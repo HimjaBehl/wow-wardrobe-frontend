@@ -83,14 +83,13 @@ export default function App() {
       }
 
       // ✅ Get cleaned image_url from /auto-tag response
-      const { image_url: cleanedImageUrl, name, category, color, tags } = await res.json();
-
+      const { image_url, name, category, color, tags } = await res.json(); 
       const saveRes = await fetch("https://wow-wardrobe-backend-himjabehl.replit.app/wardrobe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uid: user.uid,
-          image_url: cleanedImageUrl, // ✅ cleaned image now saved
+          image_url: image_url,  
           name,
           category,
           color,
