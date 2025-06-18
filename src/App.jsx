@@ -56,6 +56,9 @@ export default function App() {
       } catch (e) {
         console.error("❌ JSON parse error:", e.message);
       }
+    } catch (err) {
+      console.error("❌ Fetch items failed:", err.message);
+    }
   };
   const handleUpload = async () => {
     if (!file || !user) {
