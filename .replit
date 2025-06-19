@@ -1,4 +1,11 @@
 run = "npm run dev"
+
+[interpreter]
+entrypoint = "index.html"
+
+[env]
+PORT = "5173"
+
 modules = ["nodejs-20"]
 hidden = [".config", "package-lock.json"]
 entrypoint = "index.html"
