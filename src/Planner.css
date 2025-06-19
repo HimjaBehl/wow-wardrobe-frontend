@@ -1,0 +1,62 @@
+.planner-container {
+  padding: 2rem;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.calendar-wrapper {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.add-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #ff168f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.week-slider {
+  margin-bottom: 2rem;
+}
+
+.week-scroll {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+
+.day-card {
+  min-width: 140px;
+  background: #ffe2e2;
+  border-radius: 10px;
+  padding: 1rem;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.day-card.active {
+  border: 2px solid #ff168f;
+}
+
+.tag {
+  background: #ff168f;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.planned-list .planned-card {
+  background: #fdf4f4;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
