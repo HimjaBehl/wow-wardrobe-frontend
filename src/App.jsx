@@ -217,12 +217,9 @@ export default function App() {
     romantic: ["wedding", "date"],
     bold: ["party", "formal"]
   };
-  const mappedOccasions = vibeOccasionMap[vibe] || [];
-  console.log("🎯 Mapped Occasions:", mappedOccasions);
 
   const handleSuggestOutfit = async () => {
     try {
-      const mappedOccasions = vibeOccasionMap[vibe] || [];
       console.log("🧥 Sending items to AI:", items);
       const res = await fetch(`${BASE_URL}/suggest-outfit`, {
         method: "POST",
@@ -878,16 +875,66 @@ export default function App() {
                     Save
             </button>
                             </div>
-                          </div>
-                        </div>
-                      )}
-                    </section>
-                  </section>
-                </>
+                </div>
               )}
             </section>
-          </>
-        )}
-      </div>
-    );
-  }
+
+            {/* Tag Editor Modal */}
+            {showModal && selectedItem && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100vw",
+                  height: "100vh",
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 1000,
+                }}
+              >
+                <div
+                  style={{
+                    background: "white",
+                    padding: "2rem",
+                    borderRadius: "10px",
+                    width: "90%",
+                    maxWidth: "400px",
+                  }}
+                >
+                  <h3>Edit Tags for {selectedItem.name}</h3>
+                  <textarea
+                    value={editedTags.join(", ")}
+                    onChange={(e) =>
+                      setEditedTags(
+                        e.target.value.split(",").map((t) => t.trim()),
+                      )
+                    }
+                    rows={5}
+                    style={{ width: "100%", marginBottom: "1rem" }}
+                  />
+                  <div style={{ textAlign: "right" }}>
+                    <button
+                      onClick={() => setShowModal(false)}
+                      style={{ marginRight: "1rem" }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveEditedTags}
+                      style={{ backgroundColor: "#007bff", color: "white" }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        </>
+      )}
+    </div>
+  );
+}
