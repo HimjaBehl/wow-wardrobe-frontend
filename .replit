@@ -16,4 +16,10 @@ publicDir = "dist"
 
 [[ports]]
 localPort = 5173
+externalPort = 8080
+exposeLocalhost = true
+
+[[ports]]
+localPort = 5174
 externalPort = 80
+exposeLocalhost = true

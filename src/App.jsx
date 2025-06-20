@@ -1,7 +1,11 @@
+import { doc, getDoc } from "firebase/firestore"; 
 import { useState, useEffect } from "react";
 import "./App.css";
-import { storage, auth, provider, signInWithPopup, signOut } from "./firebase";
+import Onboarding from "./Onboarding"
+import { storage, auth, provider, signInWithPopup, signOut, db } from "./firebase";
+import { collection, query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import WeeklyPlanner from "./WeeklyPlanner";
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
@@ -14,10 +18,17 @@ export default function App() {
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [editItemIndex, setEditItemIndex] = useState(null);
-  const [editForm, setEditForm] = useState({ name: "", category: "", color: "", tags: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    category: "",
+    color: "",
+    tags: "",
+  });
   const [constraints, setConstraints] = useState("");
   const [outfit, setOutfit] = useState(null);
   const [user, setUser] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [editedTags, setEditedTags] = useState([]);
@@ -31,7 +42,6 @@ export default function App() {
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 2000);
     return () => clearTimeout(timer);
@@ -40,7 +50,21 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       setUser(firebaseUser);
-      if (firebaseUser) fetchItems(firebaseUser.uid);
+      if (firebaseUser) {
+        fetchItems(firebaseUser.uid);
+        if (firebaseUser) {
+          const docRef = doc(db, "preferences", firebaseUser.uid);
+            getDoc(docRef).then((docSnap) => {
+               if (docSnap.exists()) {
+              setOnboardingDone(true);
+            } else {
+              setOnboardingDone(false);
+                 setShowOnboarding(true); // ✅ Only show onboarding if not already done
+            }
+          });
+        }
+        setShowOnboarding(true); // show preferences form on first login
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -50,10 +74,12 @@ export default function App() {
       const result = await signInWithPopup(auth, provider);
       setUser(result.user);
       fetchItems(result.user.uid);
+      setShowOnboarding(true); // trigger onboarding
     } catch (err) {
       console.error("Login failed:", err.message);
     }
   };
+
 
   const handleLogout = async () => {
     try {
@@ -164,8 +190,6 @@ export default function App() {
     setDetectedItems([]); // ✅ Reset detected
   };
 
-
-
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this item?")) return;
     try {
@@ -186,14 +210,24 @@ export default function App() {
     }
   };
 
+  const vibeOccasionMap = {
+    fun: ["party", "vacation"],
+    elegant: ["wedding", "formal"],
+    chill: ["casual", "vacation"],
+    romantic: ["wedding", "date"],
+    bold: ["party", "formal"]
+  };
+  const mappedOccasions = vibeOccasionMap[vibe] || [];
+  console.log("🎯 Mapped Occasions:", mappedOccasions);
 
   const handleSuggestOutfit = async () => {
     try {
+      const mappedOccasions = vibeOccasionMap[vibe] || [];
       console.log("🧥 Sending items to AI:", items);
       const res = await fetch(`${BASE_URL}/suggest-outfit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items, occasion, vibe, city, constraints }),
+        body: JSON.stringify({ items, occasion, vibe, city, uid: user.uid }),
       });
 
       const text = await res.text();
@@ -205,7 +239,6 @@ export default function App() {
     } catch (err) {
       console.error("❌ Outfit suggestion failed:", err.message);
       alert("Failed to generate outfit. Try again.");
-      
     }
   };
 
@@ -217,7 +250,7 @@ export default function App() {
 
   const saveEditedTags = () => {
     const updatedItems = items.map((it) =>
-      it.id === selectedItem.id ? { ...it, tags: editedTags } : it
+      it.id === selectedItem.id ? { ...it, tags: editedTags } : it,
     );
     setItems(updatedItems);
     setShowModal(false);
@@ -251,10 +284,67 @@ export default function App() {
     );
   }
 
+  if (user && !onboardingDone) {
+    return <Onboarding user={user} onDone={() => setOnboardingDone(true)} />;
+  }
+
+  {showOnboarding && user && (
+    <Onboarding user={user} onDone={() => setShowOnboarding(false)} />
+  )}
+
   return (
     <div className="App" style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      {/* NAV HEADER */}
       <header
-        style={{ display: "flex", justifyContent: "space-between", marginBottom: "2rem" }}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "1px solid #ddd",
+          paddingBottom: "1rem",
+          marginBottom: "2rem",
+        }}
+      >
+
+        {/* Center: Nav Links */}
+        <nav>
+          <a href="#home" style={{ margin: "0 1rem", textDecoration: "none", color: "#333" }}>
+            Home
+          </a>
+          <a href="#add" style={{ margin: "0 1rem", textDecoration: "none", color: "#333" }}>
+            Add Item
+          </a>
+          <a href="#stylist" style={{ margin: "0 1rem", textDecoration: "none", color: "#333" }}>
+            AI Stylist
+          </a>
+        </nav>
+
+        {/* Right: User Info */}
+        {user && (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            {user.photoURL && (
+              <img
+                src={user.photoURL}
+                alt="User"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  marginRight: "0.5rem",
+                }}
+              />
+            )}
+            <span style={{ fontWeight: "500" }}>{user.displayName}</span>
+          </div>
+        )}
+      </header>
+
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: "2rem",
+        }}
       >
         <h1>W.O.W. Wardrobe 👗</h1>
         {user ? (
@@ -272,8 +362,8 @@ export default function App() {
       {user && (
         <>
           {/* Upload Section */}
-          <section style={{ marginBottom: "2rem" }}>
-            <h2>Upload Item</h2>
+          <section id="add" style={{ marginBottom: "2rem" }}>
+          <h2>Upload Item</h2>
             <input
               type="file"
               accept="image/*"
@@ -316,14 +406,13 @@ export default function App() {
                           name: item.name || "",
                           category: item.category || "",
                           color: item.color || "",
-                          tags: (item.tags || []).join(", ")
+                          tags: (item.tags || []).join(", "),
                         });
                       }}
                       style={{ marginTop: "0.5rem" }}
                     >
                       ✏️ Edit
                     </button>
-
                   </div>
                 ))}
                 <button
@@ -338,55 +427,87 @@ export default function App() {
                   Add Selected to Wardrobe
                 </button>
                 {editItemIndex !== null && (
-                  <div style={{
-                    position: "fixed",
-                    top: 0, left: 0,
-                    width: "100vw", height: "100vh",
-                    backgroundColor: "rgba(0,0,0,0.6)",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    zIndex: 1000
-                  }}>
-                    <div style={{
-                      background: "#fff",
-                      padding: "2rem",
-                      borderRadius: "10px",
-                      width: "90%",
-                      maxWidth: "400px"
-                    }}>
+                  <div
+                    style={{
+                      position: "fixed",
+                      top: 0,
+                      left: 0,
+                      width: "100vw",
+                      height: "100vh",
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      zIndex: 1000,
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: "#fff",
+                        padding: "2rem",
+                        borderRadius: "10px",
+                        width: "90%",
+                        maxWidth: "400px",
+                      }}
+                    >
                       <h3>Edit Detected Item</h3>
 
                       <label style={{ fontWeight: "bold" }}>Name</label>
                       <input
                         type="text"
                         value={editForm.name}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        style={{ width: "100%", marginBottom: "1rem", padding: "0.5rem" }}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, name: e.target.value })
+                        }
+                        style={{
+                          width: "100%",
+                          marginBottom: "1rem",
+                          padding: "0.5rem",
+                        }}
                       />
 
                       <label style={{ fontWeight: "bold" }}>Category</label>
                       <input
                         type="text"
                         value={editForm.category}
-                        onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                        style={{ width: "100%", marginBottom: "1rem", padding: "0.5rem" }}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, category: e.target.value })
+                        }
+                        style={{
+                          width: "100%",
+                          marginBottom: "1rem",
+                          padding: "0.5rem",
+                        }}
                       />
 
                       <label style={{ fontWeight: "bold" }}>Color</label>
                       <input
                         type="text"
                         value={editForm.color}
-                        onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
-                        style={{ width: "100%", marginBottom: "1rem", padding: "0.5rem" }}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, color: e.target.value })
+                        }
+                        style={{
+                          width: "100%",
+                          marginBottom: "1rem",
+                          padding: "0.5rem",
+                        }}
                       />
 
-                      <label style={{ fontWeight: "bold" }}>Tags (comma separated)</label>
+                      <label style={{ fontWeight: "bold" }}>
+                        Tags (comma separated)
+                      </label>
                       <input
                         type="text"
                         value={editForm.tags}
-                        onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
-                        style={{ width: "100%", marginBottom: "1rem", padding: "0.5rem" }}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, tags: e.target.value })
+                        }
+                        style={{
+                          width: "100%",
+                          marginBottom: "1rem",
+                          padding: "0.5rem",
+                        }}
                       />
 
                       <div style={{ textAlign: "right" }}>
@@ -404,12 +525,18 @@ export default function App() {
                               name: editForm.name,
                               category: editForm.category,
                               color: editForm.color,
-                              tags: editForm.tags.split(",").map((tag) => tag.trim())
+                              tags: editForm.tags
+                                .split(",")
+                                .map((tag) => tag.trim()),
                             };
                             setDetectedItems(updated);
                             setEditItemIndex(null);
                           }}
-                          style={{ backgroundColor: "#007bff", color: "white", padding: "0.5rem 1rem" }}
+                          style={{
+                            backgroundColor: "#007bff",
+                            color: "white",
+                            padding: "0.5rem 1rem",
+                          }}
                         >
                           Save
                         </button>
@@ -417,13 +544,12 @@ export default function App() {
                     </div>
                   </div>
                 )}
-
               </div>
             )}
           </section>
 
           {/* Wardrobe Section */}
-          <section style={{ marginBottom: "2rem" }}>
+            <section id="home" style={{ marginBottom: "2rem" }}>
             <h2>Your Wardrobe 🧥</h2>
             <div>
               <select
@@ -451,7 +577,15 @@ export default function App() {
               </select>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: "1.5rem",
+                  paddingTop: "1rem",
+                }}
+              >
+
               {filteredItems.map((item) => (
                 <div
                   key={item.id}
@@ -468,7 +602,11 @@ export default function App() {
                   <img
                     src={item.image_url}
                     alt={item.name}
-                    style={{ width: "100%", height: "240px", objectFit: "cover" }}
+                    style={{
+                      width: "100%",
+                      height: "240px",
+                      objectFit: "cover",
+                    }}
                   />
                   <div
                     style={{
@@ -479,13 +617,36 @@ export default function App() {
                   >
                     {formatLabel(item.color) + " " + formatLabel(item.name)}
                   </div>
-                  <p style={{ textAlign: "center", fontSize: "0.9rem", margin: 0 }}>
+                  <p
+                    style={{
+                      textAlign: "center",
+                      fontSize: "0.9rem",
+                      margin: 0,
+                    }}
+                  >
                     {formatLabel(item.category)}
-                  </p>{/* Tag chip row */}
+                  </p>
+                  {/* Tag chip row */}
                   {item.tags && item.tags.length > 0 && (
-                    <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "4px", padding: "4px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        flexWrap: "wrap",
+                        gap: "4px",
+                        padding: "4px",
+                      }}
+                    >
                       {item.tags.map((tag, i) => (
-                        <span key={i} style={{ background: "#eee", borderRadius: "12px", padding: "2px 8px", fontSize: "0.8rem" }}>
+                        <span
+                          key={i}
+                          style={{
+                            background: "#eee",
+                            borderRadius: "12px",
+                            padding: "2px 8px",
+                            fontSize: "0.8rem",
+                          }}
+                        >
                           {formatLabel(tag)}
                         </span>
                       ))}
@@ -521,15 +682,14 @@ export default function App() {
                   >
                     🗑️
                   </button>
-
                 </div>
               ))}
             </div>
           </section>
 
           {/* Outfit Suggestions */}
-          <section>
-            <h2>AI Outfit Suggestions 🤖</h2>
+          <section id="stylist">
+          <h2>AI Outfit Suggestions 🤖</h2>
             <div style={{ marginBottom: "1rem" }}>
               <select
                 value={occasion}
@@ -580,32 +740,93 @@ export default function App() {
               Get Outfit Suggestions
             </button>
 
-            {Array.isArray(outfit) && outfit.length > 0 ? (
-              <div style={{ marginTop: "2rem" }}>
-                <h3>Suggested Looks</h3>
-                {outfit.map((look, idx) => (
-                  <div key={idx} style={{ marginBottom: "2rem" }}>
-                    <h4>Look {idx + 1}</h4>
-                    <p><em>{look.style_note}</em></p>
-                    <div className="grid">
-                      {look.items.map((piece, i) => (
-                        <div key={i} className="card">
-                          <img src={piece.image_url} alt={piece.name || "No name"} />
-                          <p><strong>{piece.name || "Unnamed"}</strong></p>
-                          <p>Category: {piece.category || "N/A"}</p>
-                          <p>Color: {piece.color || "N/A"}</p>
-                        </div>
-                      ))}
+            {/* ✅ Moved outside the button */}
+            <section style={{ marginTop: "2rem" }}>
+              <h2>🗓️ Weekly Outfit Planner</h2>
+              <WeeklyPlanner />
+            </section>
+
+           
+            <section style={{ marginTop: "2rem" }}>
+              <h2>🧠 Suggested Looks</h2>
+              {Array.isArray(outfit) && outfit.length > 0 ? (
+                <div style={{ marginTop: "2rem" }}>
+                  <h3>Suggested Looks</h3>
+                  {outfit.map((look, idx) => (
+                    <div key={idx} style={{ marginBottom: "2rem", textAlign: "center" }}>
+                      <h4 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>
+                        Look {idx + 1}
+                      </h4>
+                      <p
+                        style={{
+                          backgroundColor: "#f5f5f5",
+                          padding: "0.5rem 1rem",
+                          borderLeft: "4px solid #000",
+                          margin: "0 auto 1.5rem",
+                          maxWidth: "400px",
+                          fontStyle: "italic",
+                          textAlign: "left",
+                        }}
+                      >
+                        📝 {look.style_note}
+                      </p>
+
+                      <div
+                        className="look-collage"
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "1.5rem",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {look.items.map((piece, i) => (
+                          <div
+                            key={i}
+                            className="look-piece"
+                            style={{
+                              width: "160px",
+                              backgroundColor: "#fff",
+                              borderRadius: "12px",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                              padding: "1rem",
+                              textAlign: "center",
+                            }}
+                          >
+                            <img
+                              src={piece.image_url}
+                              alt={piece.name || "No name"}
+                              style={{
+                                width: "100%",
+                                height: "180px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                marginBottom: "0.5rem",
+                              }}
+                            />
+                            <strong style={{ fontSize: "0.95rem" }}>
+                              {piece.name || "Unnamed"}
+                            </strong>
+                            <p style={{ margin: "0.25rem 0", fontSize: "0.85rem" }}>
+                              Category: {piece.category || "N/A"}
+                            </p>
+                            <p style={{ margin: "0.25rem 0", fontSize: "0.85rem" }}>
+                              Color: {piece.color || "N/A"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : outfit !== null && (
-              <p style={{ marginTop: "1rem" }}>
-                No outfits found. Try changing your filters or uploading more items.
-              </p>
-            )}
-          </section>
+                  ))}
+                </div>
+              ) : (
+                outfit !== null && (
+                  <p style={{ marginTop: "1rem" }}>
+                    No outfits found. Try changing your filters or uploading more items.
+                  </p>
+                )
+              )}
+
 
           {/* Tag Editor Modal */}
           {showModal && selectedItem && (
@@ -637,7 +858,7 @@ export default function App() {
                   value={editedTags.join(", ")}
                   onChange={(e) =>
                     setEditedTags(
-                      e.target.value.split(",").map((t) => t.trim())
+                      e.target.value.split(",").map((t) => t.trim()),
                     )
                   }
                   rows={5}
@@ -655,13 +876,13 @@ export default function App() {
                     style={{ backgroundColor: "#007bff", color: "white" }}
                   >
                     Save
-                  </button>
+            </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </section>
                 </div>
-              </div>
-            </div>
-          )}
+              );
         </>
-      )}
-    </div>
-  );
-}
+            });
