@@ -221,7 +221,7 @@ export default function App() {
       alert("Something went wrong while deleting.");
     }
   };
-  
+
   async function handleFeedback(idx, liked) {
     const userObj = auth.currentUser;
     if (!userObj) {
@@ -271,7 +271,7 @@ export default function App() {
       alert("Failed to generate outfit. Try again.");
     }
     // -------------  🆕 Save user feedback  -------------
-    
+
 
   };
 
@@ -776,7 +776,7 @@ export default function App() {
                     )}
                   </div>
                   </div>
-            
+
                   {/* 📝 Edit Button */}
                   <button
                     onClick={() => openEditModal(item)}
@@ -829,7 +829,7 @@ export default function App() {
             </div>
           </section>
           )}
-          
+
 
           {/* AI Stylist Section */}
           {activeTab === "stylist" && (
@@ -991,32 +991,32 @@ export default function App() {
                             Save This Look
                           </button>
                         </div>
-                      {/* ---------- FEEDBACK BUTTONS ---------- */}
-                      <div style={{ marginTop: "1rem" }}>
-                        <button
-                          onClick={() => handleFeedback(idx, true)}
-                          style={{ marginRight: "0.6rem" }}
-                        >
-                          ❤️ Love it
-                        </button>
-                        <button onClick={() => handleFeedback(idx, false)}>
-                          🙅 Not my vibe
-                        </button>
+                        {/* ---------- FEEDBACK BUTTONS ---------- */}
+                        <div style={{ marginTop: "1rem" }}>
+                          <button
+                            onClick={() => handleFeedback(idx, true)}
+                            style={{ marginRight: "0.6rem" }}
+                          >
+                            ❤️ Love it
+                          </button>
+                          <button onClick={() => handleFeedback(idx, false)}>
+                            🙅 Not my vibe
+                          </button>
+                        </div>
+
+                        {feedbackSubmitted === idx && (
+                          <p
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "#6b7280",
+                              marginTop: "0.25rem",
+                            }}
+                          >
+                            Feedback saved. Tina's taking notes! 📝
+                          </p>
+                        )}
+                        {/* -------------------------------------- */}
                       </div>
-
-                      {feedbackSubmitted === idx && (
-                        <p
-                          style={{
-                            fontSize: "0.8rem",
-                            color: "#6b7280",
-                            marginTop: "0.25rem",
-                          }}
-                        >
-                          Feedback saved. Tina’s taking notes! 📝
-                        </p>
-                      )}
-                      {/* -------------------------------------- */}
-
                       ))}
                     </div>
                   </div>
@@ -1176,5 +1176,3 @@ export default function App() {
       </div>
       );
       }
-
-
