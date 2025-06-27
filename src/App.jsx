@@ -505,7 +505,7 @@ export default function App() {
                   gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
                   gap: "1rem"
                 }}>
-                  {detectedItems.map((item, i) => (
+                  {detectedItems.map((item, i) => {
                 console.log("🖼️ Item image:", item.image_url); // ✅ now logs to DevTools console
                 return (
                     <div key={i} style={{ marginBottom: "0.5rem", border: "1px solid #ccc", padding: "0.5rem" }}>
@@ -545,7 +545,8 @@ export default function App() {
                         <Pencil size={16} />
                       </button>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
                 <button onClick={confirmSelectedItems} style={{
                       marginLeft: "1rem",
