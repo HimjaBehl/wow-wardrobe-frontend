@@ -506,8 +506,25 @@ export default function App() {
                   gap: "1rem"
                 }}>
                   {detectedItems.map((item, i) => (
+                console.log("🖼️ Item image:", item.image_url); // ✅ now logs to DevTools console
+                return (
                     <div key={i} style={{ marginBottom: "0.5rem", border: "1px solid #ccc", padding: "0.5rem" }}>
-                      <img src={item.image_url} alt={item.name} style={{ width: "100px" }} />
+                      <img
+                        src={item.image_url}
+                        alt={item.name}
+                        style={{
+                          width: "100%",
+                          height: "220px",
+                          objectFit: "contain",
+                          backgroundColor: "#fafafa",
+                          padding: "12px",
+                          borderBottom: "1px solid #eee",
+                          display: "block",
+                        }}
+                      />
+                      
+
+
                       <p>{item.name} — {item.category} • {item.color}</p>
                       <button onClick={() => toggleItemApproval(i)}>
                         {item.approved ? "✅ Keep" : "❌ Remove"}
