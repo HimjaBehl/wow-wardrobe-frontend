@@ -986,39 +986,38 @@ export default function App() {
                               cursor: "pointer",
                               fontWeight: "600",
                             }}
-
                           >
                             Save This Look
                           </button>
                         </div>
-                        {/* ---------- FEEDBACK BUTTONS ---------- */}
-                        <div style={{ marginTop: "1rem" }}>
-                          <button
-                            onClick={() => handleFeedback(idx, true)}
-                            style={{ marginRight: "0.6rem" }}
-                          >
-                            ❤️ Love it
-                          </button>
-                          <button onClick={() => handleFeedback(idx, false)}>
-                            🙅 Not my vibe
-                          </button>
-                        </div>
-
-                        {feedbackSubmitted === idx && (
-                          <p
-                            style={{
-                              fontSize: "0.8rem",
-                              color: "#6b7280",
-                              marginTop: "0.25rem",
-                            }}
-                          >
-                            Feedback saved. Tina's taking notes! 📝
-                          </p>
-                        )}
-                        {/* -------------------------------------- */}
-                      </div>
                       ))}
                     </div>
+                    
+                    {/* ---------- FEEDBACK BUTTONS ---------- */}
+                    <div style={{ marginTop: "1rem" }}>
+                      <button
+                        onClick={() => handleFeedback(idx, true)}
+                        style={{ marginRight: "0.6rem" }}
+                      >
+                        ❤️ Love it
+                      </button>
+                      <button onClick={() => handleFeedback(idx, false)}>
+                        🙅 Not my vibe
+                      </button>
+                    </div>
+
+                    {feedbackSubmitted === idx && (
+                      <p
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "#6b7280",
+                          marginTop: "0.25rem",
+                        }}
+                      >
+                        Feedback saved. Tina's taking notes! 📝
+                      </p>
+                    )}
+                    {/* -------------------------------------- */}
                   </div>
                 ))}
               </div>
