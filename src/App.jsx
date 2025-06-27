@@ -506,31 +506,30 @@ export default function App() {
                   gap: "1rem"
                 }}>
                   {detectedItems.map((item, i) => (
-
-                  <div key={i} style={{ marginBottom: "0.5rem", border: "1px solid #ccc", padding: "0.5rem" }}>
-                    <img src={item.image_url} alt={item.name} style={{ width: "100px" }} />
-                    <p>{item.name} — {item.category} • {item.color}</p>
-                    <button onClick={() => toggleItemApproval(i)}>
-                      {item.approved ? "✅ Keep" : "❌ Remove"}
-                    </button>
-                    <button
-                      onClick={() => openEditModal(item)}
-                      style={{
-                        position: "absolute",
-                        top: "8px",
-                        left: "8px",
-                        background: "#fff",
-                        border: "1px solid #ccc",
-                        borderRadius: "50%",
-                        padding: "6px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Pencil size={16} />
-                    </button>
-                  </div>
-                  </div>
-                ))}
+                    <div key={i} style={{ marginBottom: "0.5rem", border: "1px solid #ccc", padding: "0.5rem" }}>
+                      <img src={item.image_url} alt={item.name} style={{ width: "100px" }} />
+                      <p>{item.name} — {item.category} • {item.color}</p>
+                      <button onClick={() => toggleItemApproval(i)}>
+                        {item.approved ? "✅ Keep" : "❌ Remove"}
+                      </button>
+                      <button
+                        onClick={() => openEditModal(item)}
+                        style={{
+                          position: "absolute",
+                          top: "8px",
+                          left: "8px",
+                          background: "#fff",
+                          border: "1px solid #ccc",
+                          borderRadius: "50%",
+                          padding: "6px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Pencil size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
                 <button onClick={confirmSelectedItems} style={{
                       marginLeft: "1rem",
                       padding: "0.6rem 1.2rem",
