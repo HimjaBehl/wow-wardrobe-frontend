@@ -1,24 +1,32 @@
-import React, { useState } from "react";
-import { auth, db } from "./firebase"; // ✅ Firebase auth and firestore
+import React, { useState, useEffect } from "react";
+import { auth, db } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDocs, collection, query, where } from "firebase/firestore";
-import { useEffect } from "react";
 import Calendar from "react-calendar";
-import "react-calendar/dist/Calendar.css"; // ✅ keep if installed successfully
-import "./Planner.css"; // We'll add custom styles here
-
+import "react-calendar/dist/Calendar.css";
+import "./Planner.css";
 
 export default function WeeklyPlanner() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [plannedOutfits, setPlannedOutfits] = useState({});
-  const user = auth.currentUser;
+  const [user, setUser] = useState(null);
+
+  // ✅ Get logged-in user
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+
+    return () => unsub();
+  }, []);
+
+  // ✅ Fetch outfit plans for current week
   useEffect(() => {
     const fetchPlannedOutfits = async () => {
-      const uid = user?.uid;
-      if (!uid) return;
+      if (!user) return;
 
       const start = new Date(selectedDate);
       start.setDate(start.getDate() - start.getDay()); // Sunday
-
       const end = new Date(start);
       end.setDate(start.getDate() + 6); // Saturday
 
@@ -28,7 +36,7 @@ export default function WeeklyPlanner() {
       try {
         const q = query(
           collection(db, "outfit_plans"),
-          where("uid", "==", uid),
+          where("uid", "==", user.uid),
           where("date", ">=", startKey),
           where("date", "<=", endKey)
         );
@@ -49,8 +57,7 @@ export default function WeeklyPlanner() {
     fetchPlannedOutfits();
   }, [selectedDate, user]);
 
-
-  const formatDateKey = (date) => date.toISOString().split("T")[0]; // YYYY-MM-DD
+  const formatDateKey = (date) => date.toISOString().split("T")[0];
 
   const handleAddOutfit = async () => {
     const key = formatDateKey(selectedDate);
@@ -88,7 +95,7 @@ export default function WeeklyPlanner() {
 
   const weekDates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(selectedDate);
-    d.setDate(d.getDate() - d.getDay() + i); // get week start (Sunday)
+    d.setDate(d.getDate() - d.getDay() + i); // Sunday to Saturday
     return d;
   });
 
@@ -118,9 +125,7 @@ export default function WeeklyPlanner() {
                 <h4>{date.toDateString().slice(0, 10)}</h4>
                 {data ? (
                   <>
-                    <p>
-                      <strong>{data.title}</strong>
-                    </p>
+                    <p><strong>{data.title}</strong></p>
                     <p>{data.note}</p>
                     <span className="tag">{data.vibe}</span>
                   </>

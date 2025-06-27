@@ -1,16 +1,27 @@
 import { useState } from "react";
 import { doc, setDoc } from "firebase/firestore";
-import { db } from "./firebase"; // ensure db is exported from firebase.js
+import { db } from "./firebase";
 
 export default function Onboarding({ user, onDone }) {
   const [stylePrefs, setStylePrefs] = useState("");
 
   const savePreferences = async () => {
-    await setDoc(doc(db, "preferences", user.uid), {
-      uid: user.uid,
-      stylePrefs
-    });
-    onDone();
+    if (!user || !user.uid) {
+      alert("User not logged in.");
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, "preferences", user.uid), {
+        uid: user.uid,
+        stylePrefs,
+        timestamp: Date.now()
+      });
+      if (onDone) onDone(); // ✅ only call when successful
+    } catch (err) {
+      console.error("❌ Failed to save preferences:", err);
+      alert("Something went wrong while saving preferences.");
+    }
   };
 
   return (
@@ -23,7 +34,7 @@ export default function Onboarding({ user, onDone }) {
         onChange={(e) => setStylePrefs(e.target.value)}
         style={{ width: "100%", padding: "1rem" }}
       />
-      <button onClick={savePreferences} style={{ marginTop: "1rem" }}>
+      <button onClick={savePreferences} style={{ marginTop: "1rem", padding: "1rem 2rem", background: "#000", color: "#fff", border: "none" }}>
         Save & Continue
       </button>
     </div>
