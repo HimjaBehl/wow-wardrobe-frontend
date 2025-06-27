@@ -49,6 +49,19 @@ export default function App() {
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [selectedReasons, setSelectedReasons] = useState([]);
 
+  // 👇 Assume `file` is the uploaded image file (e.g. from <input type="file">)
+  const fileName = `${Date.now()}_${file.name}`;
+  const fileRef = ref(storage, `wardrobe/${fileName}`);
+
+  // ✅ Upload to Firebase
+  await uploadBytes(fileRef, file);
+
+  // ✅ Get the public URL
+  const imageUrl = await getDownloadURL(fileRef);
+
+  // 🧪 Console log it
+  console.log("🖼️ Public image URL:", imageUrl);
+
   const formatLabel = (str) =>
     str
       .split("/")
@@ -153,42 +166,16 @@ export default function App() {
       // Save to state instead of Firebase
       setDetectedItems(data.detected || []);
       console.log("👗 outfits received in UI:", data);
-      const detectedItems = data.detected || [];
+      // Step: Process detected objects
+      // ✅ We only need what the backend gave us
+      setDetectedItems(data.items || []);   // <-- ‘items’ matches backend response
 
-      for (let i = 0; i < detectedItems.length; i++) {
-        const item = detectedItems[i];
-        const { cropped_image_base64, name, category, color, tags } = item;
-
-        // Convert base64 to Blob
-        const response = await fetch(cropped_image_base64);
-        const blob = await response.blob();
-
-        // Unique file name
-        const croppedName = `${user.uid}_${name}_${Date.now()}.png`;
-        const croppedRef = ref(storage, `wardrobe/${croppedName}`);
-
-        // Upload to Firebase Storage
-        await uploadBytes(croppedRef, blob);
-        const croppedUrl = await getDownloadURL(croppedRef);
-
-        // Save to Firestore using your backend
-        await fetch(`${BASE_URL}/wardrobe`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            uid: user.uid,
-            name,
-            category,
-            color,
-            tags,
-            image_url: croppedUrl,
-          }),
-        });
+      // Optional: tell the user
+      if ((data.items || []).length === 0) {
+        alert("⚠️ No clothing items detected in this photo.");
+      } else {
+        console.log("🟣 Detected & cropped:", data.items.length, "items");
       }
-
-      // Refresh wardrobe in UI
-      await fetchItems(user.uid);
-      alert("✅ Cropped items added!");
 
     } catch (err) {
       console.error("Upload error:", err);
@@ -361,7 +348,10 @@ export default function App() {
             />
           </Routes>
         </div>
-        <BottomNav />
+        <BottomNav
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
       </Router>
     );
 
@@ -507,6 +497,11 @@ export default function App() {
                 }}>
                   {detectedItems.map((item, i) => {
                 console.log("🖼️ Item image:", item.image_url); // ✅ now logs to DevTools console
+                if (response.detected.length === 0) {
+                  alert("⚠️ No clothing items were detected. Try a clearer image or zoom in.");
+                  return;
+                }
+
                 return (
                     <div key={i} style={{ marginBottom: "0.5rem", border: "1px solid #ccc", padding: "0.5rem" }}>
                       <img
