@@ -49,19 +49,6 @@ export default function App() {
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [selectedReasons, setSelectedReasons] = useState([]);
 
-  // 👇 Assume `file` is the uploaded image file (e.g. from <input type="file">)
-  const fileName = `${Date.now()}_${file.name}`;
-  const fileRef = ref(storage, `wardrobe/${fileName}`);
-
-  // ✅ Upload to Firebase
-  await uploadBytes(fileRef, file);
-
-  // ✅ Get the public URL
-  const imageUrl = await getDownloadURL(fileRef);
-
-  // 🧪 Console log it
-  console.log("🖼️ Public image URL:", imageUrl);
-
   const formatLabel = (str) =>
     str
       .split("/")
