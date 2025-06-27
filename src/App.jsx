@@ -45,7 +45,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("wardrobe");
   const [detectedItems, setDetectedItems] = useState([]);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(null); // 🆕 for like/dislike toast
-
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState(null);
+  const [selectedReasons, setSelectedReasons] = useState([]);
 
   const formatLabel = (str) =>
     str
@@ -148,12 +150,46 @@ export default function App() {
       }
 
       const data = await res.json();
+      // Save to state instead of Firebase
+      setDetectedItems(data.detected || []);
       console.log("👗 outfits received in UI:", data);
-      const tagged = (data.detected || []).map((obj) => ({
-        ...obj,
-        approved: true,
-      }));
-      setDetectedItems(tagged);
+      const detectedItems = data.detected || [];
+
+      for (let i = 0; i < detectedItems.length; i++) {
+        const item = detectedItems[i];
+        const { cropped_image_base64, name, category, color, tags } = item;
+
+        // Convert base64 to Blob
+        const response = await fetch(cropped_image_base64);
+        const blob = await response.blob();
+
+        // Unique file name
+        const croppedName = `${user.uid}_${name}_${Date.now()}.png`;
+        const croppedRef = ref(storage, `wardrobe/${croppedName}`);
+
+        // Upload to Firebase Storage
+        await uploadBytes(croppedRef, blob);
+        const croppedUrl = await getDownloadURL(croppedRef);
+
+        // Save to Firestore using your backend
+        await fetch(`${BASE_URL}/wardrobe`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uid: user.uid,
+            name,
+            category,
+            color,
+            tags,
+            image_url: croppedUrl,
+          }),
+        });
+      }
+
+      // Refresh wardrobe in UI
+      await fetchItems(user.uid);
+      alert("✅ Cropped items added!");
+
     } catch (err) {
       console.error("Upload error:", err);
       alert("Something went wrong during upload.");
@@ -222,7 +258,7 @@ export default function App() {
     }
   };
 
-  async function handleFeedback(idx, liked) {
+    async function handleFeedback(idx, liked, reasons = []) {
     const userObj = auth.currentUser;
     if (!userObj) {
       alert("Please log in first 🙂");
@@ -231,14 +267,16 @@ export default function App() {
 
     const lookObj = outfit[idx];          // the exact outfit the user judged
 
-    const payload = {
-      uid: userObj.uid,
-      liked,                              // true / false
-      timestamp: new Date(),
-      occasion,
-      vibe,
-      outfit: lookObj
-    };
+      const payload = {
+        uid: userObj.uid,
+        liked,
+        reasons,  // ✅ Add this
+        timestamp: new Date(),
+        occasion,
+        vibe,
+        outfit: lookObj
+      };
+
 
     try {
       await addDoc(collection(db, "outfitFeedback"), payload);
@@ -462,7 +500,13 @@ export default function App() {
             {detectedItems.length > 0 && (
               <div style={{ marginTop: "1rem" }}>
                 <h4>Detected Items</h4>
-                {detectedItems.map((item, i) => (
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                  gap: "1rem"
+                }}>
+                  {detectedItems.map((item, i) => (
+
                   <div key={i} style={{ marginBottom: "0.5rem", border: "1px solid #ccc", padding: "0.5rem" }}>
                     <img src={item.image_url} alt={item.name} style={{ width: "100px" }} />
                     <p>{item.name} — {item.category} • {item.color}</p>
@@ -484,7 +528,7 @@ export default function App() {
                     >
                       <Pencil size={16} />
                     </button>
-
+                  </div>
                   </div>
                 ))}
                 <button onClick={confirmSelectedItems} style={{
@@ -1001,7 +1045,10 @@ export default function App() {
                       >
                         ❤️ Love it
                       </button>
-                      <button onClick={() => handleFeedback(idx, false)}>
+                      <button onClick={() => {
+                        setSelectedIdx(idx);
+                        setShowReasonModal(true);
+                      }}>
                         🙅 Not my vibe
                       </button>
                     </div>
@@ -1172,6 +1219,49 @@ export default function App() {
       </nav>
       )}
       {/* -------------------------------------- */}
+      {showReasonModal && (
+        <div style={{
+          position: "fixed", inset: 0,
+          background: "rgba(0,0,0,0.45)",
+          display: "flex", justifyContent: "center", alignItems: "center",
+          zIndex: 2000
+        }}>
+          <div style={{
+            background: "#fff", padding: "1.5rem",
+            borderRadius: "12px", width: 300
+          }}>
+            <h4 style={{ marginBottom: "0.75rem" }}>Why not your vibe?</h4>
+            {["Too formal", "Dislikes heels", "Too bold", "Not weather-friendly", "Not flattering"].map(r => (
+              <label key={r} style={{ display: "block", marginBottom: "0.5rem" }}>
+                <input
+                  type="checkbox"
+                  checked={selectedReasons.includes(r)}
+                  onChange={e => {
+                    setSelectedReasons(
+                      e.target.checked
+                        ? [...selectedReasons, r]
+                        : selectedReasons.filter(x => x !== r)
+                    );
+                  }}
+                />{" "}
+                {r}
+              </label>
+            ))}
+
+            <button
+              onClick={() => {
+                handleFeedback(selectedIdx, false, selectedReasons);
+                setShowReasonModal(false);
+                setSelectedIdx(null);
+                setSelectedReasons([]);
+              }}
+              style={{ marginTop: "1rem" }}
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      )}
       </div>
       );
       }
