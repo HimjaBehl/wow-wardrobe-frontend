@@ -1,245 +1,227 @@
-.App {
-  font-family: sans-serif;
-  text-align: center;
-  margin: 2rem;
-  padding: 1rem;
-  box-sizing: border-box;
-  max-width: 100%;
-}
+/* =============================
+   WOW Wardrobe – Mobile‑first CSS
+   ============================= */
 
-form {
-  display: flex;
-  flex-direction: column;
-  max-width: 400px;
-  margin: auto;
-  gap: 10px;
-}
-
-input, button, select {
-  padding: 10px;
-  font-size: 1rem;
-}
-
-button {
-  background: black;
-  color: white;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  max-width: 300px;
-  margin: 0.5rem auto;
-  display: block;
-  font-size: 1rem;
-  padding: 0.75rem;
-
-}
-
-button:hover {
-  opacity: 0.8;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
-}
-
-.card {
-  border: 1px solid #ccc;
-  padding: 0.5rem;
-  border-radius: 6px;
-  background: #f9f9f9;
-}
-
-.card img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-
-.grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  justify-content: center;
-  margin-top: 1rem;
-  position: relative;
-}
-
-.card {
-  width: 180px;
-  background: #fff;
-  padding: 0.5rem;
-  border-radius: 10px;
-  box-shadow: 4px 8px 20px rgba(0, 0, 0, 0.15);
-  font-family: 'Caveat', cursive;
-  transform: rotate(-2deg);
-  transition: transform 0.2s ease;
-  position: relative;
-}
-
-.card:nth-child(even) {
-  transform: rotate(3deg);
-}
-
-.card:hover {
-  transform: rotate(0deg) scale(1.05);
-}
-
-.card img {
-  width: 100%;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-}
-
-.card p {
-  margin: 0;
-  font-size: 1rem;
-  text-align: center;
-}
-
-body {
-  background: #faf9f6 url("https://www.transparenttextures.com/patterns/paper-fibers.png");
-  background-size: cover;
-}
-@media (max-width: 480px) {
-  h1, h2, h3 {
-    font-size: 1.25rem;
-    text-align: center;
-  }
-
-  input, select {
-    font-size: 1rem;
-    padding: 0.5rem;
-    width: 100%;
-    max-width: 300px;
-    margin: 0.25rem auto;
-    display: block;
-  }
-}
-.card {
-  position: relative;
-  cursor: pointer;
-}
-
-.card-controls {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  display: flex;
-  gap: 8px;
-  font-size: 1.1rem;
-}
-
-.card-controls span {
-  cursor: pointer;
-}
-
-.card-controls span {
-  font-size: 1.2rem;
-}
-em {
-  font-style: italic;
-  color: #666;
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-body {
-  max-width: 480px;
-  margin: auto;
-  background: #f5f5f5;
-  font-family: sans-serif;
-}
-
-img {
-  max-width: 100%;
-  border-radius: 8px;
-}
-
+/* Base Reset & Global  ---------------------------- */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Poppins', sans-serif;
+  -webkit-tap-highlight-color: transparent; /* remove blue flash on mobile */
+  scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden; /* ✅ Prevent horizontal scroll on mobile */
-  font-family: sans-serif;
+  overflow-x: hidden;           /* stop accidental side‑scroll */
+  background: #faf9f6 url("https://www.transparenttextures.com/patterns/paper-fibers.png");
+  background-size: cover;
+  color: #222;
 }
 
-
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
+/* App Wrapper  ------------------------------------ */
+.App {
+  max-width: 100%;
+  padding: 1rem;
+  margin: 2rem auto;
+  text-align: center;
 }
 
-header h1 {
-  font-size: 1.8rem;
-  color: #CBAACB;
+/* Headings  -------------------------------------- */
+h1,h2,h3 {
+  line-height: 1.25;
+  margin-bottom: .75rem;
 }
 
-nav a {
-  margin-left: 20px;
-  text-decoration: none;
-  color: #3a3a3a;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-nav a:hover {
-  color: #CBAACB;
-}
-
-main {
+/* Forms & Inputs  -------------------------------- */
+form {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: .75rem;
+  max-width: 400px;
+  margin: 0 auto 2rem;
 }
 
-.card {
-  background-color: #FFE2E2;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
-.app-container {
-  padding-bottom: 70px; /* space above nav bar */
-}
-
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
+input,select,textarea,button {
   width: 100%;
-  height: 60px;
-  background-color: white;
-  border-top: 1px solid #ddd;
+  padding: .65rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+button {
+  background: #000;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  min-height: 44px;            /* ✅ Apple tap target */
+  transition: opacity .25s ease;
+}
+button:hover{opacity:.8;}
+
+/* Grid of Wardrobe Cards  ------------------------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+  gap: 1rem;
+  padding: 1rem 0;
+  justify-content: center;
+}
+
+/* Card Style ------------------------------------- */
+.card {
+  background: #FFE2E2;
+  padding: .6rem;
+  border-radius: 12px;
+  box-shadow: 4px 8px 20px rgba(0,0,0,.15);
+  position: relative;
+  transition: transform .2s ease;
+}
+.card:nth-child(even){transform:rotate(3deg);} /* playful tilt */
+.card:hover{transform:rotate(0deg) scale(1.05);} /* smooth straighten */
+
+.card img{
+  width:100%;
+  border-radius:10px;
+  margin-bottom:.5rem;
+  object-fit:cover;
+}
+.card p{font-size:1rem;margin:0;}
+
+/* Edit / Delete icons ---------------------------- */
+.card-controls{
+  position:absolute;top:8px;right:8px;
+  display:flex;gap:8px;
+  flex-direction: row; /* ensure side-by-side layout */
+  gap: 12px;           /* more spacing between buttons */
+  z-index: 10;         /* make sure it's on top */
+  background: rgba(255, 255, 255, 0.9); /* subtle bg if needed */
+  padding:2px 6px;
+  border-radius:6px;
+  font-size:1.2rem;
+}
+
+/* Bottom Navigation ------------------------------ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;width:100%;
+  height:70px;
+  padding-bottom:env(safe-area-inset-bottom);
+  background:#fff;border-top:1px solid #ddd;
+  display:flex;justify-content:space-around;align-items:center;
+  z-index:999;
+}
+.tab{display:flex;flex-direction:column;align-items:center;font-size:14px;color:#888;text-decoration:none;}
+.tab span{font-size:26px;}
+.tab:hover{color:#007aff;}
+
+/* Modal (generic) -------------------------------- */
+.modal{
+  width:90vw;max-height:80vh;overflow-y:auto;
+  background:#fff;padding:20px;
+  border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.15);
+}
+
+/* Responsive tweaks ------------------------------ */
+@media(max-width:480px){
+  html{font-size:15px;}
+  h1,h2,h3{font-size:1.3rem;}
+  form{padding:0 1rem;}
+}
+
+/* ─── modal base ───────────────────────*/
+.modal-overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55);
+  display:flex; justify-content:center; align-items:center;
+  z-index:1200;
+  padding:env(safe-area-inset-top) 1rem env(safe-area-inset-bottom);
+}
+.modal-card{
+  width:92%; max-width:340px;
+  background:#fff; border-radius:16px;
+  padding:1.25rem;
+  box-shadow:0 8px 30px rgba(0,0,0,.25);
+  animation:pop .25s ease;
+  text-align:center;
+}
+@keyframes pop{
+  from{transform:scale(.9);opacity:0}
+  to  {transform:scale(1);opacity:1}
+}
+/* chips + buttons reuse styles you already have */
+.chip{background:#eee;padding:4px 10px;border-radius:999px;font-size:.8rem}
+.primary-btn,.danger-btn{
+  width:100%;margin-top:.75rem;padding:.6rem;border:none;border-radius:8px;
+  font-weight:600;cursor:pointer
+}
+.primary-btn{background:#6C4AB6;color:#fff}
+.danger-btn {background:#ff4d4f;color:#fff}
+
+/* ✨ Modal overlay */
+.wow-overlay {
+  position: fixed;
+  inset: 0;                    /* = top:0 right:0 bottom:0 left:0 */
+  background: rgba(0,0,0,0.55);
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
-  z-index: 999;
+  z-index: 999;                /* above everything else */
 }
 
-.tab {
+/* ✨ Modal box */
+.wow-modal {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 14px;
+  max-width: 92%;
+  max-height: 90%;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  text-align: center;
+}
+
+.wow-modal img {
+  max-width: 260px;
+  width: 90%;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+/* Nice pill tags */
+.wow-modal .tags {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #888;
-  text-decoration: none;
-  font-size: 12px;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin: .75rem 0;
+}
+.wow-modal .tags span{
+  background:#eee;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:.8rem;
 }
 
-.tab span {
-  font-size: 22px;
+.wow-modal button{
+  margin-top:1rem;
+  padding:.55rem 1.2rem;
+  border:none;
+  background:#000;
+  color:#fff;
+  border-radius:8px;
+  cursor:pointer;
+}
+.wow-modal button:hover{opacity:.85;}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  color: #222;
 }
 
-.tab:hover {
-  color: #007aff;
+.card-controls span {
+  font-size: 1.35rem;
+  margin-left: 6px;
+  cursor: pointer;
+  user-select: none;
 }

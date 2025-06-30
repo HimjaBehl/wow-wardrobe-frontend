@@ -1,20 +1,13 @@
-import Onboarding from "./Onboarding";
-import { doc, getDoc } from "firebase/firestore";
-import { useState, useEffect } from "react";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useState, useEffect, useMemo } from "react";
 import "./App.css";
+import Onboarding from "./Onboarding";
 import { storage, auth, provider, signInWithPopup, signOut, db } from "./firebase";
-import { collection, query, where, addDoc } from "firebase/firestore";
+import { collection, query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import WeeklyPlanner from "./WeeklyPlanner";
 import VirtualTryOn from "./VirtualTryOn";
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import BottomNav from './BottomNav'; // This is the nav bar you created
-import Home from './Home';         // Or whatever you call your homepage
-import Wardrobe from './Wardrobe';
-import Plan from './Plan';      // If you have a planner component
-import Assistant from './Assistant';
-import Tina from './Tina';
-import { Pencil, Trash2 } from "lucide-react";
+
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
@@ -44,30 +37,26 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("wardrobe");
   const [detectedItems, setDetectedItems] = useState([]);
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(null); // 🆕 for like/dislike toast
-  const [showReasonModal, setShowReasonModal] = useState(false);
-  const [selectedIdx, setSelectedIdx] = useState(null);
-  const [selectedReasons, setSelectedReasons] = useState([]);
+  
+  // 🔹 NEW – for the click-to-open modal
+  const [modalItem,   setModalItem]   = useState(null);
+  const [isModalOpen, setModalOpen]   = useState(false);
+  const openModal  = (item) => { setModalItem(item); setModalOpen(true); };
+  const closeModal = ()    => { setModalOpen(false); setModalItem(null); };
 
-  const formatLabel = (str) =>
-    str
-      .split("/")
+  // 🆕 derive dropdown lists from current wardrobe 
+  const uniqueCategories = useMemo( () => [...new Set(items.map((it) => it.category).filter(Boolean))], [items] ); const uniqueColors = useMemo( () => [...new Set(items.map((it) => it.color).filter(Boolean))], [items] );
+
+  const formatLabel = (str = "") => {
+    return str
+      .split("/")                // drop parent paths (“Clothing/Tops” → “Tops”)
       .pop()
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-
-  // --- NEW: getWeather helper -----------------
-  const getWeather = async (city) => {
-    try {
-      // free no-API-key endpoint (wttr.in)
-      const res = await fetch(`https://wttr.in/${city}?format=%t`);
-      return await res.text();              // e.g. “+32°C”
-    } catch (e) {
-      console.warn("⚠️ Weather fetch failed:", e.message);
-      return null;                          // fail silently
-    }
+      .replace(/_/g, " ")        // snake_case → spaces
+      .toLowerCase()             // start with all-lower
+      .replace(/\b\w/g, (c) => c.toUpperCase()) // Title-case each word
+      .trim();
   };
-  // --------------------------------------------
+
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 2000);
@@ -150,20 +139,11 @@ export default function App() {
       }
 
       const data = await res.json();
-      // Save to state instead of Firebase
-      setDetectedItems(data.detected || []);
-      console.log("👗 outfits received in UI:", data);
-      // Step: Process detected objects
-      // ✅ We only need what the backend gave us
-      setDetectedItems(data.items || []);   // <-- ‘items’ matches backend response
-
-      // Optional: tell the user
-      if ((data.items || []).length === 0) {
-        alert("⚠️ No clothing items detected in this photo.");
-      } else {
-        console.log("🟣 Detected & cropped:", data.items.length, "items");
-      }
-
+      const tagged = (data.detected || []).map((obj) => ({
+        ...obj,
+        approved: true,
+      }));
+      setDetectedItems(tagged);
     } catch (err) {
       console.error("Upload error:", err);
       alert("Something went wrong during upload.");
@@ -232,43 +212,39 @@ export default function App() {
     }
   };
 
-    async function handleFeedback(idx, liked, reasons = []) {
-    const userObj = auth.currentUser;
-    if (!userObj) {
-      alert("Please log in first 🙂");
-      return;
-    }
 
-    const lookObj = outfit[idx];          // the exact outfit the user judged
-
-      const payload = {
-        uid: userObj.uid,
-        liked,
-        reasons,  // ✅ Add this
-        timestamp: new Date(),
-        occasion,
-        vibe,
-        outfit: lookObj
-      };
-
-
+  // 💖 toggle / untoggle favourite
+  const toggleFavorite = async (id, currentFav = false) => {
     try {
-      await addDoc(collection(db, "outfitFeedback"), payload);
-      setFeedbackSubmitted(idx);          // show “saved” toast
-      setTimeout(() => setFeedbackSubmitted(null), 3000);
+      await updateDoc(doc(db, "wardrobe", id), { isFavorite: !currentFav });
+      // Refresh UI quickly without full refetch
+      setItems((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, isFavorite: !currentFav } : it))
+      );
     } catch (err) {
-      console.error("Feedback save error →", err);
-      alert("Couldn't save feedback, sorry!");
+      console.error("Fav toggle failed:", err);
+      alert("Couldn’t update favourite, sorry!");
     }
-  }
+  };
+
+  // ✅ mark as worn (stores ISO date only)
+  const markAsWorn = async (id) => {
+    const today = new Date().toISOString().split("T")[0];
+    try {
+      await updateDoc(doc(db, "wardrobe", id), { lastWorn: today });
+      setItems((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, lastWorn: today } : it))
+      );
+    } catch (err) {
+      console.error("Mark worn failed:", err);
+      alert("Couldn’t mark as worn, sorry!");
+    }
+  };
+
 
   const handleSuggestOutfit = async () => {
-    if (!user) return alert("Please log in to get outfit suggestions!");
-
-    const city = "Delhi"; // or auto-detect later with a dropdown or IP lookup
-
     try {
-      console.log("🧠 Sending items to AI:", items);
+      console.log("🧥 Sending items to AI:", items);
       const res = await fetch(`${BASE_URL}/suggest-outfit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -277,16 +253,15 @@ export default function App() {
 
       const text = await res.text();
       const data = JSON.parse(text);
-      setOutfit(data?.outfits || []);
+      const outfits = Array.isArray(data.outfits)
+        ? data.outfits
+        : data.outfits?.outfits || [];
+      setOutfit(outfits);
     } catch (err) {
-      console.error("💥 Outfit suggestion failed:", err.message);
+      console.error("❌ Outfit suggestion failed:", err.message);
       alert("Failed to generate outfit. Try again.");
     }
-    // -------------  🆕 Save user feedback  -------------
-
-
   };
-
 
 
   const openEditModal = (item) => {
@@ -303,45 +278,37 @@ export default function App() {
     setShowModal(false);
   };
 
+  // 💎 Clean, case-friendly filtering
   const filteredItems = items.filter((item) => {
-    return (
-      (filterCategory ? item.category === filterCategory : true) &&
-      (filterColor
-        ? item.color?.toLowerCase() === filterColor.toLowerCase()
-        : true)
-    );
+    const categoryMatch = filterCategory
+      ? formatLabel(item.category) === formatLabel(filterCategory)
+      : true;
+
+    const colorMatch = filterColor
+      ? formatLabel(item.color) === formatLabel(filterColor)
+      : true;
+
+    return categoryMatch && colorMatch;
   });
+
 
   if (loading) {
     return (
-      <Router>
-        <div style={{ paddingBottom: "70px" }}>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <div className="App">
-                  {showOnboarding ? (
-                  <Onboarding user={user} onDone={() => setShowOnboarding(false)} />
-                  ) : (
-                    <>
-                      <Wardrobe />
-                      <Assistant />
-                      <Plan />
-                    </>
-                  )}
-                </div>
-              }
-            />
-          </Routes>
-        </div>
-        <BottomNav
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-        />
-      </Router>
+      <div
+        style={{
+          height: "100vh",
+          backgroundColor: "#000",
+          color: "#fff",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+        }}
+      >
+        <h1 style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>W.O.W.</h1>
+        <p style={{ fontSize: "1.2rem" }}>What. Outfit. When.</p>
+      </div>
     );
-
   }
 
   if (user && !onboardingDone) {
@@ -349,10 +316,13 @@ export default function App() {
   }
 
   return (
-    <div className="App" style={{  padding: "1rem",
-                                  maxWidth: "600px",
-                                  margin: "auto",
-                                  textAlign: "center",}}>
+    <div
+      className="App"
+      style={{
+        padding: "1rem 1rem 5rem",
+        fontFamily: "sans-serif",
+      }}
+    >
       {/* Header */}
       <header
         style={{
@@ -423,30 +393,22 @@ export default function App() {
           marginBottom: "2rem",
         }}
       >
-        <h1 style={{ fontSize: "2rem", fontWeight: "700", margin: "1rem 0", color: "#6C4AB6" }}>
-          W.O.W. Wardrobe
-        </h1>
+        <h1>W.O.W. Wardrobe </h1>
         {user ? (
           <div>
             <span> {user.displayName}</span>
-            <button  onClick={handleLogout} style={{ marginLeft: "1rem" }}>
+            <button aria-label="Logout" onClick={handleLogout} style={{ marginLeft: "1rem" }}>
               Logout
             </button>
           </div>
         ) : (
           <button onClick={handleLogin} style={{
-              marginLeft: "1rem",
-              padding: "0.6rem 1.2rem",
-              fontSize: "0.95rem",
+              marginTop: "1rem",
+              width: "100%",
+              padding: "0.75rem",
+              fontSize: "1rem",
               borderRadius: "8px",
-              backgroundColor: "#6C4AB6",
-              color: "white",
-              border: "none",
-              fontWeight: "600",
-              cursor: "pointer",
-          }}
-            >
-            Login with Google</button>
+            }}>Login with Google</button>
         )}
       </header>
       {user && (
@@ -454,94 +416,51 @@ export default function App() {
           {/* Upload & Auto-tag section already included above */}
           {activeTab === "upload" && (
           <section id="add" style={{ marginBottom: "2rem" }}>
-            <h2 style={{ fontSize: window.innerWidth < 480 ? "1.1rem" : "1.4rem", marginBottom: "1rem" }}>Upload Item</h2>
+            <h2>Upload Item</h2>
             <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
-            <button
-              onClick={handleUpload}
-              style={{
-                marginLeft: "1rem",
-                padding: "0.6rem 1.2rem",
-                fontSize: "0.95rem",
+            <button onClick={handleUpload} style={{
+                marginTop: "1rem",
+                width: "100%",
+                padding: "0.75rem",
+                fontSize: "1rem",
                 borderRadius: "8px",
-                backgroundColor: "#6C4AB6",
-                color: "white",
-                border: "none",
-                fontWeight: "600",
-                cursor: "pointer",
-              }}
-            >
+              }}>
               Upload & Auto-Tag
             </button>
-
 
             {detectedItems.length > 0 && (
               <div style={{ marginTop: "1rem" }}>
                 <h4>Detected Items</h4>
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                  gap: "1rem"
-                }}>
-                  {detectedItems.map((item, i) => {
-                console.log("🖼️ Item image:", item.image_url); // ✅ now logs to DevTools console
-                if (response.detected.length === 0) {
-                  alert("⚠️ No clothing items were detected. Try a clearer image or zoom in.");
-                  return;
-                }
-
-                return (
-                    <div key={i} style={{ marginBottom: "0.5rem", border: "1px solid #ccc", padding: "0.5rem" }}>
-                      <img
-                        src={item.image_url}
-                        alt={item.name}
-                        style={{
-                          width: "100%",
-                          height: "220px",
-                          objectFit: "contain",
-                          backgroundColor: "#fafafa",
-                          padding: "12px",
-                          borderBottom: "1px solid #eee",
-                          display: "block",
-                        }}
-                      />
-                      
-
-
-                      <p>{item.name} — {item.category} • {item.color}</p>
-                      <button onClick={() => toggleItemApproval(i)}>
-                        {item.approved ? "✅ Keep" : "❌ Remove"}
-                      </button>
-                      <button
-                        onClick={() => openEditModal(item)}
-                        style={{
-                          position: "absolute",
-                          top: "8px",
-                          left: "8px",
-                          background: "#fff",
-                          border: "1px solid #ccc",
-                          borderRadius: "50%",
-                          padding: "6px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Pencil size={16} />
-                      </button>
-                    </div>
-                  );
-                })}
-                </div>
+                {detectedItems.map((item, i) => (
+                  <div key={i} style={{ marginBottom: "0.5rem", border: "1px solid #ccc", padding: "0.5rem" }}>
+                    <img src={item.image_url} alt={item.name} style={{ width: "100px" }} />
+                    <p>{item.name} — {item.category} • {item.color}</p>
+                    <button onClick={() => toggleItemApproval(i)}>
+                      {item.approved ? "✅ Keep" : "❌ Remove"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditItemIndex(i);
+                        setEditForm({
+                          name: item.name || "",
+                          category: item.category || "",
+                          color: item.color || "",
+                          tags: (item.tags || []).join(", "),
+                        });
+                      }}
+                      style={{ marginLeft: "0.5rem" }}
+                    >
+                      ✏️ Edit
+                    </button>
+                  </div>
+                ))}
                 <button onClick={confirmSelectedItems} style={{
-                      marginLeft: "1rem",
-                      padding: "0.6rem 1.2rem",
-                      fontSize: "0.95rem",
-                      borderRadius: "8px",
-                      backgroundColor: "#6C4AB6",
-                      color: "white",
-                      border: "none",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                    }}
-                  >
+                    marginTop: "1rem",
+                    width: "100%",
+                    padding: "0.75rem",
+                    fontSize: "1rem",
+                    borderRadius: "8px",
+                  }}>
                   Add Selected to Wardrobe
                 </button>
               </div>
@@ -561,7 +480,6 @@ export default function App() {
                 justifyContent: "center",
                 alignItems: "center",
                 zIndex: 1000,
-                paddingTop: "env(safe-area-inset-top)",  // ← ✅ ADD THIS
               }}
             >
               <div
@@ -667,208 +585,119 @@ export default function App() {
           {/* Wardrobe Section */}
           {activeTab === "wardrobe" && (
           <section id="wardrobe" style={{ marginBottom: "2rem" }}>
-            <h2 style={{ fontSize: window.innerWidth < 480 ? "1.1rem" : "1.4rem", marginBottom: "1rem" }}>Your Wardrobe 🧥</h2>
+            <h2>Your Wardrobe 🧥</h2>
             <div>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                style={{
-                  padding: "0.5rem",
-                  borderRadius: "8px",
-                  border: filterCategory ? "2px solid #6C4AB6" : "1px solid #ccc",
-                  backgroundColor: filterCategory ? "#f3f0ff" : "#fff",
-                  margin: "0.5rem",
-                  width: "80%",
-                  maxWidth: "300px",
-                  fontWeight: "500",
-                }}
-              >
+              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} > <option value="">All Categories</option> {uniqueCategories.map((cat) => ( <option key={cat} value={cat}>{formatLabel(cat)}</option> ))} </select>
 
-                <option value="">Filter by category</option>
-                <option value="Topwear">Topwear</option>
-                <option value="Bottomwear">Bottomwear</option>
-                <option value="Dresses">Dresses</option>
-                <option value="Outerwear">Outerwear</option>
-                <option value="Footwear">Footwear</option>
-              </select>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterColor(e.target.value)}
-                style={{
-                  padding: "0.5rem",
-                  borderRadius: "8px",
-                  border: filterCategory ? "2px solid #6C4AB6" : "1px solid #ccc",
-                  backgroundColor: filterCategory ? "#f3f0ff" : "#fff",
-                  margin: "0.5rem",
-                  width: "80%",
-                  maxWidth: "300px",
-                  fontWeight: "500",
-                }}
-              >
-
-
-                <option value="">Filter by color</option>
-                <option value="White">White</option>
-                <option value="Black">Black</option>
-                <option value="Blue">Blue</option>
-                <option value="Beige">Beige</option>
-                <option value="Green">Green</option>
-              </select>
+              <select value={filterColor} onChange={(e) => setFilterColor(e.target.value)} style={{ marginLeft: "1rem" }} > <option value="">All Colors</option> {uniqueColors.map((col) => ( <option key={col} value={col}>{formatLabel(col)}</option> ))} </select>
+              
             </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                  gap: "1rem",
-                  paddingTop: "1rem",
-                  paddingLeft: "1rem",
-                  paddingRight: "1rem",
-                }}
-              >
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                  gap: "1.5rem",
-                  paddingTop: "1rem",
-                }}
-              >
-                {filteredItems.map((item) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      background: "#fff",
-                      borderRadius: "12px",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                      overflow: "hidden",
-                      position: "relative",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                      cursor: "pointer",
-                      transform: "scale(1)",
-                      marginBottom: "30px", // ✅ ADD THIS LINE
-                    }}
-
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.03)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "1.5rem",
+                paddingTop: "1rem",
+              }}
+            >
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => openModal(item)} 
+                  aria-label={`Open details for ${item.name}`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openModal(item)}
+                  style={{
+                    cursor: "pointer",
+                    width: "200px",
+                    margin: "10px",
+                    background: "#fff",
+                    borderRadius: "8px",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                    overflow: "hidden",
+                    position: "relative",
                   }}
                 >
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      style={{
-                        width: "100%",
-                        height: "220px",               // ✅ slightly taller, consistent
-                        objectFit: "contain",          // ✅ ensures no cropping
-                        backgroundColor: "#fafafa",
-                        padding: "12px",               // ✅ adds breathing space
-                        borderBottom: "1px solid #eee",
-                        display: "block",
-                      }}
-                    />
-
-
-                  <div style={{ padding: "0.75rem 0.5rem 0 0.5rem" }}>
-                    <h3 style={{
-                      fontSize: window.innerWidth < 480 ? "1rem" : "1.2rem",
-                      fontWeight: "600",
-                      margin: "0 0 0.25rem",
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    style={{
+                      width: "100%",
+                      height: "240px",
+                      objectFit: "cover",
+                    }}
+                  />
+                  <div
+                    style={{
+                      padding: "0.5rem",
+                      fontWeight: "bold",
                       textAlign: "center",
-                      color: "#222",
-                    }}>
-                      {formatLabel(item.color)} {formatLabel(item.name)}
-                    </h3>
-                  <div style={{ textAlign: "center" }}>
-                    <p style={{
-                      fontSize: window.innerWidth < 480 ? "0.75rem" : "0.85rem",
+                    }}
+                  >
+                    {formatLabel(item.color)} {formatLabel(item.name)}
+                  </div>
+                  <p
+                    style={{
+                      textAlign: "center",
+                      fontSize: "0.9rem",
                       margin: 0,
-                      fontWeight: "500",
-                    }}>
-                      {formatLabel(item.category)}
-                    </p>
-
-                    {item.tags && item.tags.length > 0 && (
-                      <div style={{
+                    }}
+                  >
+                    {formatLabel(item.category)}
+                  </p>
+                  {item.tags && item.tags.length > 0 && (
+                    <div
+                      style={{
                         display: "flex",
                         justifyContent: "center",
                         flexWrap: "wrap",
-                        gap: "6px",
-                        padding: "6px",
-                        marginTop: "4px",
-                      }}>
-                        {item.tags.map((tag, i) => (
-                          <span
-                            key={i}
-                            style={{
-                              background: "#eee",
-                              borderRadius: "12px",
-                              padding: "4px 10px",
-                              fontSize: "0.75rem",
-                            }}
-                          >
-                            {formatLabel(tag)}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                        gap: "4px",
+                        padding: "4px",
+                      }}
+                    >
+                      {[...new Set(item.tags || [])].map((tag, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            background: "#eee",
+                            borderRadius: "12px",
+                            padding: "2px 8px",
+                            fontSize: "0.8rem",
+                          }}
+                        >
+                          {formatLabel(tag)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {/* ————————— CARD CONTROLS ————————— */}
+                  <div className="card-controls">
+                  
+
+                    {/* existing edit / delete */}
+                    <span
+                      aria-label="Edit item"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
+                      onKeyDown={(e) => (["Enter"," "].includes(e.key)) && openEditModal(item)}
+                    >
+                      ✏️
+                    </span>
+                    <span
+                      aria-label="Delete item"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                      onKeyDown={(e) => (["Enter"," "].includes(e.key)) && handleDelete(item.id)}
+                    >
+                      🗑️
+                    </span>
                   </div>
-                  </div>
-
-                  {/* 📝 Edit Button */}
-                  <button
-                    onClick={() => openEditModal(item)}
-                    style={{
-                      position: "absolute",
-                      top: "8px",
-                      left: "8px",
-                      background: "#fff",
-                      border: "1px solid #ccc",
-                      borderRadius: "50%",
-                      width: "30px",
-                      height: "30px",
-                      fontSize: "16px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    ✏️
-                  </button>
-
-                  {/* 🗑️ Delete Button */}
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    style={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      background: "#fff",
-                      border: "1px solid #ccc",
-                      borderRadius: "50%",
-                      width: "30px",
-                      height: "30px",
-                      fontSize: "16px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    🗑️
-                  </button>
-
                 </div>
               ))}
-            </div>
             </div>
           </section>
           )}
@@ -877,7 +706,7 @@ export default function App() {
           {/* AI Stylist Section */}
           {activeTab === "stylist" && (
           <section id="stylist">
-            <h2 style={{ fontSize: window.innerWidth < 480 ? "1.1rem" : "1.4rem", marginBottom: "1rem" }}> Outfit Suggestions 🤖</h2>
+            <h2>AI Outfit Suggestions 🤖</h2>
             <div style={{ marginBottom: "1rem" }}>
               <select
                 value={occasion}
@@ -918,13 +747,15 @@ export default function App() {
             <button
               onClick={handleSuggestOutfit}
               style={{
-                padding: "0.6rem 1.2rem",
-                background: "#6C4AB6",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
+                backgroundColor: "white",
+                color: "black",
+                 marginTop: "1rem",
+                  width: "100%",
+                  padding: "0.75rem",
+                  fontSize: "1rem",
+                  borderRadius: "8px",
+                border: "1px solid black",
                 cursor: "pointer",
-                fontWeight: "600",
               }}
             >
               Get Outfit Suggestions
@@ -935,137 +766,43 @@ export default function App() {
           {/* Weekly Planner */}
           {activeTab === "planner" && (
             <section style={{ marginTop: "2rem" }}>
-              <h2 style={{ fontSize:window.innerWidth < 480 ? "1.1rem" : "1.4rem", marginBottom: "1rem" }}> Weekly Outfit Planner</h2>
+              <h2>🗓️ Weekly Outfit Planner</h2>
               <WeeklyPlanner />
             </section>
           )}
 
           {/* Suggested Looks */}
-          <section style={{ marginTop: "2rem" }}>
-            <h2 style={{ fontSize: window.innerWidth < 480 ? "1.1rem" : "1.4rem", marginBottom: "1rem" }}>🧠 Suggested Looks</h2>
-            {Array.isArray(outfit) && outfit.length > 0 ? (
-              <div style={{ marginTop: "2rem" }}>
-                {outfit.map((look, idx) => (
-                  <div key={idx} style={{ marginBottom: "2rem", textAlign: "center" }}>
-                    <h4 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>
-                      Look {idx + 1}
-                    </h4>
-                    <p
-                      style={{
-                        backgroundColor: "#f5f5f5",
-                        padding: "0.5rem 1rem",
-                        borderLeft: "4px solid #000",
-                        margin: "0 auto 1.5rem",
-                        maxWidth: "400px",
-                        fontStyle: "italic",
-                        textAlign: "left",
-                      }}
-                    >
-                      📝 {look.style_note}
-                    </p>
+          {suggestedLooks.map((lookObj, index) => (
+            <div key={index} className="suggested-look-block" style={{ marginBottom: '40px' }}>
+              <h3 style={{ textAlign: "center" }}>Look {index + 1}</h3>
+              <p style={{ fontStyle: "italic", textAlign: "center" }}>📝 {lookObj.description}</p>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "1.5rem",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {look.items.map((piece, i) => (
-                        <div
-                          key={i}
-                          style={{
-                            width: "160px",
-                            backgroundColor: "#fff",
-                            borderRadius: "12px",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                            padding: "1rem",
-                            textAlign: "center",
-                          }}
-                        >
-                          <img
-                            src={piece.image_url}
-                            alt={piece.name || "No name"}
-                            style={{
-                              width: "100%",
-                              height: "180px",
-                              objectFit: "cover",
-                              borderRadius: "8px",
-                              marginBottom: "0.5rem",
-                            }}
-                          />
-                          <strong style={{ fontSize: "0.95rem" }}>
-                            {piece.name || "Unnamed"}
-                          </strong>
-                          <p style={{ margin: "0.25rem 0", fontSize: window.innerWidth < 480 ? "0.75rem" : "0.85rem" }}>
-                            Category: {piece.category || "N/A"}
-                          </p>
-                          <p style={{ margin: "0.25rem 0", fontSize:window.innerWidth < 480 ? "0.75rem" : "0.85rem" }}>
-                            Color: {piece.color || "N/A"}
-                          </p>
-                          <button
-                            onClick={() => {
-                              const date = prompt("Enter date (YYYY-MM-DD) to save this look:");
-                              if (!date) return;
-                              fetch(`${BASE_URL}/plan-outfit`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ uid: user.uid, date, outfit: look }),
-                              })
-                                .then((r) => {
-                                  if (!r.ok) throw new Error("Server error");
-                                  alert(`✅ Look saved for ${date}`);
-                                })
-                                .catch((e) => alert("❌ " + e.message));
-                            }}
-                            style={{
-                              marginTop: "1rem",
-                              padding: "0.6rem 1.2rem",
-                              background: "#6C4AB6",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "8px",
-                              cursor: "pointer",
-                              fontWeight: "600",
-                            }}
-                          >
-                            Save This Look
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* ---------- FEEDBACK BUTTONS ---------- */}
-                    <div style={{ marginTop: "1rem" }}>
-                      <button
-                        onClick={() => handleFeedback(idx, true)}
-                        style={{ marginRight: "0.6rem" }}
-                      >
-                        ❤️ Love it
-                      </button>
-                      <button onClick={() => {
-                        setSelectedIdx(idx);
-                        setShowReasonModal(true);
-                      }}>
-                        🙅 Not my vibe
-                      </button>
-                    </div>
+              {/* 💖 and ✅ buttons for the whole look */}
+              <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginBottom: "15px" }}>
+                <button onClick={() => saveLook(index)} style={{ fontSize: "20px", background: "black", color: "white", padding: "6px 14px", borderRadius: "10px" }}>💖 Save Look</button>
+                <button onClick={() => confirmLook(index)} style={{ fontSize: "20px", background: "black", color: "white", padding: "6px 14px", borderRadius: "10px" }}>✅ Select Look</button>
+              </div>
 
-                    {feedbackSubmitted === idx && (
-                      <p
-                        style={{
-                          fontSize: "0.8rem",
-                          color: "#6b7280",
-                          marginTop: "0.25rem",
-                        }}
-                      >
-                        Feedback saved. Tina's taking notes! 📝
-                      </p>
-                    )}
-                    {/* -------------------------------------- */}
+              {/* Items in the look */}
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "20px" }}>
+                {lookObj.items.map((item, idx) => (
+                  <div key={idx} className="suggested-item" style={{
+                    border: "1px solid #ccc",
+                    borderRadius: "10px",
+                    padding: "10px",
+                    width: "200px",
+                    boxShadow: "2px 2px 10px rgba(0,0,0,0.1)",
+                    textAlign: "center"
+                  }}>
+                    <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }} />
+                    <h4 style={{ margin: "10px 0 5px" }}>{item.name}</h4>
+                    <p style={{ margin: "0", fontSize: "14px" }}><b>Category:</b> {item.category.split('/').pop()}</p>
+                    <p style={{ margin: "0", fontSize: "14px" }}><b>Color:</b> {item.color}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          ))}
               </div>
             ) : (
               outfit !== null && (
@@ -1090,7 +827,6 @@ export default function App() {
                 justifyContent: "center",
                 alignItems: "center",
                 zIndex: 1000,
-                paddingTop: "env(safe-area-inset-top)",  // ← ✅ ADD THIS
               }}
             >
               <div
@@ -1133,51 +869,40 @@ export default function App() {
                 </div>
               </div>
 
-              {activeTab === "wardrobe" && (
-                <>
-                  {/* Optional: Keep filters here */}
-                  <div className="filter-bar">
-                    <select
-                      value={filterCategory}
-                      onChange={(e) => setFilterCategory(e.target.value)}
-                    >
-                      <option value="">All Categories</option>
-                      <option value="Tops">Tops</option>
-                      <option value="Bottoms">Bottoms</option>
-                      <option value="Dresses">Dresses</option>
-                      <option value="Accessories">Accessories</option>
-                    </select>
-
-                    <select
-                      value={filterColor}
-                      onChange={(e) => setFilterColor(e.target.value)}
-                    >
-                      <option value="">All Colors</option>
-                      <option value="Red">Red</option>
-                      <option value="Blue">Blue</option>
-                      <option value="Black">Black</option>
-                      <option value="White">White</option>
-                    </select>
-                  </div>
-
-                  {/* ✅ New grid component */}
-                  <Wardrobe
-                    items={filteredItems}
-                    onAddClick={() => setActiveTab("upload")}
-                    onEdit={openEditModal}
-                    onDelete={handleDelete}
-                    filterCategory={filterCategory}
-                    filterColor={filterColor}
-                  />
-                </>
-              )}
             </section>
           )}
         </>
       )}
+      {/* -------------------------------------------- */}
+      {/* 📌  NEW: wardrobe-card details modal         */}
+      {isModalOpen && modalItem && (
+        <div className="wow-overlay" onClick={closeModal}>
+          <div
+            className="wow-modal"
+            onClick={(e) => e.stopPropagation()}   // keep clicks inside
+          >
+            <img src={modalItem.image_url} alt={modalItem.name} />
+
+            <h3>{formatLabel(modalItem.color)} {formatLabel(modalItem.name)}</h3>
+            <p className="sub">{formatLabel(modalItem.category)}</p>
+
+            {modalItem.tags?.length > 0 && (
+              <div className="tags">
+                {[...new Set(modalItem.tags)].map((t, i) => (
+                  <span key={i}>{formatLabel(t)}</span>
+                ))}
+              </div>
+            )}
+
+
+            <button onClick={closeModal}>Close</button>
+          </div>
+        </div>
+      )}
+      {/* -------------------------------------------- */}
       {/* Virtual Try-On Section */}
       <section style={{ marginTop: "2rem" }}>
-        <h2 style={{ fontSize: window.innerWidth < 480 ? "1.1rem" : "1.4rem", marginBottom: "1rem" }}> Try It On</h2>
+        <h2>🧥 Try It On</h2>
         <VirtualTryOn />
       </section>
       <nav
@@ -1216,51 +941,8 @@ export default function App() {
           </button>
         ))}
       </nav>
-      )}
-      {/* -------------------------------------- */}
-      {showReasonModal && (
-        <div style={{
-          position: "fixed", inset: 0,
-          background: "rgba(0,0,0,0.45)",
-          display: "flex", justifyContent: "center", alignItems: "center",
-          zIndex: 2000
-        }}>
-          <div style={{
-            background: "#fff", padding: "1.5rem",
-            borderRadius: "12px", width: 300
-          }}>
-            <h4 style={{ marginBottom: "0.75rem" }}>Why not your vibe?</h4>
-            {["Too formal", "Dislikes heels", "Too bold", "Not weather-friendly", "Not flattering"].map(r => (
-              <label key={r} style={{ display: "block", marginBottom: "0.5rem" }}>
-                <input
-                  type="checkbox"
-                  checked={selectedReasons.includes(r)}
-                  onChange={e => {
-                    setSelectedReasons(
-                      e.target.checked
-                        ? [...selectedReasons, r]
-                        : selectedReasons.filter(x => x !== r)
-                    );
-                  }}
-                />{" "}
-                {r}
-              </label>
-            ))}
-
-            <button
-              onClick={() => {
-                handleFeedback(selectedIdx, false, selectedReasons);
-                setShowReasonModal(false);
-                setSelectedIdx(null);
-                setSelectedReasons([]);
-              }}
-              style={{ marginTop: "1rem" }}
-            >
-              Submit
-            </button>
-          </div>
-        </div>
-      )}
       </div>
       );
       }
+
+
