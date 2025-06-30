@@ -919,11 +919,7 @@ export default function App() {
         </div>
       )}
       {/* -------------------------------------------- */}
-      {/* Virtual Try-On Section */}
-      <section style={{ marginTop: "2rem" }}>
-        <h2>🧥 Try It On</h2>
-        <VirtualTryOn />
-      </section>
+     
       <nav
         style={{
           position: "fixed",
