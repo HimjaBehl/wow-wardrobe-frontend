@@ -44,6 +44,29 @@ export default function App() {
   const openModal  = (item) => { setModalItem(item); setModalOpen(true); };
   const closeModal = ()    => { setModalOpen(false); setModalItem(null); };
 
+  const saveLook = async (index) => {
+    const selectedLook = suggestedLooks[index];
+    try {
+      await addDoc(collection(db, "favoriteLooks"), {
+        uid: user?.uid,
+        description: selectedLook.description,
+        items: selectedLook.items,
+        timestamp: serverTimestamp()
+      });
+      alert("💖 Look saved successfully!");
+    } catch (error) {
+      console.error("Error saving look:", error);
+      alert("Failed to save look.");
+    }
+  };
+
+  const confirmLook = (index) => {
+    const selectedLook = suggestedLooks[index];
+    console.log("✅ Selected Look:", selectedLook);
+    alert("✅ Look confirmed!");
+  };
+
+
   // 🆕 derive dropdown lists from current wardrobe 
   const uniqueCategories = useMemo( () => [...new Set(items.map((it) => it.category).filter(Boolean))], [items] ); const uniqueColors = useMemo( () => [...new Set(items.map((it) => it.color).filter(Boolean))], [items] );
 
@@ -771,46 +794,42 @@ export default function App() {
             </section>
           )}
 
-          {/* Suggested Looks */}
-          {suggestedLooks.map((lookObj, index) => (
-            <div key={index} className="suggested-look-block" style={{ marginBottom: '40px' }}>
-              <h3 style={{ textAlign: "center" }}>Look {index + 1}</h3>
-              <p style={{ fontStyle: "italic", textAlign: "center" }}>📝 {lookObj.description}</p>
+          {/* Display outfit suggestions */}
+          {outfit && outfit.length > 0 ? (
+            <div style={{ marginTop: "2rem" }}>
+              {outfit.map((lookObj, index) => (
+                <div key={index} className="suggested-look-block" style={{ marginBottom: '40px' }}>
+                  <h3 style={{ textAlign: "center" }}>Look {index + 1}</h3>
+                  <p style={{ fontStyle: "italic", textAlign: "center" }}>📝 {lookObj.description}</p>
 
-              {/* 💖 and ✅ buttons for the whole look */}
-              <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginBottom: "15px" }}>
-                <button onClick={() => saveLook(index)} style={{ fontSize: "20px", background: "black", color: "white", padding: "6px 14px", borderRadius: "10px" }}>💖 Save Look</button>
-                <button onClick={() => confirmLook(index)} style={{ fontSize: "20px", background: "black", color: "white", padding: "6px 14px", borderRadius: "10px" }}>✅ Select Look</button>
-              </div>
-
-              {/* Items in the look */}
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "20px" }}>
-                {lookObj.items.map((item, idx) => (
-                  <div key={idx} className="suggested-item" style={{
-                    border: "1px solid #ccc",
-                    borderRadius: "10px",
-                    padding: "10px",
-                    width: "200px",
-                    boxShadow: "2px 2px 10px rgba(0,0,0,0.1)",
-                    textAlign: "center"
-                  }}>
-                    <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }} />
-                    <h4 style={{ margin: "10px 0 5px" }}>{item.name}</h4>
-                    <p style={{ margin: "0", fontSize: "14px" }}><b>Category:</b> {item.category.split('/').pop()}</p>
-                    <p style={{ margin: "0", fontSize: "14px" }}><b>Color:</b> {item.color}</p>
+                  {/* Items in the look */}
+                  <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "20px" }}>
+                    {lookObj.items.map((item, idx) => (
+                      <div key={idx} className="suggested-item" style={{
+                        border: "1px solid #ccc",
+                        borderRadius: "10px",
+                        padding: "10px",
+                        width: "200px",
+                        boxShadow: "2px 2px 10px rgba(0,0,0,0.1)",
+                        textAlign: "center"
+                      }}>
+                        <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }} />
+                        <h4 style={{ margin: "10px 0 5px" }}>{item.name}</h4>
+                        <p style={{ margin: "0", fontSize: "14px" }}><b>Category:</b> {item.category.split('/').pop()}</p>
+                        <p style={{ margin: "0", fontSize: "14px" }}><b>Color:</b> {item.color}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
-              </div>
-            ) : (
-              outfit !== null && (
-                <p style={{ marginTop: "1rem" }}>
-                  No outfits found. Try changing your filters or uploading more items.
-                </p>
-              )
-            )}
+          ) : (
+            outfit !== null && (
+              <p style={{ marginTop: "1rem" }}>
+                No outfits found. Try changing your filters or uploading more items.
+              </p>
+            )
+          )}
           </section>
 
           {/* Tag Edit Modal */}
