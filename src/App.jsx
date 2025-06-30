@@ -1,9 +1,9 @@
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useState, useEffect, useMemo } from "react";
 import "./App.css";
 import Onboarding from "./Onboarding";
 import { storage, auth, provider, signInWithPopup, signOut, db } from "./firebase";
-import { collection, query, where } from "firebase/firestore";
+import { query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import WeeklyPlanner from "./WeeklyPlanner";
 import VirtualTryOn from "./VirtualTryOn";
@@ -830,7 +830,6 @@ export default function App() {
               </p>
             )
           )}
-          </section>
 
           {/* Tag Edit Modal */}
           {showModal && selectedItem && (
