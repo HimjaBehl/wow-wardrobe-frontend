@@ -9,7 +9,30 @@ import WeeklyPlanner from "./WeeklyPlanner";
 import VirtualTryOn from "./VirtualTryOn";
 
 
+
+
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
+
+/* ========== mood-board helpers ========== */
+async function saveOutfitToPlanner({ uid, outfit }) {
+  const date = new Date().toISOString().split("T")[0];
+  await fetch(`${BASE_URL}/plan-outfit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid, date, outfit }),
+  });
+  alert("📅 Outfit saved!");
+}
+
+async function likeOutfit({ uid, outfit }) {
+  await fetch(`${BASE_URL}/like-outfit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid, outfit }),
+  });
+  alert("❤️  Look liked");
+}
+/* ======================================== */
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -19,6 +42,7 @@ export default function App() {
   const [occasion, setOccasion] = useState("casual");
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
+  const [customPrompt, setCustomPrompt] = useState("");
   const [editItemIndex, setEditItemIndex] = useState(null);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -37,6 +61,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("wardrobe");
   const [detectedItems, setDetectedItems] = useState([]);
+
+
   
   // 🔹 NEW – for the click-to-open modal
   const [modalItem,   setModalItem]   = useState(null);
@@ -44,13 +70,12 @@ export default function App() {
   const openModal  = (item) => { setModalItem(item); setModalOpen(true); };
   const closeModal = ()    => { setModalOpen(false); setModalItem(null); };
 
-  const saveLook = async (index) => {
-    const selectedLook = suggestedLooks[index];
+  const saveLook = async (lookObj) => {
     try {
       await addDoc(collection(db, "favoriteLooks"), {
         uid: user?.uid,
-        description: selectedLook.description,
-        items: selectedLook.items,
+         note : lookObj.style_note,
+         items: lookObj.items,
         timestamp: serverTimestamp()
       });
       alert("💖 Look saved successfully!");
@@ -60,9 +85,8 @@ export default function App() {
     }
   };
 
-  const confirmLook = (index) => {
-    const selectedLook = suggestedLooks[index];
-    console.log("✅ Selected Look:", selectedLook);
+  const confirmLook = (lookObj) => {
+  console.log("✅ Selected Look:", lookObj);
     alert("✅ Look confirmed!");
   };
 
@@ -90,6 +114,7 @@ export default function App() {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
+        console.log("🔥 Your UID is:", firebaseUser.uid);
         fetchItems(firebaseUser.uid);
         const docRef = doc(db, "preferences", firebaseUser.uid);
         getDoc(docRef).then((docSnap) => {
@@ -121,11 +146,26 @@ export default function App() {
       const res = await fetch(`${BASE_URL}/wardrobe?uid=${uid}`);
       const text = await res.text();
       const data = JSON.parse(text);
-      setItems(data);
+
+      // ✅ Skip URL generation if image_url already exists
+      const withUrls = data.map((item) => {
+        if (item.image_url) {
+          return item; // image_url is already in Firestore
+        } else {
+          console.warn("⚠️ Missing image_url for item:", item);
+          return item; // fallback — will display nothing or broken image
+        }
+      });
+
+
+      setItems(withUrls);
+      console.log("👗 Wardrobe items loaded:", withUrls);
     } catch (e) {
       console.error("❌ Error fetching wardrobe:", e.message);
     }
   };
+
+  
 
   const handleLogout = async () => {
     try {
@@ -145,7 +185,8 @@ export default function App() {
     const storageRef = ref(storage, `wardrobe/${file.name}`);
     try {
       await uploadBytes(storageRef, file);
-      const imageUrl = await getDownloadURL(storageRef);
+      const imageUrl   = await getDownloadURL(storageRef);   // used for Ximilar preview
+      const storagePath = storageRef.fullPath;               // ➡  "wardrobe/…filename…"
 
       const res = await fetch(`${BASE_URL}/auto-tag`, {
         method: "POST",
@@ -165,6 +206,7 @@ export default function App() {
       const tagged = (data.detected || []).map((obj) => ({
         ...obj,
         approved: true,
+        imagePath: storagePath,   // will be saved to Firestore
       }));
       setDetectedItems(tagged);
     } catch (err) {
@@ -194,7 +236,7 @@ export default function App() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             uid: user.uid,
-            image_url: item.image_url,
+            image_path: item.imagePath,   // <—— change key & value
             name: item.name,
             category: item.category,
             color: item.color,
@@ -267,24 +309,37 @@ export default function App() {
 
   const handleSuggestOutfit = async () => {
     try {
-      console.log("🧥 Sending items to AI:", items);
+      console.log("🧥 Calling AI with:", { uid: user.uid, occasion, vibe });
       const res = await fetch(`${BASE_URL}/suggest-outfit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items, occasion, vibe, city, uid: user.uid }),
+        body: JSON.stringify({
+          uid: user.uid,
+          occasion,
+          vibe,
+          city,
+          constraints,
+          prompt: customPrompt.trim()  // 👈 new
+        }),
       });
 
-      const text = await res.text();
-      const data = JSON.parse(text);
-      const outfits = Array.isArray(data.outfits)
-        ? data.outfits
-        : data.outfits?.outfits || [];
-      setOutfit(outfits);
-    } catch (err) {
-      console.error("❌ Outfit suggestion failed:", err.message);
-      alert("Failed to generate outfit. Try again.");
-    }
-  };
+      const raw = await res.text();
+      const data = JSON.parse(raw);
+
+      setOutfit([
+        {
+          style_note: "Suggested look",
+          items: Array.isArray(data.outfit) ? dedupe(data.outfit) : [],
+        },
+      ]);
+
+
+  // 🔸 remove any exact-duplicate items (same image_url)
+  function dedupe(list = []) {
+    const map = new Map();                     // image_url ⇢ item
+    list.forEach((it) => map.set(it.image_url, it));
+    return Array.from(map.values());
+  }
 
 
   const openEditModal = (item) => {
@@ -643,15 +698,13 @@ export default function App() {
                     position: "relative",
                   }}
                 >
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
-                    style={{
-                      width: "100%",
-                      height: "240px",
-                      objectFit: "cover",
-                    }}
-                  />
+                  {item.image_url && (
+                     <img
+                       src={item.image_url}
+                      alt={item.name}
+                       style={{ width:"100%",height:"240px",objectFit:"cover" }}
+                     />
+                   )}
                   <div
                     style={{
                       padding: "0.5rem",
@@ -767,6 +820,22 @@ export default function App() {
               placeholder="Any style preferences or constraints?"
               style={{ width: "100%", padding: "8px", marginBottom: "1rem" }}
             />
+
+            {/* NEW — Free-text styling query */}
+            <textarea
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              placeholder='Or just tell us what you need…  
+            e.g. "Something comfy for brunch in the rain 🌧️"'
+              rows={3}
+              style={{
+                width: "100%",
+                padding: "8px",
+                marginTop: "0.5rem",
+                borderRadius: "8px",
+              }}
+            />
+
             <button
               onClick={handleSuggestOutfit}
               style={{
@@ -795,41 +864,41 @@ export default function App() {
           )}
 
           {/* Display outfit suggestions */}
+          {/* Display outfit suggestions */}
           {outfit && outfit.length > 0 ? (
-            <div style={{ marginTop: "2rem" }}>
-              {outfit.map((lookObj, index) => (
-                <div key={index} className="suggested-look-block" style={{ marginBottom: '40px' }}>
-                  <h3 style={{ textAlign: "center" }}>Look {index + 1}</h3>
-                  <p style={{ fontStyle: "italic", textAlign: "center" }}>📝 {lookObj.description}</p>
+            outfit.map((look, idx) => (
+              <section key={idx} className="outfit-group">
+                <h3>✨ Look {idx + 1}</h3>
+                <p className="style-note">📝 {look.style_note}</p>
 
-                  {/* Items in the look */}
-                  <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "20px" }}>
-                    {lookObj.items.map((item, idx) => (
-                      <div key={idx} className="suggested-item" style={{
-                        border: "1px solid #ccc",
-                        borderRadius: "10px",
-                        padding: "10px",
-                        width: "200px",
-                        boxShadow: "2px 2px 10px rgba(0,0,0,0.1)",
-                        textAlign: "center"
-                      }}>
-                        <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }} />
-                        <h4 style={{ margin: "10px 0 5px" }}>{item.name}</h4>
-                        <p style={{ margin: "0", fontSize: "14px" }}><b>Category:</b> {item.category.split('/').pop()}</p>
-                        <p style={{ margin: "0", fontSize: "14px" }}><b>Color:</b> {item.color}</p>
-                      </div>
-                    ))}
-                  </div>
+                <div className="outfit-grid">
+                  {look.items.map((piece, i) => (
+                    <article key={i} className="outfit-card">
+                      <img src={piece.image_url} alt={piece.name} />
+                      <p><strong>{piece.name}</strong></p>
+                      <p>
+                        {piece.category ? piece.category.split("/").pop() : ""}{" "}
+                        {piece.color ? "• " + piece.color : ""}
+                      </p>
+
+                    </article>
+                  ))}
                 </div>
-              ))}
-            </div>
+
+                <div className="outfit-actions">
+                  <button onClick={() => saveOutfitToPlanner({ uid: user.uid, outfit: look })}>
+                    💾 Save
+                  </button>
+                  <button onClick={() => likeOutfit({ uid: user.uid, outfit: look })}>
+                    ❤️ Like
+                  </button>
+                </div>
+              </section>
+            ))
           ) : (
-            outfit !== null && (
-              <p style={{ marginTop: "1rem" }}>
-                No outfits found. Try changing your filters or uploading more items.
-              </p>
-            )
+            outfit !== null && <p style={{ marginTop: "1rem" }}>No outfits found.</p>
           )}
+
 
           {/* Tag Edit Modal */}
           {showModal && selectedItem && (
