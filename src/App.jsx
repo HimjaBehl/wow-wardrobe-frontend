@@ -342,21 +342,6 @@ export default function App() {
     }
   };
 
-  const data = await res.json();
-
-  const list =
-    Array.isArray(data.outfit) ? data.outfit :
-    Array.isArray(data.outfits) ? data.outfits[0]?.items || [] :
-    [];
-
-  setOutfit([
-    {
-      style_note: data.style_note || "Suggested look",
-      items     : dedupe(list),
-    },
-  ]);
-
-
   // 🔸 remove any exact-duplicate items (same image_url)
   function dedupe(list = []) {
     const map = new Map();                     // image_url ⇢ item
