@@ -332,7 +332,11 @@ export default function App() {
           items: Array.isArray(data.outfit) ? dedupe(data.outfit) : [],
         },
       ]);
-
+    } catch (error) {
+      console.error("❌ Error getting outfit suggestions:", error);
+      alert("Failed to get outfit suggestions. Please try again.");
+    }
+  };
 
   // 🔸 remove any exact-duplicate items (same image_url)
   function dedupe(list = []) {
