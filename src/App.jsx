@@ -63,7 +63,7 @@ export default function App() {
   const [detectedItems, setDetectedItems] = useState([]);
 
 
-  
+
   // 🔹 NEW – for the click-to-open modal
   const [modalItem,   setModalItem]   = useState(null);
   const [isModalOpen, setModalOpen]   = useState(false);
@@ -165,7 +165,7 @@ export default function App() {
     }
   };
 
-  
+
 
   const handleLogout = async () => {
     try {
@@ -322,6 +322,25 @@ export default function App() {
           prompt: customPrompt.trim()  // 👈 new
         }),
       });
+
+      const data = await res.json();
+
+      const list =
+        Array.isArray(data.outfit) ? data.outfit :
+        Array.isArray(data.outfits) ? data.outfits[0]?.items || [] :
+        [];
+
+      setOutfit([
+        {
+          style_note: data.style_note || "Suggested look",
+          items: dedupe(list),
+        },
+      ]);
+    } catch (error) {
+      console.error("❌ Error getting outfit suggestions:", error);
+      alert("Failed to get outfit suggestions. Please try again.");
+    }
+  };
 
   const data = await res.json();
 
@@ -672,7 +691,7 @@ export default function App() {
               <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} > <option value="">All Categories</option> {uniqueCategories.map((cat) => ( <option key={cat} value={cat}>{formatLabel(cat)}</option> ))} </select>
 
               <select value={filterColor} onChange={(e) => setFilterColor(e.target.value)} style={{ marginLeft: "1rem" }} > <option value="">All Colors</option> {uniqueColors.map((col) => ( <option key={col} value={col}>{formatLabel(col)}</option> ))} </select>
-              
+
             </div>
 
             <div
@@ -754,7 +773,7 @@ export default function App() {
                   )}
                   {/* ————————— CARD CONTROLS ————————— */}
                   <div className="card-controls">
-                  
+
 
                     {/* existing edit / delete */}
                     <span
@@ -995,7 +1014,7 @@ export default function App() {
         </div>
       )}
       {/* -------------------------------------------- */}
-     
+
       <nav
         style={{
           position: "fixed",
@@ -1035,5 +1054,3 @@ export default function App() {
       </div>
       );
       }
-
-
