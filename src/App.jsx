@@ -323,20 +323,20 @@ export default function App() {
         }),
       });
 
-      const raw = await res.text();
-      const data = JSON.parse(raw);
+  const data = await res.json();
 
-      setOutfit([
-        {
-          style_note: "Suggested look",
-          items: Array.isArray(data.outfit) ? dedupe(data.outfit) : [],
-        },
-      ]);
-    } catch (error) {
-      console.error("❌ Error getting outfit suggestions:", error);
-      alert("Failed to get outfit suggestions. Please try again.");
-    }
-  };
+  const list =
+    Array.isArray(data.outfit) ? data.outfit :
+    Array.isArray(data.outfits) ? data.outfits[0]?.items || [] :
+    [];
+
+  setOutfit([
+    {
+      style_note: data.style_note || "Suggested look",
+      items     : dedupe(list),
+    },
+  ]);
+
 
   // 🔸 remove any exact-duplicate items (same image_url)
   function dedupe(list = []) {
@@ -787,6 +787,10 @@ export default function App() {
           {activeTab === "stylist" && (
           <section id="stylist">
             <h2>AI Outfit Suggestions 🤖</h2>
+            <p style={{marginTop:"-0.5rem",marginBottom:"1rem",fontSize:"0.9rem",color:"#555"}}>
+              Use the dropdowns <em>or</em> just type what you want below ✨
+            </p>
+
             <div style={{ marginBottom: "1rem" }}>
               <select
                 value={occasion}
