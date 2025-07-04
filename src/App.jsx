@@ -389,10 +389,8 @@ export default function App() {
             name: it.name || `Item ${it.idx || "?"}`
           }))
         )
-      }));
-
-      /* 🛑 If the backend sent an empty items list, drop that look */
-          .filter(l => l.items.length);
+      }))
+      .filter(l => l.items.length); // 🛑 If the backend sent an empty items list, drop that look
 
         console.log("🧩 Parsed looks headed to UI:", allLooks);
 
