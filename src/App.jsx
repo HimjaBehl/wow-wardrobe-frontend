@@ -1,4 +1,4 @@
-import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, deleteDoc, addDoc, collection, serverTimestamp, writeBatch } from "firebase/firestore";
 import { useState, useEffect, useMemo } from "react";
 import "./App.css";
 import Onboarding from "./Onboarding";
@@ -40,6 +40,8 @@ export default function App() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterColor, setFilterColor] = useState("");
   const [occasion, setOccasion] = useState("casual");
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [customPrompt, setCustomPrompt] = useState("");
@@ -147,15 +149,26 @@ export default function App() {
       const text = await res.text();
       const data = JSON.parse(text);
 
-      // ✅ Skip URL generation if image_url already exists
+      // 🔄 Ensure every item has an image_url
       const withUrls = data.map((item) => {
-        if (item.image_url) {
-          return item; // image_url is already in Firestore
-        } else {
-          console.warn("⚠️ Missing image_url for item:", item);
-          return item; // fallback — will display nothing or broken image
+        if (item.image_url) return item;
+
+        // 👇 Build the public URL from image_path
+        if (item.image_path) {
+          const bucket = "wowapp1406.appspot.com";  // your Firebase bucket
+          return {
+            ...item,
+            image_url: `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(
+              item.image_path
+            )}?alt=media`,
+          };
         }
+
+        console.warn("⚠️ Missing image_url for item:", item);
+        return item;
       });
+
+
 
 
       setItems(withUrls);
@@ -206,7 +219,8 @@ export default function App() {
       const tagged = (data.detected || []).map((obj) => ({
         ...obj,
         approved: true,
-        imagePath: storagePath,   // will be saved to Firestore
+        imagePath: storagePath, // will be saved to Firestore
+        image_url: imageUrl,
       }));
       setDetectedItems(tagged);
     } catch (err) {
@@ -224,11 +238,19 @@ export default function App() {
   const confirmSelectedItems = async () => {
     const approved = detectedItems.filter((item) => item.approved);
 
+    // 🚦 throw out any item whose path is missing or “undefined”
+    const bad = approved.find((it) => !it.imagePath || it.imagePath.includes("undefined"));
+    if (bad) {
+      alert("One of the selected items has an invalid image path — please re-upload.");
+      return;
+    }
+
+
     if (approved.length === 0) {
       alert("No items selected to save.");
       return;
     }
-
+     
     try {
       for (const item of approved) {
         const res = await fetch(`${BASE_URL}/wardrobe`, {
@@ -236,11 +258,12 @@ export default function App() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             uid: user.uid,
-            image_path: item.imagePath,   // <—— change key & value
-            name: item.name,
-            category: item.category,
-            color: item.color,
-            tags: item.tags,
+            image_path: item.imagePath,
+            image_url : item.image_url,   // ➕ keep the public link
+            name     : item.name,
+            category : item.category,
+            color    : item.color,
+            tags     : item.tags,
           }),
         });
 
@@ -306,6 +329,29 @@ export default function App() {
     }
   };
 
+  // 🔥 Bulk-delete selected wardrobe items
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) return;
+    if (!window.confirm(`Delete ${selectedItems.length} selected item(s)?`)) return;
+
+    try {
+      // 1) delete from Firestore (batched)
+           const batch = writeBatch(db);
+            selectedItems.forEach(id =>
+              batch.delete(doc(db, "wardrobe", id))
+            );
+            await batch.commit();
+
+      // 2) update local UI
+      setItems((prev) => prev.filter((it) => !selectedItems.includes(it.id)));
+      setSelectedItems([]);
+      setIsMultiSelectMode(false);
+      alert("🗑️ Deleted!");
+    } catch (err) {
+      console.error("Bulk delete failed:", err);
+      alert("Couldn’t delete some items.");
+    }
+  };
 
   const handleSuggestOutfit = async () => {
     try {
@@ -323,19 +369,35 @@ export default function App() {
         }),
       });
 
-      const data = await res.json();
+      if (!res.ok) {
+         const text = await res.text();
+           console.error("❌ Backend error:", text);
+           alert("Backend error, see console.");
+           return;
+         }
+      
+         const data = await res.json();
+         console.log("🎁 Raw response from backend:", data);
 
-      const list =
-        Array.isArray(data.outfit) ? data.outfit :
-        Array.isArray(data.outfits) ? data.outfits[0]?.items || [] :
-        [];
+      const allLooks = (data.looks || []).map((look) => ({
+        title: look.title,
+        style_note: look.style_note || "Suggested look",
+        items: dedupe(
+          (look.items || []).map((it) => ({
+            ...it,
+            image_url: it.image_url || it.image,
+            name: it.name || `Item ${it.idx || "?"}`
+          }))
+        )
+      }));
 
-      setOutfit([
-        {
-          style_note: data.style_note || "Suggested look",
-          items: dedupe(list),
-        },
-      ]);
+      /* 🛑 If the backend sent an empty items list, drop that look */
+          .filter(l => l.items.length);
+
+        console.log("🧩 Parsed looks headed to UI:", allLooks);
+
+      setOutfit(allLooks);
+
     } catch (error) {
       console.error("❌ Error getting outfit suggestions:", error);
       alert("Failed to get outfit suggestions. Please try again.");
@@ -344,10 +406,13 @@ export default function App() {
 
   // 🔸 remove any exact-duplicate items (same image_url)
   function dedupe(list = []) {
-    const map = new Map();                     // image_url ⇢ item
-    list.forEach((it) => map.set(it.image_url, it));
-    return Array.from(map.values());
+    const map = new Map();
+    list.forEach((it) => map.set(`${it.idx}-${it.image_url}`, it)); // idx + url
+    return [...map.values()];
   }
+
+
+
 
 
   const openEditModal = (item) => {
@@ -672,6 +737,41 @@ export default function App() {
           {activeTab === "wardrobe" && (
           <section id="wardrobe" style={{ marginBottom: "2rem" }}>
             <h2>Your Wardrobe 🧥</h2>
+
+            {/* ── Multi-select toolbar ───────────────────── */}
+            <div style={{ marginBottom: "10px" }}>
+              <button
+                onClick={() => {
+                  setIsMultiSelectMode(!isMultiSelectMode);
+                  if (isMultiSelectMode) setSelectedItems([]);     // leaving the mode resets
+                }}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  backgroundColor: isMultiSelectMode ? "#ffe0e0" : "#e0ffe0",
+                  marginRight: "10px"
+                }}
+              >
+                {isMultiSelectMode ? "Cancel Multi-Select" : "Select Items to Delete"}
+              </button>
+
+              {isMultiSelectMode && selectedItems.length > 0 && (
+                <button
+                  onClick={handleDeleteSelected}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    backgroundColor: "#ff4d4d",
+                    color: "#fff"
+                  }}
+                >
+                  Delete {selectedItems.length} Selected
+                </button>
+              )}
+            </div>
+            {/* ───────────────────────────────────────────── */}
+
+            
             <div>
               <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} > <option value="">All Categories</option> {uniqueCategories.map((cat) => ( <option key={cat} value={cat}>{formatLabel(cat)}</option> ))} </select>
 
@@ -706,6 +806,29 @@ export default function App() {
                     position: "relative",
                   }}
                 >
+                  {isMultiSelectMode && (
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(item.id)}
+                      onChange={(e) => {
+                        const ids = e.target.checked
+                          ? [...selectedItems, item.id]
+                          : selectedItems.filter((sid) => sid !== item.id);
+                        setSelectedItems(ids);
+                      }}
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        left: 8,
+                        width: 18,
+                        height: 18,
+                        cursor: "pointer",
+                        zIndex: 12
+                      }}
+                      onClick={(e) => e.stopPropagation()}  // don’t open modal
+                    />
+                  )}
+
                   {item.image_url && (
                      <img
                        src={item.image_url}
@@ -880,20 +1003,22 @@ export default function App() {
           {outfit && outfit.length > 0 ? (
             outfit.map((look, idx) => (
               <section key={idx} className="outfit-group">
-                <h3>✨ Look {idx + 1}</h3>
+                <h3>✨ {look.title || `Look ${idx + 1}`}</h3>
                 <p className="style-note">📝 {look.style_note}</p>
 
                 <div className="outfit-grid">
                   {look.items.map((piece, i) => (
-                    <article key={i} className="outfit-card">
-                      <img src={piece.image_url} alt={piece.name} />
-                      <p><strong>{piece.name}</strong></p>
-                      <p>
-                        {piece.category ? piece.category.split("/").pop() : ""}{" "}
-                        {piece.color ? "• " + piece.color : ""}
-                      </p>
+                    
+                <article key={i} className="outfit-card">
+                  <img
+                    src={piece.image_url}
+                    alt={piece.name || `Item ${i + 1}`}
+                  />
+                  <p className="item-name">
+                    {piece.name}
+                  </p>
+                </article>
 
-                    </article>
                   ))}
                 </div>
 
