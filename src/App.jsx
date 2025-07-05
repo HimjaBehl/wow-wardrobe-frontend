@@ -355,52 +355,56 @@ export default function App() {
 
   const handleSuggestOutfit = async () => {
     try {
-      console.log("🧥 Calling AI with:", { uid: user.uid, occasion, vibe });
-      const res = await fetch(`${BASE_URL}/suggest-outfit`, {
-        method: "POST",
+      const payload = {
+        uid: user.uid,
+        occasion,
+        vibe,
+        city,
+        constraints,
+        prompt: customPrompt.trim(),
+      };
+
+      const res  = await fetch(`${BASE_URL}/suggest-outfit`, {
+        method : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user.uid,
-          occasion,
-          vibe,
-          city,
-          constraints,
-          prompt: customPrompt.trim()  // 👈 new
-        }),
+        body   : JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-         const text = await res.text();
-           console.error("❌ Backend error:", text);
-           alert("Backend error, see console.");
-           return;
-         }
-      
-         const data = await res.json();
-         console.log("🎁 Raw response from backend:", data);
+      /* ---------- read body safely ---------- */
+      const bodyText = await res.text();       // always read as text
+      let   data     = {};
+      try { data = JSON.parse(bodyText); }     // try decode JSON
+      catch { /* non-JSON, leave data empty */ }
 
-      const allLooks = (data.looks || []).map((look) => ({
-        title: look.title,
-        style_note: look.style_note || "Suggested look",
-        items: dedupe(
-          (look.items || []).map((it) => ({
-            ...it,
-            image_url: it.image_url || it.image,
-            name: it.name || `Item ${it.idx || "?"}`
+      /* ---------- happy path ---------- */
+      if (res.ok && Array.isArray(data.looks)) {
+        console.log("🎯 Final looks:", data.looks);
+        setOutfit(
+          data.looks.map((look) => ({
+            title : look.title,
+            style_note: look.style_note || "Suggested look",
+            items : dedupe(
+              (look.items || []).map((it) => ({
+                ...it,
+                image_url: it.image_url || it.image,
+                name     : it.name      || `Item ${it.idx ?? "?"}`,
+              }))
+            ),
           }))
-        )
-      }))
-      .filter(l => l.items.length); // 🛑 If the backend sent an empty items list, drop that look
+        );
+        return;                                 // ✅ done
+      }
 
-        console.log("🧩 Parsed looks headed to UI:", allLooks);
-
-      setOutfit(allLooks);
-
-    } catch (error) {
-      console.error("❌ Error getting outfit suggestions:", error);
-      alert("Failed to get outfit suggestions. Please try again.");
+      /* ---------- error path ---------- */
+      const msg = data.error || bodyText.slice(0, 200) || "Unknown backend error";
+      alert(`🚨 Stylist error: ${msg}`);
+      console.error("💔 Stylist call failed", { status: res.status, data: bodyText });
+    } catch (err) {
+      console.error("❌ handleSuggestOutfit crashed:", err);
+      alert("Could not reach stylist service. Check console / network tab.");
     }
   };
+
 
   // 🔸 remove any exact-duplicate items (same image_url)
   function dedupe(list = []) {
