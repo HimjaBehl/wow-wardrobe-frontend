@@ -6,4 +6,17 @@ export default defineConfig({
   server: {
     allowedHosts: [".replit.dev"], // ✅ This is the fix
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          fabric: ['fabric'],
+          firebase: ['firebase'],
+          router: ['react-router-dom']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  }
 });
