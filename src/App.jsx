@@ -24,14 +24,29 @@ async function saveOutfitToPlanner({ uid, outfit }) {
   alert("📅 Outfit saved!");
 }
 
-async function likeOutfit({ uid, outfit }) {
-  await fetch(`${BASE_URL}/like-outfit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ uid, outfit }),
-  });
-  alert("❤️  Look liked");
+async function likeOutfit({ uid, outfit, context = {} }) {
+  try {
+    const res = await fetch(`${BASE_URL}/like-outfit`, {
+     method : "POST",
+      headers: { "Content-Type": "application/json" },
+      body   : JSON.stringify({ uid, outfit, context }),
+    });
+
+    /** 🔍 DEBUG */
+    console.log("➡️  like-outfit response status:", res.status);
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Backend replied ${res.status}: ${txt.slice(0,200)}`);
+    }
+
+    alert("❤️  Look liked");
+  } catch (err) {
+    console.error("❌ likeOutfit failed:", err);
+    alert("Couldn’t like this look – see console.");
+  }
 }
+
 /* ======================================== */
 
 export default function App() {
@@ -45,6 +60,7 @@ export default function App() {
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [customPrompt, setCustomPrompt] = useState("");
+  const [selectedMood, setSelectedMood] = useState("powerful");
   const [editItemIndex, setEditItemIndex] = useState(null);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -353,22 +369,78 @@ export default function App() {
     }
   };
 
-  const handleSuggestOutfit = async () => {
-    try {
-      const payload = {
-        uid: user.uid,
-        occasion,
-        vibe,
-        city,
-        constraints,
-        prompt: customPrompt.trim(),
-      };
+  async function suggestOutfit(options = {}) {
+    const {
+      uid,
+      vibe,
+      occasion,
+      style_mood,
+      prompt = "",
+      constraints = "",
+      city = "Delhi",
+    } = options;
 
-      const res  = await fetch(`${BASE_URL}/suggest-outfit`, {
-        method : "POST",
+    if (!uid) return;
+
+    const attempt = async (payload) => {
+      const response = await fetch(`${BASE_URL}/suggest-outfit`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body   : JSON.stringify(payload),
+        body: JSON.stringify(payload),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Retry case if Tina failed with "no valid looks"
+        if (data.error?.includes("no looks") || data.error?.includes("No valid looks")) {
+          const reasons = data.rejected_reasons || [];
+          const combinedReason = reasons.join(" | ");
+          setOutfitSuggestions([]);
+          setFallbackMessage(
+            `Tina tried her best but couldn’t style a look.\nReasons: ${combinedReason}`
+          );
+        } else {
+          setFallbackMessage(`Error: ${data.error || "Something went wrong"}`);
+        }
+        return null;
+      }
+
+      return data;
+    };
+
+    // 1️⃣ First attempt — full payload
+    let result = await attempt({
+      uid,
+      city,
+      occasion,
+      vibe,
+      constraints,
+      prompt,
+      style_mood,
+    });
+
+    // 2️⃣ If fail and retry allowed — fallback to minimal
+    if (!result || !Array.isArray(result.looks) || result.looks.length === 0) {
+      console.warn("⚠️ Retry: Tina failed to find a look. Trying simplified prompt...");
+
+      result = await attempt({
+        uid,
+        city,
+        occasion: "",
+        vibe: "",
+        constraints,
+        prompt,
+        style_mood,
+      });
+    }
+
+    if (result && Array.isArray(result.looks)) {
+      setOutfitSuggestions(result.looks);
+      setFallbackMessage(""); // clear fallback
+    }
+  }
+
 
       /* ---------- read body safely ---------- */
       const bodyText = await res.text();       // always read as text
@@ -1009,28 +1081,39 @@ export default function App() {
                 <p className="style-note">📝 {look.style_note}</p>
 
                 <div className="outfit-grid">
-                  {look.items.map((piece, i) => (
-                    
-                <article key={i} className="outfit-card">
-                  <img
-                    src={piece.image_url}
-                    alt={piece.name || `Item ${i + 1}`}
-                  />
-                  <p className="item-name">
-                    {piece.name}
-                  </p>
-                </article>
+                  {look.items.map((piece, i) => {
+                    const hydrated = items.find((it, idx) => String(idx) === piece.idx) || {};
 
-                  ))}
+                    return (
+                      <article key={i} className="outfit-card">
+                        <img
+                          src={hydrated.image_url}
+                          alt={hydrated.name || `Item ${piece.idx}`}
+                          style={{ width: "100%", height: "240px", objectFit: "cover" }}
+                        />
+                        <p className="item-name">{hydrated.name || `Item ${piece.idx}`}</p>
+                      </article>
+                    );
+                  })}
+
                 </div>
 
                 <div className="outfit-actions">
                   <button onClick={() => saveOutfitToPlanner({ uid: user.uid, outfit: look })}>
                     💾 Save
                   </button>
-                  <button onClick={() => likeOutfit({ uid: user.uid, outfit: look })}>
+                  <button
+                    onClick={() =>
+                      likeOutfit({
+                        uid    : user.uid,
+                        outfit : look,
+                        context: { occasion, vibe, style_mood: selectedMood },
+                      })
+                    }
+                  >
                     ❤️ Like
                   </button>
+
                 </div>
               </section>
             ))
