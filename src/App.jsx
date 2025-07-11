@@ -266,7 +266,7 @@ export default function App() {
       alert("No items selected to save.");
       return;
     }
-     
+
     try {
       for (const item of approved) {
         const res = await fetch(`${BASE_URL}/wardrobe`, {
@@ -369,7 +369,7 @@ export default function App() {
     }
   };
 
-  async function suggestOutfit(options = {}) {
+async function suggestOutfit(options = {}) {
     const {
       uid,
       vibe,
@@ -396,12 +396,10 @@ export default function App() {
         if (data.error?.includes("no looks") || data.error?.includes("No valid looks")) {
           const reasons = data.rejected_reasons || [];
           const combinedReason = reasons.join(" | ");
-          setOutfitSuggestions([]);
-          setFallbackMessage(
-            `Tina tried her best but couldn’t style a look.\nReasons: ${combinedReason}`
-          );
+          setOutfit([]);
+          alert(`Tina tried her best but couldn't style a look.\nReasons: ${combinedReason}`);
         } else {
-          setFallbackMessage(`Error: ${data.error || "Something went wrong"}`);
+          alert(`Error: ${data.error || "Something went wrong"}`);
         }
         return null;
       }
@@ -436,46 +434,22 @@ export default function App() {
     }
 
     if (result && Array.isArray(result.looks)) {
-      setOutfitSuggestions(result.looks);
-      setFallbackMessage(""); // clear fallback
+      console.log("🎯 Final looks:", result.looks);
+      setOutfit(
+        result.looks.map((look) => ({
+          title : look.title,
+          style_note: look.style_note || "Suggested look",
+          items : dedupe(
+            (look.items || []).map((it) => ({
+              ...it,
+              image_url: it.image_url || it.image,
+              name     : it.name      || `Item ${it.idx ?? "?"}`,
+            }))
+          ),
+        }))
+      );
     }
   }
-
-
-      /* ---------- read body safely ---------- */
-      const bodyText = await res.text();       // always read as text
-      let   data     = {};
-      try { data = JSON.parse(bodyText); }     // try decode JSON
-      catch { /* non-JSON, leave data empty */ }
-
-      /* ---------- happy path ---------- */
-      if (res.ok && Array.isArray(data.looks)) {
-        console.log("🎯 Final looks:", data.looks);
-        setOutfit(
-          data.looks.map((look) => ({
-            title : look.title,
-            style_note: look.style_note || "Suggested look",
-            items : dedupe(
-              (look.items || []).map((it) => ({
-                ...it,
-                image_url: it.image_url || it.image,
-                name     : it.name      || `Item ${it.idx ?? "?"}`,
-              }))
-            ),
-          }))
-        );
-        return;                                 // ✅ done
-      }
-
-      /* ---------- error path ---------- */
-      const msg = data.error || bodyText.slice(0, 200) || "Unknown backend error";
-      alert(`🚨 Stylist error: ${msg}`);
-      console.error("💔 Stylist call failed", { status: res.status, data: bodyText });
-    } catch (err) {
-      console.error("❌ handleSuggestOutfit crashed:", err);
-      alert("Could not reach stylist service. Check console / network tab.");
-    }
-  };
 
 
   // 🔸 remove any exact-duplicate items (same image_url)
@@ -845,7 +819,7 @@ export default function App() {
             </div>
             {/* ───────────────────────────────────────────── */}
 
-            
+
             <div>
               <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} > <option value="">All Categories</option> {uniqueCategories.map((cat) => ( <option key={cat} value={cat}>{formatLabel(cat)}</option> ))} </select>
 
@@ -1014,6 +988,7 @@ export default function App() {
                 <option value="bold">Bold</option>
                 <option value="romantic">Romantic</option>
               </select>
+              ```tool_code
               <input
                 type="text"
                 value={city}
@@ -1046,7 +1021,17 @@ export default function App() {
             />
 
             <button
-              onClick={handleSuggestOutfit}
+              onClick={async () => {
+                await suggestOutfit({
+                  uid: user.uid,
+                  vibe,
+                  occasion,
+                  style_mood: selectedMood,
+                  prompt: customPrompt,
+                  constraints,
+                  city,
+                });
+              }}
               style={{
                 backgroundColor: "white",
                 color: "black",
