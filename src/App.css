@@ -1,347 +1,599 @@
 /* =============================
-   WOW Wardrobe – Mobile‑first CSS
+   WOW Wardrobe – Modern Minimalist Design System
    ============================= */
 
-/* Base Reset & Global  ---------------------------- */
+/* ─── CSS Variables ─────────────────────────────── */
+:root {
+  /* Colors */
+  --primary-black: #000000;
+  --primary-white: #ffffff;
+  --accent-pink: #ff6b8d;
+  --accent-gold: #d4af37;
+  --neutral-50: #fafafa;
+  --neutral-100: #f5f5f5;
+  --neutral-200: #eeeeee;
+  --neutral-300: #e0e0e0;
+  --neutral-400: #bdbdbd;
+  --neutral-500: #9e9e9e;
+  --neutral-600: #757575;
+  --neutral-700: #616161;
+  --neutral-800: #424242;
+  --neutral-900: #212121;
+  
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.15);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+/* ─── Base Reset ────────────────────────────────── */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  -webkit-tap-highlight-color: transparent; /* remove blue flash on mobile */
+}
+
+html {
   scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  overflow-x: hidden;           /* stop accidental side‑scroll */
-  background: #faf9f6 url("https://www.transparenttextures.com/patterns/paper-fibers.png");
-  background-size: cover;
-  color: #222;
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: var(--font-weight-normal);
+  line-height: 1.6;
+  color: var(--neutral-900);
+  background-color: var(--neutral-50);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* App Wrapper  ------------------------------------ */
-.App {
-  max-width: 100%;
-  padding: 1rem;
-  margin: 2rem auto;
-  text-align: center;
-}
-
-/* Headings  -------------------------------------- */
-h1,h2,h3 {
-  line-height: 1.25;
-  margin-bottom: .75rem;
-}
-
-/* Forms & Inputs  -------------------------------- */
-form {
+/* ─── App Layout ────────────────────────────────── */
+.app {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: .75rem;
-  max-width: 400px;
-  margin: 0 auto 2rem;
+  background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
 }
 
-input,select,textarea,button {
-  width: 100%;
-  padding: .65rem 1rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+.app-header {
+  position: sticky;
+  top: 0;
+  background: var(--primary-white);
+  border-bottom: 1px solid var(--neutral-200);
+  z-index: 100;
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
 }
 
-button {
-  background: #000;
-  color: #fff;
-  border: none;
+.app-logo {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-black);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.app-profile {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-gold));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-white);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  min-height: 44px;            /* ✅ Apple tap target */
-  transition: opacity .25s ease;
+  transition: var(--transition-fast);
 }
-button:hover{opacity:.8;}
 
-/* Grid of Wardrobe Cards  ------------------------- */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
-  gap: 1rem;
-  padding: 1rem 0;
+.app-profile:hover {
+  transform: scale(1.05);
+}
+
+.app-main {
+  flex: 1;
+  padding: 0 0 5rem 0; /* Bottom padding for nav */
+  container-type: inline-size;
+}
+
+/* ─── Bottom Navigation ─────────────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--primary-white);
+  border-top: 1px solid var(--neutral-200);
+  padding: var(--spacing-sm) 0 calc(var(--spacing-sm) + env(safe-area-inset-bottom));
+  z-index: 100;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.bottom-nav-list {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
   justify-content: center;
 }
 
-/* Card Style ------------------------------------- */
+.bottom-nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: var(--neutral-500);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-sm);
+  transition: var(--transition-fast);
+  min-width: 44px; /* Touch target */
+  min-height: 44px;
+  gap: var(--spacing-xs);
+}
+
+.bottom-nav-link.active,
+.bottom-nav-link:hover {
+  color: var(--accent-pink);
+}
+
+.bottom-nav-icon {
+  font-size: 1.25rem;
+  margin-bottom: 2px;
+}
+
+/* ─── Section Container ─────────────────────────── */
+.section {
+  padding: var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.section-title {
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-black);
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+/* ─── Modern Forms ──────────────────────────────── */
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  margin-bottom: var(--spacing-xs);
+  text-align: left;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  background: var(--primary-white);
+  transition: var(--transition-fast);
+  appearance: none;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--accent-pink);
+  box-shadow: 0 0 0 3px rgba(255, 107, 141, 0.1);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ─── Modern Buttons ────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1rem;
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  min-height: 44px;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: var(--primary-black);
+  color: var(--primary-white);
+}
+
+.btn-primary:hover {
+  background: var(--neutral-800);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--primary-white);
+  color: var(--primary-black);
+  border: 1px solid var(--neutral-300);
+}
+
+.btn-secondary:hover {
+  background: var(--neutral-100);
+  border-color: var(--neutral-400);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-gold));
+  color: var(--primary-white);
+  border: none;
+}
+
+.btn-accent:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-small {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.875rem;
+  min-height: 36px;
+}
+
+.btn-icon-only {
+  padding: var(--spacing-md);
+  min-width: 44px;
+}
+
+/* ─── Card System ───────────────────────────────── */
 .card {
-  background: #FFE2E2;
-  padding: .6rem;
-  border-radius: 12px;
-  box-shadow: 4px 8px 20px rgba(0,0,0,.15);
-  position: relative;
-  transition: transform .2s ease;
-}
-.card:nth-child(even){transform:rotate(3deg);} /* playful tilt */
-.card:hover{transform:rotate(0deg) scale(1.05);} /* smooth straighten */
-
-.card img{
-  width:100%;
-  border-radius:10px;
-  margin-bottom:.5rem;
-  object-fit:cover;
-}
-.card p{font-size:1rem;margin:0;}
-
-/* Edit / Delete icons ---------------------------- */
-.card-controls{
-  position:absolute;top:8px;right:8px;
-  display:flex;gap:8px;
-  flex-direction: row; /* ensure side-by-side layout */
-  gap: 12px;           /* more spacing between buttons */
-  z-index: 10;         /* make sure it's on top */
-  background: rgba(255, 255, 255, 0.9); /* subtle bg if needed */
-  padding:2px 6px;
-  border-radius:6px;
-  font-size:1.2rem;
+  background: var(--primary-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: var(--transition-normal);
 }
 
-/* Bottom Navigation ------------------------------ */
-.bottom-nav{
-  position:fixed;bottom:0;left:0;width:100%;
-  height:70px;
-  padding-bottom:env(safe-area-inset-bottom);
-  background:#fff;border-top:1px solid #ddd;
-  display:flex;justify-content:space-around;align-items:center;
-  z-index:999;
-}
-.tab{display:flex;flex-direction:column;align-items:center;font-size:14px;color:#888;text-decoration:none;}
-.tab span{font-size:26px;}
-.tab:hover{color:#007aff;}
-
-/* Modal (generic) -------------------------------- */
-.modal{
-  width:90vw;max-height:80vh;overflow-y:auto;
-  background:#fff;padding:20px;
-  border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.15);
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
-/* Responsive tweaks ------------------------------ */
-@media(max-width:480px){
-  html{font-size:15px;}
-  h1,h2,h3{font-size:1.3rem;}
-  form{padding:0 1rem;}
+.card-image {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  background: var(--neutral-100);
 }
 
-/* ─── modal base ───────────────────────*/
-.modal-overlay{
-  position:fixed; inset:0;
-  background:rgba(0,0,0,.55);
-  display:flex; justify-content:center; align-items:center;
-  z-index:1200;
-  padding:env(safe-area-inset-top) 1rem env(safe-area-inset-bottom);
+.card-content {
+  padding: var(--spacing-md);
 }
-.modal-card{
-  width:92%; max-width:340px;
-  background:#fff; border-radius:16px;
-  padding:1.25rem;
-  box-shadow:0 8px 30px rgba(0,0,0,.25);
-  animation:pop .25s ease;
-  text-align:center;
-}
-@keyframes pop{
-  from{transform:scale(.9);opacity:0}
-  to  {transform:scale(1);opacity:1}
-}
-/* chips + buttons reuse styles you already have */
-.chip{background:#eee;padding:4px 10px;border-radius:999px;font-size:.8rem}
-.primary-btn,.danger-btn{
-  width:100%;margin-top:.75rem;padding:.6rem;border:none;border-radius:8px;
-  font-weight:600;cursor:pointer
-}
-.primary-btn{background:#6C4AB6;color:#fff}
-.danger-btn {background:#ff4d4f;color:#fff}
 
-/* ✨ Modal overlay */
-.wow-overlay {
+.card-title {
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary-black);
+  margin-bottom: var(--spacing-xs);
+  line-height: 1.4;
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
+  color: var(--neutral-600);
+  margin-bottom: var(--spacing-sm);
+}
+
+.card-actions {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  display: flex;
+  gap: var(--spacing-xs);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: var(--transition-fast);
+}
+
+.card:hover .card-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  color: var(--neutral-700);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+  backdrop-filter: blur(4px);
+}
+
+.card-action-btn:hover {
+  background: var(--primary-white);
+  color: var(--primary-black);
+  transform: scale(1.1);
+}
+
+/* ─── Grid Layouts ──────────────────────────────── */
+.grid {
+  display: grid;
+  gap: var(--spacing-lg);
+  width: 100%;
+}
+
+.grid-wardrobe {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.grid-outfit {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-md);
+}
+
+/* ─── Tags ──────────────────────────────────────── */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.tag {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.tag-accent {
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-gold));
+  color: var(--primary-white);
+}
+
+/* ─── Loading States ────────────────────────────── */
+.loading-screen {
+  height: 100vh;
+  background: var(--primary-black);
+  color: var(--primary-white);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.loading-title {
+  font-size: 3rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.05em;
+}
+
+.loading-subtitle {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-light);
+  opacity: 0.8;
+}
+
+/* ─── Modals ────────────────────────────────────── */
+.modal-overlay {
   position: fixed;
-  inset: 0;                    /* = top:0 right:0 bottom:0 left:0 */
-  background: rgba(0,0,0,0.55);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;                /* above everything else */
+  z-index: 1000;
+  padding: var(--spacing-lg);
+  backdrop-filter: blur(4px);
 }
 
-/* ✨ Modal box */
-.wow-modal {
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 14px;
-  max-width: 92%;
-  max-height: 90%;
+.modal {
+  background: var(--primary-white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  max-width: 90vw;
+  max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  padding: var(--spacing-xl);
+  animation: modal-enter 0.3s ease;
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ─── Upload Area ───────────────────────────────── */
+.upload-area {
+  border: 2px dashed var(--neutral-300);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
   text-align: center;
-}
-
-.wow-modal img {
-  max-width: 260px;
-  width: 90%;
-  border-radius: 10px;
-  margin-bottom: 1rem;
-}
-
-/* Nice pill tags */
-.wow-modal .tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-  margin: .75rem 0;
-}
-.wow-modal .tags span{
-  background:#eee;
-  padding:4px 10px;
-  border-radius:12px;
-  font-size:.8rem;
-}
-
-.wow-modal button{
-  margin-top:1rem;
-  padding:.55rem 1.2rem;
-  border:none;
-  background:#000;
-  color:#fff;
-  border-radius:8px;
-  cursor:pointer;
-}
-.wow-modal button:hover{opacity:.85;}
-
-body {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 16px;
-  color: #222;
-}
-
-.card-controls span {
-  font-size: 1.35rem;
-  margin-left: 6px;
+  background: var(--primary-white);
+  transition: var(--transition-fast);
   cursor: pointer;
-  user-select: none;
 }
 
-/* —— mood-board styling —— */
-.outfit-group{
-  background:#f9f9f9;
-  padding:1.2rem;
-  border-radius:16px;
-  margin-bottom:2rem;
-  box-shadow:0 4px 12px rgba(0,0,0,0.06);
+.upload-area:hover,
+.upload-area.drag-over {
+  border-color: var(--accent-pink);
+  background: rgba(255, 107, 141, 0.05);
 }
 
-.style-note{
-  font-style:italic;
-  margin-top:4px;
-  color:#555;
+.upload-icon {
+  font-size: 3rem;
+  color: var(--neutral-400);
+  margin-bottom: var(--spacing-md);
 }
 
-.outfit-grid{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-  margin-top:1rem;
-  justify-content:center;
+.upload-text {
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  margin-bottom: var(--spacing-sm);
 }
 
-.outfit-card{
-  width:120px;
-  background:#fff;
-  border-radius:12px;
-  padding:8px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
-  text-align:center;
-  font-size:14px;
+.upload-subtext {
+  font-size: 0.875rem;
+  color: var(--neutral-500);
 }
 
-.outfit-card img{
-  width:100%;
-  height:120px;
-  object-fit:cover;
-  border-radius:8px;
+/* ─── Responsive Design ─────────────────────────── */
+@media (max-width: 768px) {
+  .section {
+    padding: var(--spacing-md);
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .grid-wardrobe {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--spacing-md);
+  }
+  
+  .app-header {
+    padding: var(--spacing-md);
+  }
+  
+  .app-logo {
+    font-size: 1.25rem;
+  }
 }
 
-.outfit-actions{
-  margin-top:12px;
-  display:flex;
-  gap:10px;
-  justify-content:center;
+@media (max-width: 480px) {
+  .section {
+    padding: var(--spacing-sm);
+  }
+  
+  .grid-wardrobe {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--spacing-sm);
+  }
+  
+  .modal {
+    padding: var(--spacing-lg);
+    margin: var(--spacing-md);
+  }
 }
 
-.outfit-actions button{
-  background:#fff;
-  border:1px solid #333;
-  border-radius:8px;
-  padding:4px 12px;
-  cursor:pointer;
-  transition:.2s;
-}
-.outfit-actions button:hover{
-  background:#333;
-  color:#fff;
+/* ─── Utilities ─────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.item-name {
-  font-size: 0.75rem;
-  color: #333;
-  margin-top: 4px;
+.text-center {
   text-align: center;
 }
 
-.outfit-group {
-  margin: 2rem 0;
-  padding: 1rem;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.outfit-grid {
+.flex {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
   justify-content: center;
-  margin-top: 1rem;
 }
 
-.outfit-card {
-  width: 140px;
-  text-align: center;
+.gap-sm {
+  gap: var(--spacing-sm);
 }
 
-.outfit-card img {
-  border-radius: 8px;
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
+.gap-md {
+  gap: var(--spacing-md);
 }
 
-.item-name {
-  font-weight: bold;
-  font-size: 0.9rem;
-  margin-top: 0.25rem;
-}
-
-.item-meta {
-  font-size: 0.8rem;
-  color: #666;
-}
-
-.trends {
-  margin-top: 12px;
-  padding: 10px;
-  background: #f9f9f9;
-  border-left: 3px solid #e91e63;
-  border-radius: 8px;
-}
-
-.trends h4 {
-  margin: 0 0 6px;
-  font-size: 14px;
-  color: #e91e63;
+.gap-lg {
+  gap: var(--spacing-lg);
 }
