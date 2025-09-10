@@ -55,6 +55,9 @@ export default function App() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterColor, setFilterColor] = useState("");
   const [occasion, setOccasion] = useState("casual");
+  // 🆕 Theme selectors
+  const [theme, setTheme] = useState("Western");
+  const [subTheme, setSubTheme] = useState("Party");
   const [selectedItems, setSelectedItems] = useState([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [vibe, setVibe] = useState("fun");
@@ -80,6 +83,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("wardrobe");
   const [detectedItems, setDetectedItems] = useState([]);
 
+  // 🆕 toggle between Tina agent (LangChain) and old route
+  const [useTinaAgent, setUseTinaAgent] = useState(false);
 
 
   // 🔹 NEW – for the click-to-open modal
@@ -90,11 +95,17 @@ export default function App() {
 
   const saveLook = async (lookObj) => {
     try {
-      await addDoc(collection(db, "favoriteLooks"), {
-        uid: user?.uid,
-         note : lookObj.style_note,
-         items: lookObj.items,
-        timestamp: serverTimestamp()
+      await fetch(`${BASE_URL}/like-outfit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user?.uid,
+          outfit: {
+            note: lookObj.style_note,
+            items: lookObj.items,
+          },
+          context: { source: "manual_save" },
+        }),
       });
       alert("💖 Look saved successfully!");
     } catch (error) {
@@ -122,11 +133,51 @@ export default function App() {
       .trim();
   };
 
+  
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (user?.uid) {
+      fetch(`${BASE_URL}/onboarding?uid=${user.uid}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error || !data.body) {
+            console.warn("⚠️ No onboarding found, showing form...");
+            setShowOnboarding(true);
+          } else {
+            console.log("✅ Onboarding data found:", data);
+          }
+        })
+        .catch(err => {
+          console.error("❌ Error fetching onboarding:", err);
+          setShowOnboarding(true);
+        });
+    }
+  }, [user]);
+
+  
+  useEffect(() => {
+    const fetchOnboarding = async () => {
+      if (!user || !user.uid) return;
+
+      try {
+        const res = await fetch(`https://wow-wardrobe-backend-himjabehl.replit.app/onboarding?uid=${user.uid}`);
+        if (!res.ok) throw new Error("Not onboarded");
+        const prefs = await res.json();
+        console.log("🎯 Found onboarding prefs:", prefs);
+        setShowOnboarding(false);
+      } catch (err) {
+        console.warn("⚠️ No onboarding found, showing form...");
+        setShowOnboarding(true);
+      }
+    };
+
+    fetchOnboarding();
+  }, [user]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
@@ -211,7 +262,8 @@ export default function App() {
       return;
     }
 
-    const storageRef = ref(storage, `wardrobe/${file.name}`);
+    const uniqueName = `${user.uid}/${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, `wardrobe/${uniqueName}`);
     try {
       await uploadBytes(storageRef, file);
       const imageUrl   = await getDownloadURL(storageRef);   // used for Ximilar preview
@@ -320,7 +372,16 @@ export default function App() {
   // 💖 toggle / untoggle favourite
   const toggleFavorite = async (id, currentFav = false) => {
     try {
-      await updateDoc(doc(db, "wardrobe", id), { isFavorite: !currentFav });
+      const res = await fetch(`${BASE_URL}/wardrobe/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: user.uid, isFavorite: !currentFav }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to update favorite: ${res.status}`);
+      }
+
       // Refresh UI quickly without full refetch
       setItems((prev) =>
         prev.map((it) => (it.id === id ? { ...it, isFavorite: !currentFav } : it))
@@ -335,7 +396,15 @@ export default function App() {
   const markAsWorn = async (id) => {
     const today = new Date().toISOString().split("T")[0];
     try {
-      await updateDoc(doc(db, "wardrobe", id), { lastWorn: today });
+      const res = await fetch(`${BASE_URL}/mark-worn`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: user.uid, itemId: id, lastWorn: today }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to mark as worn: ${res.status}`);
+      }
       setItems((prev) =>
         prev.map((it) => (it.id === id ? { ...it, lastWorn: today } : it))
       );
@@ -351,14 +420,17 @@ export default function App() {
     if (!window.confirm(`Delete ${selectedItems.length} selected item(s)?`)) return;
 
     try {
-      // 1) delete from Firestore (batched)
-           const batch = writeBatch(db);
-            selectedItems.forEach(id =>
-              batch.delete(doc(db, "wardrobe", id))
-            );
-            await batch.commit();
+      const res = await fetch(`${BASE_URL}/wardrobe/bulk-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: user.uid, ids: selectedItems }),
+      });
 
-      // 2) update local UI
+      if (!res.ok) {
+        throw new Error(`Failed to delete items: ${res.status}`);
+      }
+
+      // Update local UI
       setItems((prev) => prev.filter((it) => !selectedItems.includes(it.id)));
       setSelectedItems([]);
       setIsMultiSelectMode(false);
@@ -368,6 +440,87 @@ export default function App() {
       alert("Couldn’t delete some items.");
     }
   };
+  async function suggestOutfitAgent(options = {}) {
+    const { uid, city, wardrobe, theme, subTheme } = options;
+
+    if (!uid) return;
+
+    console.log("🟢 Sending to Tina agent:", options);
+
+    try {
+      const res = await fetch(`${BASE_URL}/tina-agent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid, city, wardrobe, theme, subTheme }),
+
+
+      });
+
+      const rawText = await res.text();
+      console.log("🎯 Tina agent result (raw from backend):", rawText);
+
+      let clean = rawText.trim();
+      if (clean.startsWith("```")) {
+        clean = clean.replace(/```json/i, "").replace(/```$/, "").trim();
+      }
+
+      let data;
+      try {
+        data = JSON.parse(clean);
+        console.log("✅ Parsed Tina agent JSON:", data);
+      } catch (err) {
+        console.warn("⚠️ Could not parse Tina agent raw:", clean);
+        data = { looks: [] };
+      }
+
+      if (!res.ok) throw new Error(data.error || "Agent failed");
+
+      // 🔥 Fallback if Tina sends no looks
+      if (!data.looks && data.look) {
+        data.looks = [ { title: "Look 1", style_note: "Auto-fixed", items: data.look } ];
+      }
+
+      if (!data.looks || !Array.isArray(data.looks)) {
+        console.warn("⚠️ Tina returned invalid schema:", data);
+        setOutfit([]);
+        return;
+      }
+
+
+      // ✅ Normal case
+      setOutfit(
+        data.looks.map((look, idx) => ({
+          title: look.title || `Look ${idx + 1}`,
+          style_note: look.style_note || "Suggested look",
+          trends_used: look.trends_used || [],
+          items: (look.items || []).map((it) => {
+            const wardrobeItem = items.find((w) => String(w.id) === String(it.id)) || {};
+            return {
+              id: it.id,
+              name: wardrobeItem.name || it.name || "Unnamed",
+              category: wardrobeItem.category || it.category || "",
+              color: wardrobeItem.color || it.color || "",
+              image_url: wardrobeItem.image_url || it.image_url || "",
+              tags: wardrobeItem.tags || it.tags || [],
+            };
+          }),
+        }))
+      );
+    } catch (err) {
+      console.error("❌ Tina agent failed:", err);
+      alert("Tina agent could not generate looks.");
+    }
+  }
+
+  async function suggestPinterestOutfits({ uid, theme, city, weather }) {
+    const res = await fetch(`${BASE_URL}/pinterest-analysis`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid, theme, city, weather }),
+    });
+    return await res.json();
+  }
+
 
 async function suggestOutfit(options = {}) {
     const {
@@ -383,7 +536,12 @@ async function suggestOutfit(options = {}) {
     if (!uid) return;
 
     const attempt = async (payload) => {
-      const response = await fetch(`${BASE_URL}/suggest-outfit`, {
+      console.log("🟢 Sending to backend:", payload);
+      // 👉 toggle here: use Tina agent or old suggest-outfit
+      const endpoint = useTinaAgent ? "/tina-agent" : "/suggest-outfit";
+
+      const response = await fetch(`${BASE_URL}${endpoint}`, {
+
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -512,6 +670,12 @@ async function suggestOutfit(options = {}) {
 
   if (user && !onboardingDone) {
     return <Onboarding user={user} onDone={() => setOnboardingDone(true)} />;
+  }
+
+
+  // ✅ Add this right before return:
+  if (showOnboarding) {
+    return <Onboarding user={user} onDone={() => setShowOnboarding(false)} />;
   }
 
   return (
@@ -960,93 +1124,48 @@ async function suggestOutfit(options = {}) {
 
           {/* AI Stylist Section */}
           {activeTab === "stylist" && (
-          <section id="stylist">
-            <h2>AI Outfit Suggestions 🤖</h2>
-            <p style={{marginTop:"-0.5rem",marginBottom:"1rem",fontSize:"0.9rem",color:"#555"}}>
-              Use the dropdowns <em>or</em> just type what you want below ✨
-            </p>
+            <section id="stylist">
+              <h2>AI Outfit Suggestions 🤖</h2>
+              <p style={{marginTop:"-0.5rem",marginBottom:"1rem",fontSize:"0.9rem",color:"#555"}}>
+                Pick a sub-theme and city, Tina will style your look ✨
+              </p>
 
-            <div style={{ marginBottom: "1rem" }}>
-              <select
-                value={occasion}
-                onChange={(e) => setOccasion(e.target.value)}
+              <div style={{ marginBottom: "1rem" }}>
+                <select
+                  value={subTheme}
+                  onChange={(e) => setSubTheme(e.target.value)}
+                >
+                  <option value="Casual">Casual</option>
+                  <option value="Party">Party</option>
+                  <option value="Workwear">Workwear</option>
+                  <option value="Athleisure">Athleisure</option>
+                  <option value="Brunch">Brunch</option>
+                  <option value="Dinner">Dinner</option>
+                </select>
+
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City"
+                  style={{ marginLeft: "1rem", padding: "4px" }}
+                />
+              </div>
+
+              <button
+                onClick={async () => {
+                  await suggestOutfitAgent({
+                    uid: user.uid,
+                    city,
+                    wardrobe: items,
+                    subTheme,
+                  });
+                }}
+                style={{ backgroundColor: "white", border: "1px solid black", marginTop: "1rem" }}
               >
-                <option value="casual">Casual</option>
-                <option value="formal">Formal</option>
-                <option value="party">Party</option>
-                <option value="vacation">Vacation</option>
-                <option value="wedding">Wedding</option>
-              </select>
-              <select
-                value={vibe}
-                onChange={(e) => setVibe(e.target.value)}
-                style={{ marginLeft: "1rem" }}
-              >
-                <option value="fun">Fun</option>
-                <option value="elegant">Elegant</option>
-                <option value="chill">Chill</option>
-                <option value="bold">Bold</option>
-                <option value="romantic">Romantic</option>
-              </select>
-              ```tool_code
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="City"
-                style={{ marginLeft: "1rem", padding: "4px" }}
-              />
-            </div>
-            <input
-              type="text"
-              value={constraints}
-              onChange={(e) => setConstraints(e.target.value)}
-              placeholder="Any style preferences or constraints?"
-              style={{ width: "100%", padding: "8px", marginBottom: "1rem" }}
-            />
-
-            {/* NEW — Free-text styling query */}
-            <textarea
-              value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
-              placeholder='Or just tell us what you need…  
-            e.g. "Something comfy for brunch in the rain 🌧️"'
-              rows={3}
-              style={{
-                width: "100%",
-                padding: "8px",
-                marginTop: "0.5rem",
-                borderRadius: "8px",
-              }}
-            />
-
-            <button
-              onClick={async () => {
-                await suggestOutfit({
-                  uid: user.uid,
-                  vibe,
-                  occasion,
-                  style_mood: selectedMood,
-                  prompt: customPrompt,
-                  constraints,
-                  city,
-                });
-              }}
-              style={{
-                backgroundColor: "white",
-                color: "black",
-                 marginTop: "1rem",
-                  width: "100%",
-                  padding: "0.75rem",
-                  fontSize: "1rem",
-                  borderRadius: "8px",
-                border: "1px solid black",
-                cursor: "pointer",
-              }}
-            >
-              Get Outfit Suggestions
-            </button>
-          </section>
+                Get Outfit Suggestions
+              </button>
+            </section>
           )}
 
           {/* Weekly Planner */}
@@ -1067,13 +1186,15 @@ async function suggestOutfit(options = {}) {
 
                 <div className="outfit-grid">
                   {look.items.map((piece, i) => {
-                    const hydrated = items.find((it, idx) => String(idx) === piece.idx) || {};
+                const hydrated = piece;
+
 
                     return (
                       <article key={i} className="outfit-card">
                         <img
                           src={hydrated.image_url}
-                          alt={hydrated.name || `Item ${piece.idx}`}
+                          alt={hydrated.name}
+
                           style={{ width: "100%", height: "240px", objectFit: "cover" }}
                         />
                         <p className="item-name">{hydrated.name || `Item ${piece.idx}`}</p>
@@ -1100,10 +1221,37 @@ async function suggestOutfit(options = {}) {
                   </button>
 
                 </div>
+                {look.trends_used && look.trends_used.length > 0 && (
+                  <div className="trends">
+                    <h4>✨ Inspired by Trends</h4>
+                    <ul>
+                      {look.trends_used.map((trend, i) => (
+                        <li key={i}>
+                          {trend.content}
+                          {trend.url && (
+                            <a
+                              href={trend.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ marginLeft: "6px", color: "#0070f3" }}
+                            >
+                              (Source)
+                            </a>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
               </section>
             ))
           ) : (
-            outfit !== null && <p style={{ marginTop: "1rem" }}>No outfits found.</p>
+            outfit !== null && (
+              <p style={{ marginTop: "1rem", color: "#888" }}>
+                Tina couldn’t style anything right now. Try again, or check wardrobe 👗
+              </p>
+            )
           )}
 
 
