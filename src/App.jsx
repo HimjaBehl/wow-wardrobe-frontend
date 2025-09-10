@@ -651,19 +651,9 @@ async function suggestOutfit(options = {}) {
 
   if (loading) {
     return (
-      <div
-        style={{
-          height: "100vh",
-          backgroundColor: "#000",
-          color: "#fff",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
-        }}
-      >
-        <h1 style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>W.O.W.</h1>
-        <p style={{ fontSize: "1.2rem" }}>What. Outfit. When.</p>
+      <div className="loading-screen">
+        <h1 className="loading-title">W.O.W.</h1>
+        <p className="loading-subtitle">What. Outfit. When.</p>
       </div>
     );
   }
@@ -679,104 +669,46 @@ async function suggestOutfit(options = {}) {
   }
 
   return (
-    <div
-      className="App"
-      style={{
-        padding: "1rem 1rem 5rem",
-        fontFamily: "sans-serif",
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          borderBottom: "1px solid #ddd",
-          paddingBottom: "1rem",
-          marginBottom: "2rem",
-        }}
-      >
-        <nav style={{ display: "flex", gap: "1rem" }}>
-          {[
-            { href: "#wardrobe", label: "Wardrobe" },
-            { href: "#add", label: "Add Item" },
-            { href: "#stylist", label: "AI Stylist" },
-          ].map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              style={{
-                padding: "8px 14px",
-                textDecoration: "none",
-                color: "#333",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                backgroundColor: "#f9f9f9",
-                fontWeight: 500,
-                fontSize: "0.95rem",
-                transition: "all 0.2s ease-in-out",
-              }}
-              onMouseOver={(e) => {
-                e.target.style.backgroundColor = "#e0e0e0";
-                e.target.style.cursor = "pointer";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.backgroundColor = "#f9f9f9";
-              }}
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-
+    <div className="app">
+      {/* Modern Header */}
+      <header className="app-header">
+        <a href="#" className="app-logo">
+          W.O.W.
+        </a>
         {user && (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {user.photoURL && (
-              <img
-                src={user.photoURL}
-                alt="User"
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  marginRight: "0.5rem",
-                }}
+          <div className="app-profile">
+            {user.photoURL ? (
+              <img 
+                src={user.photoURL} 
+                alt={user.displayName || 'User'}
+                style={{ width: '100%', height: '100%', borderRadius: '50%' }}
               />
+            ) : (
+              (user.displayName || user.email || 'U').charAt(0).toUpperCase()
             )}
-            <span style={{ fontWeight: "500" }}>{user.displayName}</span>
           </div>
+        )}
+        {!user && (
+          <button className="btn btn-primary" onClick={handleLogin}>
+            Login
+          </button>
         )}
       </header>
 
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: "2rem",
-        }}
-      >
-        <h1>W.O.W. Wardrobe </h1>
-        {user ? (
-          <div>
-            <span> {user.displayName}</span>
-            <button aria-label="Logout" onClick={handleLogout} style={{ marginLeft: "1rem" }}>
-              Logout
+      {/* Main Content */}
+      <main className="app-main">
+        {!user ? (
+          <div className="section text-center">
+            <h1 className="section-title">Welcome to W.O.W.</h1>
+            <p style={{ fontSize: '1.125rem', color: 'var(--neutral-600)', marginBottom: 'var(--spacing-xl)' }}>
+              Your personal wardrobe assistant. Please login to continue.
+            </p>
+            <button className="btn btn-accent" onClick={handleLogin}>
+              Login with Google
             </button>
           </div>
         ) : (
-          <button onClick={handleLogin} style={{
-              marginTop: "1rem",
-              width: "100%",
-              padding: "0.75rem",
-              fontSize: "1rem",
-              borderRadius: "8px",
-            }}>Login with Google</button>
-        )}
-      </header>
-      {user && (
-        <>
-          {/* Upload & Auto-tag section already included above */}
+          <>
           {activeTab === "upload" && (
           <section id="add" style={{ marginBottom: "2rem" }}>
             <h2>Upload Item</h2>
@@ -1313,9 +1245,58 @@ async function suggestOutfit(options = {}) {
 
             </section>
           )}
-        </>
+        )}
+      </main>
+
+      {/* Modern Bottom Navigation */}
+      {user && (
+        <nav className="bottom-nav">
+          <ul className="bottom-nav-list">
+            <li className="bottom-nav-item">
+              <button 
+                className={`bottom-nav-link ${activeTab === 'wardrobe' ? 'active' : ''}`}
+                onClick={() => setActiveTab('wardrobe')}
+                aria-label="Wardrobe"
+              >
+                <span className="bottom-nav-icon">👗</span>
+                Wardrobe
+              </button>
+            </li>
+            <li className="bottom-nav-item">
+              <button 
+                className={`bottom-nav-link ${activeTab === 'upload' ? 'active' : ''}`}
+                onClick={() => setActiveTab('upload')}
+                aria-label="Upload"
+              >
+                <span className="bottom-nav-icon">📱</span>
+                Upload
+              </button>
+            </li>
+            <li className="bottom-nav-item">
+              <button 
+                className={`bottom-nav-link ${activeTab === 'stylist' ? 'active' : ''}`}
+                onClick={() => setActiveTab('stylist')}
+                aria-label="AI Stylist"
+              >
+                <span className="bottom-nav-icon">✨</span>
+                Stylist
+              </button>
+            </li>
+            <li className="bottom-nav-item">
+              <button 
+                className={`bottom-nav-link ${activeTab === 'planner' ? 'active' : ''}`}
+                onClick={() => setActiveTab('planner')}
+                aria-label="Planner"
+              >
+                <span className="bottom-nav-icon">📅</span>
+                Planner
+              </button>
+            </li>
+          </ul>
+        </nav>
       )}
-      {/* -------------------------------------------- */}
+
+      {/* Modern Modals */}
       {/* 📌  NEW: wardrobe-card details modal         */}
       {isModalOpen && modalItem && (
         <div className="wow-overlay" onClick={closeModal}>
@@ -1379,6 +1360,6 @@ async function suggestOutfit(options = {}) {
           </button>
         ))}
       </nav>
-      </div>
-      );
-      }
+    </div>
+  );
+}
