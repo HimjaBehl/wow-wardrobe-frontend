@@ -1110,43 +1110,70 @@ body {
 }
 
 /* Quick Add Staples */
-.staples-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-lg);
+.staple-group {
+  margin-bottom: var(--spacing-2xl);
 }
 
-.staple-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-lg);
+.staple-heading {
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--neutral-900);
+  margin: 0 0 var(--spacing-lg) 0;
+  text-align: left;
+}
+
+.variant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-lg);
+  max-width: 100%;
+}
+
+.variant-card {
   background: var(--primary-white);
   border: 1px solid var(--neutral-200);
   border-radius: var(--radius-lg);
+  overflow: hidden;
   cursor: pointer;
   transition: var(--transition-normal);
-  min-height: 100px;
-  justify-content: center;
-}
-
-.staple-btn:hover {
-  border-color: var(--accent-pink);
-  transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
 
-.staple-icon {
-  font-size: 2rem;
-  margin-bottom: var(--spacing-xs);
+.variant-card:hover {
+  border-color: var(--accent-pink);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
 }
 
-.staple-name {
-  font-weight: var(--font-weight-medium);
-  color: var(--neutral-800);
+.variant-image {
+  width: 100%;
+  height: 120px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--neutral-50);
+}
+
+.variant-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--transition-normal);
+}
+
+.variant-card:hover .variant-image img {
+  transform: scale(1.05);
+}
+
+.variant-color {
+  padding: var(--spacing-md);
+  text-align: center;
   font-size: 0.9rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  background: var(--primary-white);
+  border-top: 1px solid var(--neutral-100);
 }
 
 /* Search Results */
@@ -1305,21 +1332,17 @@ body {
     padding: var(--spacing-lg);
   }
   
-  .staples-grid {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  .variant-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: var(--spacing-md);
   }
   
-  .staple-btn {
-    min-height: 80px;
-    padding: var(--spacing-md);
+  .variant-image {
+    height: 100px;
   }
   
-  .staple-icon {
-    font-size: 1.5rem;
-  }
-  
-  .staple-name {
+  .variant-color {
+    padding: var(--spacing-sm);
     font-size: 0.8rem;
   }
   
