@@ -214,11 +214,18 @@ export default function App() {
     const fetchStaples = async () => {
       try {
         const res = await fetch(`${BASE_URL}/staples`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch staples");
-        }
+        if (!res.ok) throw new Error("Failed to fetch staples");
         const staplesData = await res.json();
-        setStaples(staplesData);
+
+        if (staplesData.success && staplesData.staples) {
+          // Convert object → array
+          const arr = Object.entries(staplesData.staples).map(([name, info]) => ({
+            name,
+            category: info.category,
+            variants: info.variants || []
+          }));
+          setStaples(arr);
+        }
       } catch (err) {
         console.error("Failed to fetch staples:", err);
       }
@@ -226,6 +233,7 @@ export default function App() {
 
     fetchStaples();
   }, []);
+
 
   const handleLogin = async () => {
     try {
@@ -467,41 +475,41 @@ export default function App() {
 
       const data = await res.json();
       setSearchResults(data.products || []);
+
     } catch (err) {
       console.error("Product search failed:", err);
       showToast("❌ Search failed");
     }
   };
 
-  const handleProductSelect = async (product) => {
-    try {
-      const res = await fetch(`${BASE_URL}/wardrobe`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user.uid,
-          image_url: product.image_url,
-          name: product.name,
-          category: product.category || "Unknown",
-          color: product.color || "Unknown",
-          tags: product.tags || [],
-          source: "search"
-        }),
-      });
+      const handleProductSelect = async (product) => {
+        try {
+          const res = await fetch(`${BASE_URL}/quick-add`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: user.uid,
+              name: product.name,
+              category: product.category || "Search",
+              color: product.color || "Unknown",
+              image_url: product.image_url,
+            }),
+          });
 
-      if (!res.ok) {
-        throw new Error("Failed to save product");
-      }
+          if (!res.ok) {
+            throw new Error("Failed to save product");
+          }
 
-      showToast(`✅ ${product.name} added to wardrobe!`);
-      setSearchResults([]);
-      setSearchQuery("");
-      fetchItems(user.uid); // refresh wardrobe
-    } catch (err) {
-      console.error("Product save failed:", err);
-      showToast("❌ Failed to save product");
-    }
-  };
+          showToast(`✅ ${product.name} added to wardrobe!`);
+          setSearchResults([]);
+          setSearchQuery("");
+          fetchItems(user.uid); // refresh wardrobe
+        } catch (err) {
+          console.error("Product save failed:", err);
+          showToast("❌ Failed to save product");
+        }
+      };
+
 
   // ✅ mark as worn (stores ISO date only)
   const markAsWorn = async (id) => {
@@ -993,14 +1001,26 @@ async function suggestOutfit(options = {}) {
                       <h4 className="results-title">Found {searchResults.length} products</h4>
                       <div className="results-grid">
                         {searchResults.map((product, i) => (
-                          <div key={i} className="product-card card" onClick={() => handleProductSelect(product)}>
-                            <img src={product.image_url} alt={product.name} className="product-image" />
+                          <div key={i} className="product-card card" onClick={() => handleProductSelect({
+                            image_url: product.image_url || product.url,
+                            name: product.name || product.title || "Unnamed",
+                            category: "Search",
+                            color: "Unknown",
+                            tags: []
+                          })}>
+                            <img 
+                              src={product.image_url || product.thumbnail} 
+                              alt={product.name} 
+                              className="product-image" 
+                            />
                             <div className="product-info">
-                              <p className="product-name">{product.name}</p>
+                              <p className="product-name">{product.name || "Unnamed"}</p>
                               <p className="product-price">{product.price}</p>
                             </div>
                           </div>
                         ))}
+
+
                       </div>
                     </div>
                   )}
