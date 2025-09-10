@@ -100,53 +100,78 @@ export default function WeeklyPlanner() {
   });
 
   return (
-    <div className="planner-container">
-      <h2>Plan Your Outfits</h2>
+    <div className="section">
+      <h2 className="section-title">Weekly Outfit Planner</h2>
 
-      <div className="calendar-wrapper">
-        <h3>📅 Your Outfit Calendar</h3>
-        <Calendar value={selectedDate} onChange={setSelectedDate} />
-        <button onClick={handleAddOutfit} className="add-btn">
-          Add Outfit
+      <div className="planner-calendar">
+        <h3 className="section-subtitle">📅 Choose Your Date</h3>
+        <div className="calendar-container">
+          <Calendar value={selectedDate} onChange={setSelectedDate} />
+        </div>
+        <button onClick={handleAddOutfit} className="btn btn-primary" style={{marginTop: "var(--spacing-lg)"}}>
+          ✨ Plan New Outfit
         </button>
       </div>
 
-      <div className="week-slider">
-        <h3>🗓️ Your Week at a Glance</h3>
-        <div className="week-scroll">
+      <div className="week-overview">
+        <h3 className="section-subtitle">🗓️ Your Week at a Glance</h3>
+        <div className="week-grid">
           {weekDates.map((date, idx) => {
             const key = formatDateKey(date);
             const data = plannedOutfits[key];
+            const isSelected = key === formatDateKey(selectedDate);
             return (
               <div
-                className={`day-card ${key === formatDateKey(selectedDate) ? "active" : ""}`}
+                className={`week-day-card card ${isSelected ? "selected" : ""}`}
                 key={idx}
+                onClick={() => setSelectedDate(date)}
               >
-                <h4>{date.toDateString().slice(0, 10)}</h4>
-                {data ? (
-                  <>
-                    <p><strong>{data.title}</strong></p>
-                    <p>{data.note}</p>
-                    <span className="tag">{data.vibe}</span>
-                  </>
-                ) : (
-                  <p>No plan yet</p>
-                )}
+                <div className="day-header">
+                  <h4 className="day-name">{date.toLocaleDateString('en-US', { weekday: 'short' })}</h4>
+                  <p className="day-date">{date.getDate()}</p>
+                </div>
+                <div className="day-content">
+                  {data ? (
+                    <>
+                      <p className="outfit-title">{data.title}</p>
+                      <p className="outfit-note">{data.note}</p>
+                      <span className="tag tag-accent">{data.vibe}</span>
+                    </>
+                  ) : (
+                    <p className="no-plan">No outfit planned</p>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
       </div>
 
-      <div className="planned-list">
-        <h3>🧾 Planned Outfits</h3>
-        {Object.entries(plannedOutfits).map(([key, outfit], i) => (
-          <div key={i} className="planned-card">
-            <strong>{key}</strong> – {outfit.title} ({outfit.note}){" "}
-            <span className="tag planned">{outfit.vibe}</span>
+      {Object.keys(plannedOutfits).length > 0 && (
+        <div className="planned-outfits">
+          <h3 className="section-subtitle">🧾 All Planned Outfits</h3>
+          <div className="planned-grid">
+            {Object.entries(plannedOutfits)
+              .sort(([a], [b]) => new Date(a) - new Date(b))
+              .map(([key, outfit], i) => {
+                const date = new Date(key);
+                return (
+                  <div key={i} className="planned-outfit-card card">
+                    <div className="planned-date">
+                      <span className="date-day">{date.getDate()}</span>
+                      <span className="date-month">{date.toLocaleDateString('en-US', { month: 'short' })}</span>
+                    </div>
+                    <div className="planned-details">
+                      <h4 className="planned-title">{outfit.title}</h4>
+                      <p className="planned-note">{outfit.note}</p>
+                      <span className="tag">{outfit.vibe}</span>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
