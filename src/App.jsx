@@ -87,8 +87,6 @@ export default function App() {
   const [uploadExpanded, setUploadExpanded] = useState(true);
   const [quickAddExpanded, setQuickAddExpanded] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
-  const [showColorModal, setShowColorModal] = useState(false);
-  const [selectedStaple, setSelectedStaple] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [toastMessage, setToastMessage] = useState("");
