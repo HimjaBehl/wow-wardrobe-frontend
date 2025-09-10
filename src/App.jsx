@@ -710,53 +710,78 @@ async function suggestOutfit(options = {}) {
         ) : (
           <>
           {activeTab === "upload" && (
-          <section id="add" style={{ marginBottom: "2rem" }}>
-            <h2>Upload Item</h2>
-            <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
-            <button onClick={handleUpload} style={{
-                marginTop: "1rem",
-                width: "100%",
-                padding: "0.75rem",
-                fontSize: "1rem",
-                borderRadius: "8px",
-              }}>
-              Upload & Auto-Tag
-            </button>
+          <section className="section">
+            <h2 className="section-title">Upload New Item</h2>
+            
+            {/* Modern File Upload Area */}
+            <div className="upload-area">
+              <div className="upload-zone">
+                <div className="upload-icon">📸</div>
+                <h3>Drop your photo here</h3>
+                <p>or click to browse</p>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => setFile(e.target.files[0])}
+                  className="file-input"
+                />
+              </div>
+              <button 
+                className="btn btn-primary"
+                onClick={handleUpload}
+                style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
+              >
+                ✨ Upload & Auto-Tag
+              </button>
+            </div>
 
+            {/* Modern Detected Items */}
             {detectedItems.length > 0 && (
-              <div style={{ marginTop: "1rem" }}>
-                <h4>Detected Items</h4>
-                {detectedItems.map((item, i) => (
-                  <div key={i} style={{ marginBottom: "0.5rem", border: "1px solid #ccc", padding: "0.5rem" }}>
-                    <img src={item.image_url} alt={item.name} style={{ width: "100px" }} />
-                    <p>{item.name} — {item.category} • {item.color}</p>
-                    <button onClick={() => toggleItemApproval(i)}>
-                      {item.approved ? "✅ Keep" : "❌ Remove"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditItemIndex(i);
-                        setEditForm({
-                          name: item.name || "",
-                          category: item.category || "",
-                          color: item.color || "",
-                          tags: (item.tags || []).join(", "),
-                        });
-                      }}
-                      style={{ marginLeft: "0.5rem" }}
-                    >
-                      ✏️ Edit
-                    </button>
-                  </div>
-                ))}
-                <button onClick={confirmSelectedItems} style={{
-                    marginTop: "1rem",
-                    width: "100%",
-                    padding: "0.75rem",
-                    fontSize: "1rem",
-                    borderRadius: "8px",
-                  }}>
-                  Add Selected to Wardrobe
+              <div style={{ marginTop: "var(--spacing-xl)" }}>
+                <h3 className="section-subtitle">✨ Detected Items</h3>
+                <div className="detected-items">
+                  {detectedItems.map((item, i) => (
+                    <div key={i} className="detected-item card">
+                      <div className="detected-item-image">
+                        <img src={item.image_url} alt={item.name} className="preview-image" />
+                      </div>
+                      <div className="detected-item-content">
+                        <h4 className="detected-item-title">{item.name}</h4>
+                        <p className="detected-item-details">
+                          {item.category} • <span className="color-highlight">{item.color}</span>
+                        </p>
+                        <div className="detected-item-actions">
+                          <button 
+                            className={`btn ${item.approved ? 'btn-success' : 'btn-secondary'}`}
+                            onClick={() => toggleItemApproval(i)}
+                          >
+                            {item.approved ? "✅ Keep" : "❌ Remove"}
+                          </button>
+                          <button
+                            className="btn btn-outline"
+                            onClick={() => {
+                              setEditItemIndex(i);
+                              setEditForm({
+                                name: item.name || "",
+                                category: item.category || "",
+                                color: item.color || "",
+                                tags: (item.tags || []).join(", "),
+                              });
+                            }}
+                          >
+                            ✏️ Edit
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button 
+                  className="btn btn-primary"
+                  onClick={confirmSelectedItems}
+                  style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
+                >
+                  ➕ Add Selected to Wardrobe
                 </button>
               </div>
             )}
