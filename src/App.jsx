@@ -1059,35 +1059,43 @@ async function suggestOutfit(options = {}) {
 
           {/* AI Stylist Section */}
           {activeTab === "stylist" && (
-            <section id="stylist">
-              <h2>AI Outfit Suggestions 🤖</h2>
-              <p style={{marginTop:"-0.5rem",marginBottom:"1rem",fontSize:"0.9rem",color:"#555"}}>
-                Pick a sub-theme and city, Tina will style your look ✨
+            <section className="section">
+              <h2 className="section-title">AI Style Assistant</h2>
+              <p className="section-description">
+                Let our AI stylist create personalized looks from your wardrobe ✨
               </p>
 
-              <div style={{ marginBottom: "1rem" }}>
-                <select
-                  value={subTheme}
-                  onChange={(e) => setSubTheme(e.target.value)}
-                >
-                  <option value="Casual">Casual</option>
-                  <option value="Party">Party</option>
-                  <option value="Workwear">Workwear</option>
-                  <option value="Athleisure">Athleisure</option>
-                  <option value="Brunch">Brunch</option>
-                  <option value="Dinner">Dinner</option>
-                </select>
-
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="City"
-                  style={{ marginLeft: "1rem", padding: "4px" }}
-                />
+              {/* Modern Style Controls */}
+              <div className="style-controls">
+                <div className="form-group">
+                  <label className="form-label">Occasion</label>
+                  <select
+                    className="form-select"
+                    value={subTheme}
+                    onChange={(e) => setSubTheme(e.target.value)}
+                  >
+                    <option value="Casual">😎 Casual</option>
+                    <option value="Party">🎉 Party</option>
+                    <option value="Workwear">💼 Workwear</option>
+                    <option value="Athleisure">🏃‍♀️ Athleisure</option>
+                    <option value="Brunch">🥐 Brunch</option>
+                    <option value="Dinner">🍽️ Dinner</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Location</label>
+                  <input
+                    className="form-input"
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="e.g., New York, Paris, Tokyo"
+                  />
+                </div>
               </div>
 
               <button
+                className="btn btn-primary"
                 onClick={async () => {
                   await suggestOutfitAgent({
                     uid: user.uid,
@@ -1096,10 +1104,91 @@ async function suggestOutfit(options = {}) {
                     subTheme,
                   });
                 }}
-                style={{ backgroundColor: "white", border: "1px solid black", marginTop: "1rem" }}
+                style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
               >
-                Get Outfit Suggestions
+                🪄 Generate Outfit Ideas
               </button>
+
+              {/* Modern Outfit Suggestions */}
+              {outfit && outfit.length > 0 ? (
+            <div className="outfit-suggestions">
+              {outfit.map((look, idx) => (
+                <div key={idx} className="outfit-look">
+                  <div className="look-header">
+                    <h3 className="look-title">✨ {look.title || `Look ${idx + 1}`}</h3>
+                    <p className="look-description">{look.style_note}</p>
+                  </div>
+
+                  <div className="look-items">
+                    {look.items.map((piece, i) => {
+                      const hydrated = piece;
+                      return (
+                        <div key={i} className="look-item card">
+                          <img
+                            className="look-item-image"
+                            src={hydrated.image_url}
+                            alt={hydrated.name}
+                          />
+                          <div className="look-item-info">
+                            <p className="look-item-name">{hydrated.name || `Item ${piece.idx}`}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="look-actions">
+                    <button 
+                      className="btn btn-outline"
+                      onClick={() => saveOutfitToPlanner({ uid: user.uid, outfit: look })}
+                    >
+                      💾 Save to Planner
+                    </button>
+                    <button
+                      className="btn btn-accent"
+                      onClick={() =>
+                        likeOutfit({
+                          uid    : user.uid,
+                          outfit : look,
+                          context: { occasion, vibe, style_mood: selectedMood },
+                        })
+                      }
+                    >
+                      ❤️ Love This Look
+                    </button>
+                  </div>
+                  {look.trends_used && look.trends_used.length > 0 && (
+                    <div className="look-trends">
+                      <h4 className="trends-title">🔥 Trending Inspiration</h4>
+                      <div className="trends-list">
+                        {look.trends_used.map((trend, i) => (
+                          <div key={i} className="trend-item">
+                            <span className="trend-content">{trend.content}</span>
+                            {trend.url && (
+                              <a
+                                className="trend-source"
+                                href={trend.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                🔗 Source
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            outfit !== null && (
+              <p style={{ marginTop: "1rem", color: "#888" }}>
+                Tina couldn’t style anything right now. Try again, or check wardrobe 👗
+              </p>
+            )
+          )}
             </section>
           )}
 
@@ -1110,85 +1199,6 @@ async function suggestOutfit(options = {}) {
               <WeeklyPlanner />
             </section>
           )}
-
-          {/* Display outfit suggestions */}
-          {/* Display outfit suggestions */}
-          {outfit && outfit.length > 0 ? (
-            outfit.map((look, idx) => (
-              <section key={idx} className="outfit-group">
-                <h3>✨ {look.title || `Look ${idx + 1}`}</h3>
-                <p className="style-note">📝 {look.style_note}</p>
-
-                <div className="outfit-grid">
-                  {look.items.map((piece, i) => {
-                const hydrated = piece;
-
-
-                    return (
-                      <article key={i} className="outfit-card">
-                        <img
-                          src={hydrated.image_url}
-                          alt={hydrated.name}
-
-                          style={{ width: "100%", height: "240px", objectFit: "cover" }}
-                        />
-                        <p className="item-name">{hydrated.name || `Item ${piece.idx}`}</p>
-                      </article>
-                    );
-                  })}
-
-                </div>
-
-                <div className="outfit-actions">
-                  <button onClick={() => saveOutfitToPlanner({ uid: user.uid, outfit: look })}>
-                    💾 Save
-                  </button>
-                  <button
-                    onClick={() =>
-                      likeOutfit({
-                        uid    : user.uid,
-                        outfit : look,
-                        context: { occasion, vibe, style_mood: selectedMood },
-                      })
-                    }
-                  >
-                    ❤️ Like
-                  </button>
-
-                </div>
-                {look.trends_used && look.trends_used.length > 0 && (
-                  <div className="trends">
-                    <h4>✨ Inspired by Trends</h4>
-                    <ul>
-                      {look.trends_used.map((trend, i) => (
-                        <li key={i}>
-                          {trend.content}
-                          {trend.url && (
-                            <a
-                              href={trend.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ marginLeft: "6px", color: "#0070f3" }}
-                            >
-                              (Source)
-                            </a>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-              </section>
-            ))
-          ) : (
-            outfit !== null && (
-              <p style={{ marginTop: "1rem", color: "#888" }}>
-                Tina couldn’t style anything right now. Try again, or check wardrobe 👗
-              </p>
-            )
-          )}
-
 
           {/* Tag Edit Modal */}
           {showModal && selectedItem && (
