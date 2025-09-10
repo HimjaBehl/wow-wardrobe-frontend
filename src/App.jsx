@@ -92,6 +92,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [toastMessage, setToastMessage] = useState("");
+  const [staples, setStaples] = useState([]);
 
   // 🆕 toggle between Tina agent (LangChain) and old route
   const [useTinaAgent, setUseTinaAgent] = useState(false);
@@ -208,6 +209,24 @@ export default function App() {
       }
     });
     return () => unsubscribe();
+  }, []);
+
+  // Fetch staples from backend
+  useEffect(() => {
+    const fetchStaples = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/staples`);
+        if (!res.ok) {
+          throw new Error("Failed to fetch staples");
+        }
+        const staplesData = await res.json();
+        setStaples(staplesData);
+      } catch (err) {
+        console.error("Failed to fetch staples:", err);
+      }
+    };
+
+    fetchStaples();
   }, []);
 
   const handleLogin = async () => {
@@ -408,30 +427,29 @@ export default function App() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  const handleQuickAdd = async (staple, color) => {
+  const handleQuickAdd = async (variant, stapleName, stapleCategory) => {
     try {
       const res = await fetch(`${BASE_URL}/quick-add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uid: user.uid,
-          name: staple.name,
-          category: staple.category,
-          color: color,
+          name: stapleName,
+          category: stapleCategory,
+          color: variant.color,
+          image_url: variant.image_url,
         }),
       });
 
       if (!res.ok) {
-        throw new Error(`Failed to add ${staple.name}`);
+        throw new Error(`Failed to add ${stapleName}`);
       }
 
-      showToast(`✅ ${color} ${staple.name} added to wardrobe!`);
-      setShowColorModal(false);
-      setSelectedStaple(null);
+      showToast(`✅ Added ${stapleName} (${variant.color})`);
       fetchItems(user.uid); // refresh wardrobe
     } catch (err) {
       console.error("Quick add failed:", err);
-      showToast(`❌ Failed to add ${staple.name}`);
+      showToast(`❌ Failed to add ${stapleName}`);
     }
   };
 
@@ -913,28 +931,31 @@ async function suggestOutfit(options = {}) {
               
               {quickAddExpanded && (
                 <div className="section-content">
-                  <div className="staples-grid">
-                    {[
-                      { name: "T-shirt", category: "Tops", icon: "👕" },
-                      { name: "Shirt", category: "Tops", icon: "👔" },
-                      { name: "Jeans", category: "Bottoms", icon: "👖" },
-                      { name: "Flats", category: "Shoes", icon: "🥿" },
-                      { name: "Shoes", category: "Shoes", icon: "👟" },
-                      { name: "Dress", category: "Dresses", icon: "👗" }
-                    ].map((staple) => (
-                      <button
-                        key={staple.name}
-                        className="staple-btn"
-                        onClick={() => {
-                          setSelectedStaple(staple);
-                          setShowColorModal(true);
-                        }}
-                      >
-                        <span className="staple-icon">{staple.icon}</span>
-                        <span className="staple-name">{staple.name}</span>
-                      </button>
-                    ))}
-                  </div>
+                  {staples.map((staple) => (
+                    <div key={staple.name} className="staple-group">
+                      <h4 className="staple-heading">{staple.name}</h4>
+                      <div className="variant-grid">
+                        {staple.variants.map((variant, index) => (
+                          <div
+                            key={index}
+                            className="variant-card"
+                            onClick={() => handleQuickAdd(variant, staple.name, staple.category)}
+                          >
+                            <div className="variant-image">
+                              <img 
+                                src={variant.image_url} 
+                                alt={`${staple.name} in ${variant.color}`}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                            <div className="variant-color">{variant.color}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -989,43 +1010,6 @@ async function suggestOutfit(options = {}) {
               )}
             </div>
             
-            {/* Color Selection Modal */}
-            {showColorModal && selectedStaple && (
-              <div className="modal-overlay" onClick={() => setShowColorModal(false)}>
-                <div className="color-modal" onClick={(e) => e.stopPropagation()}>
-                  <h3>Choose Color for {selectedStaple.name}</h3>
-                  <div className="color-grid">
-                    {[
-                      { name: "Black", hex: "#000000" },
-                      { name: "White", hex: "#FFFFFF" },
-                      { name: "Gray", hex: "#808080" },
-                      { name: "Navy", hex: "#000080" },
-                      { name: "Blue", hex: "#0066CC" },
-                      { name: "Red", hex: "#CC0000" },
-                      { name: "Pink", hex: "#FF69B4" },
-                      { name: "Green", hex: "#00AA00" },
-                      { name: "Brown", hex: "#8B4513" },
-                      { name: "Beige", hex: "#F5F5DC" }
-                    ].map((color) => (
-                      <button
-                        key={color.name}
-                        className="color-option"
-                        style={{ backgroundColor: color.hex, border: color.name === 'White' ? '1px solid #ddd' : 'none' }}
-                        onClick={() => handleQuickAdd(selectedStaple, color.name)}
-                        title={color.name}
-                      />
-                    ))}
-                  </div>
-                  <button 
-                    className="btn btn-secondary"
-                    onClick={() => setShowColorModal(false)}
-                    style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
             
             {/* Toast Notification */}
             {toastMessage && (
