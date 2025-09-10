@@ -82,6 +82,16 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("wardrobe");
   const [detectedItems, setDetectedItems] = useState([]);
+  
+  // New upload features state
+  const [uploadExpanded, setUploadExpanded] = useState(true);
+  const [quickAddExpanded, setQuickAddExpanded] = useState(false);
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const [showColorModal, setShowColorModal] = useState(false);
+  const [selectedStaple, setSelectedStaple] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [toastMessage, setToastMessage] = useState("");
 
   // 🆕 toggle between Tina agent (LangChain) and old route
   const [useTinaAgent, setUseTinaAgent] = useState(false);
@@ -389,6 +399,91 @@ export default function App() {
     } catch (err) {
       console.error("Fav toggle failed:", err);
       alert("Couldn’t update favourite, sorry!");
+    }
+  };
+
+  // ⚡ New upload features functions
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(""), 3000);
+  };
+
+  const handleQuickAdd = async (staple, color) => {
+    try {
+      const res = await fetch(`${BASE_URL}/quick-add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user.uid,
+          name: staple.name,
+          category: staple.category,
+          color: color,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to add ${staple.name}`);
+      }
+
+      showToast(`✅ ${color} ${staple.name} added to wardrobe!`);
+      setShowColorModal(false);
+      setSelectedStaple(null);
+      fetchItems(user.uid); // refresh wardrobe
+    } catch (err) {
+      console.error("Quick add failed:", err);
+      showToast(`❌ Failed to add ${staple.name}`);
+    }
+  };
+
+  const handleProductSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    try {
+      const res = await fetch(`${BASE_URL}/search-product`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Search failed");
+      }
+
+      const data = await res.json();
+      setSearchResults(data.products || []);
+    } catch (err) {
+      console.error("Product search failed:", err);
+      showToast("❌ Search failed");
+    }
+  };
+
+  const handleProductSelect = async (product) => {
+    try {
+      const res = await fetch(`${BASE_URL}/wardrobe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user.uid,
+          image_url: product.image_url,
+          name: product.name,
+          category: product.category || "Unknown",
+          color: product.color || "Unknown",
+          tags: product.tags || [],
+          source: "search"
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save product");
+      }
+
+      showToast(`✅ ${product.name} added to wardrobe!`);
+      setSearchResults([]);
+      setSearchQuery("");
+      fetchItems(user.uid); // refresh wardrobe
+    } catch (err) {
+      console.error("Product save failed:", err);
+      showToast("❌ Failed to save product");
     }
   };
 
@@ -711,67 +806,87 @@ async function suggestOutfit(options = {}) {
           <>
           {activeTab === "upload" && (
           <section className="section">
-            <h2 className="section-title">Upload New Item</h2>
+            <h2 className="section-title">Add to Wardrobe</h2>
+            <p className="section-description">Upload photos, add staples, or search for items</p>
             
-            {/* Modern File Upload Area */}
-            <div className="upload-area">
-              <div className="upload-zone">
-                <div className="upload-icon">📸</div>
-                <h3>Drop your photo here</h3>
-                <p>or click to browse</p>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={(e) => setFile(e.target.files[0])}
-                  className="file-input"
-                />
-              </div>
-              <button 
-                className="btn btn-primary"
-                onClick={handleUpload}
-                style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
+            {/* 1. Upload / Camera Section */}
+            <div className="upload-section">
+              <div 
+                className="section-header"
+                onClick={() => setUploadExpanded(!uploadExpanded)}
               >
-                ✨ Upload & Auto-Tag
-              </button>
+                <h3 className="section-subtitle">📸 Upload / Camera</h3>
+                <span className={`expand-icon ${uploadExpanded ? 'expanded' : ''}`}>▼</span>
+              </div>
+              
+              {uploadExpanded && (
+                <div className="section-content">
+                  <div className="upload-methods">
+                    <div className="upload-zone">
+                      <div className="upload-icon">📷</div>
+                      <h4>Choose Photo</h4>
+                      <p>Upload from gallery</p>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => setFile(e.target.files[0])}
+                        className="file-input"
+                      />
+                    </div>
+                    
+                    <div className="upload-zone">
+                      <div className="upload-icon">📱</div>
+                      <h4>Take Photo</h4>
+                      <p>Use camera</p>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        capture="environment"
+                        onChange={(e) => setFile(e.target.files[0])}
+                        className="file-input"
+                      />
+                    </div>
+                  </div>
+                  
+                  {file && (
+                    <div className="selected-file">
+                      <p>📄 {file.name}</p>
+                      <button 
+                        className="btn btn-primary"
+                        onClick={handleUpload}
+                        style={{ marginTop: "var(--spacing-md)", width: "100%" }}
+                      >
+                        ✨ Auto-Tag & Detect Items
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Modern Detected Items */}
+            {/* Detected Items Results */}
             {detectedItems.length > 0 && (
-              <div style={{ marginTop: "var(--spacing-xl)" }}>
+              <div className="upload-results">
                 <h3 className="section-subtitle">✨ Detected Items</h3>
                 <div className="detected-items">
                   {detectedItems.map((item, i) => (
                     <div key={i} className="detected-item card">
                       <div className="detected-item-image">
                         <img src={item.image_url} alt={item.name} className="preview-image" />
+                        <div className="checkbox-overlay">
+                          <input
+                            type="checkbox"
+                            checked={item.approved}
+                            onChange={() => toggleItemApproval(i)}
+                            className="item-checkbox"
+                          />
+                        </div>
                       </div>
                       <div className="detected-item-content">
                         <h4 className="detected-item-title">{item.name}</h4>
                         <p className="detected-item-details">
                           {item.category} • <span className="color-highlight">{item.color}</span>
                         </p>
-                        <div className="detected-item-actions">
-                          <button 
-                            className={`btn ${item.approved ? 'btn-success' : 'btn-secondary'}`}
-                            onClick={() => toggleItemApproval(i)}
-                          >
-                            {item.approved ? "✅ Keep" : "❌ Remove"}
-                          </button>
-                          <button
-                            className="btn btn-outline"
-                            onClick={() => {
-                              setEditItemIndex(i);
-                              setEditForm({
-                                name: item.name || "",
-                                category: item.category || "",
-                                color: item.color || "",
-                                tags: (item.tags || []).join(", "),
-                              });
-                            }}
-                          >
-                            ✏️ Edit
-                          </button>
-                        </div>
                       </div>
                     </div>
                   ))}
@@ -783,6 +898,139 @@ async function suggestOutfit(options = {}) {
                 >
                   ➕ Add Selected to Wardrobe
                 </button>
+              </div>
+            )}
+            
+            {/* 2. Quick Add Section */}
+            <div className="upload-section">
+              <div 
+                className="section-header"
+                onClick={() => setQuickAddExpanded(!quickAddExpanded)}
+              >
+                <h3 className="section-subtitle">⚡ Quick Add Staples</h3>
+                <span className={`expand-icon ${quickAddExpanded ? 'expanded' : ''}`}>▼</span>
+              </div>
+              
+              {quickAddExpanded && (
+                <div className="section-content">
+                  <div className="staples-grid">
+                    {[
+                      { name: "T-shirt", category: "Tops", icon: "👕" },
+                      { name: "Shirt", category: "Tops", icon: "👔" },
+                      { name: "Jeans", category: "Bottoms", icon: "👖" },
+                      { name: "Flats", category: "Shoes", icon: "🥿" },
+                      { name: "Shoes", category: "Shoes", icon: "👟" },
+                      { name: "Dress", category: "Dresses", icon: "👗" }
+                    ].map((staple) => (
+                      <button
+                        key={staple.name}
+                        className="staple-btn"
+                        onClick={() => {
+                          setSelectedStaple(staple);
+                          setShowColorModal(true);
+                        }}
+                      >
+                        <span className="staple-icon">{staple.icon}</span>
+                        <span className="staple-name">{staple.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* 3. Search & Link Section */}
+            <div className="upload-section">
+              <div 
+                className="section-header"
+                onClick={() => setSearchExpanded(!searchExpanded)}
+              >
+                <h3 className="section-subtitle">🔍 Search & Link</h3>
+                <span className={`expand-icon ${searchExpanded ? 'expanded' : ''}`}>▼</span>
+              </div>
+              
+              {searchExpanded && (
+                <div className="section-content">
+                  <div className="search-bar">
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Search for product..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleProductSearch()}
+                    />
+                    <button 
+                      className="btn btn-primary"
+                      onClick={handleProductSearch}
+                      style={{ marginTop: "var(--spacing-md)" }}
+                    >
+                      🔍 Search Products
+                    </button>
+                  </div>
+                  
+                  {searchResults.length > 0 && (
+                    <div className="search-results">
+                      <h4 className="results-title">Found {searchResults.length} products</h4>
+                      <div className="results-grid">
+                        {searchResults.map((product, i) => (
+                          <div key={i} className="product-card card" onClick={() => handleProductSelect(product)}>
+                            <img src={product.image_url} alt={product.name} className="product-image" />
+                            <div className="product-info">
+                              <p className="product-name">{product.name}</p>
+                              <p className="product-price">{product.price}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Color Selection Modal */}
+            {showColorModal && selectedStaple && (
+              <div className="modal-overlay" onClick={() => setShowColorModal(false)}>
+                <div className="color-modal" onClick={(e) => e.stopPropagation()}>
+                  <h3>Choose Color for {selectedStaple.name}</h3>
+                  <div className="color-grid">
+                    {[
+                      { name: "Black", hex: "#000000" },
+                      { name: "White", hex: "#FFFFFF" },
+                      { name: "Gray", hex: "#808080" },
+                      { name: "Navy", hex: "#000080" },
+                      { name: "Blue", hex: "#0066CC" },
+                      { name: "Red", hex: "#CC0000" },
+                      { name: "Pink", hex: "#FF69B4" },
+                      { name: "Green", hex: "#00AA00" },
+                      { name: "Brown", hex: "#8B4513" },
+                      { name: "Beige", hex: "#F5F5DC" }
+                    ].map((color) => (
+                      <button
+                        key={color.name}
+                        className="color-option"
+                        style={{ backgroundColor: color.hex, border: color.name === 'White' ? '1px solid #ddd' : 'none' }}
+                        onClick={() => handleQuickAdd(selectedStaple, color.name)}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => setShowColorModal(false)}
+                    style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Toast Notification */}
+            {toastMessage && (
+              <div className="toast-notification">
+                {toastMessage}
               </div>
             )}
           </section>
