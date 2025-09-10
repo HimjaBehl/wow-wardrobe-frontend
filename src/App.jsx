@@ -877,78 +877,79 @@ async function suggestOutfit(options = {}) {
             </div>
           )}
 
-          {/* Wardrobe Section */}
+          {/* Modern Wardrobe Section */}
           {activeTab === "wardrobe" && (
-          <section id="wardrobe" style={{ marginBottom: "2rem" }}>
-            <h2>Your Wardrobe 🧥</h2>
+          <section className="section">
+            <h2 className="section-title">Your Wardrobe</h2>
 
-            {/* ── Multi-select toolbar ───────────────────── */}
-            <div style={{ marginBottom: "10px" }}>
+            {/* Modern Multi-select Toolbar */}
+            <div className="flex gap-md" style={{ marginBottom: "var(--spacing-lg)" }}>
               <button
+                className={`btn ${isMultiSelectMode ? 'btn-secondary' : 'btn-primary'}`}
                 onClick={() => {
                   setIsMultiSelectMode(!isMultiSelectMode);
                   if (isMultiSelectMode) setSelectedItems([]);     // leaving the mode resets
                 }}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  backgroundColor: isMultiSelectMode ? "#ffe0e0" : "#e0ffe0",
-                  marginRight: "10px"
-                }}
               >
-                {isMultiSelectMode ? "Cancel Multi-Select" : "Select Items to Delete"}
+                {isMultiSelectMode ? "✕ Cancel" : "Select Items"}
               </button>
 
               {isMultiSelectMode && selectedItems.length > 0 && (
                 <button
+                  className="btn"
                   onClick={handleDeleteSelected}
                   style={{
-                    padding: "8px 16px",
-                    borderRadius: "8px",
-                    backgroundColor: "#ff4d4d",
-                    color: "#fff"
+                    background: "var(--accent-pink)",
+                    color: "var(--primary-white)"
                   }}
                 >
-                  Delete {selectedItems.length} Selected
+                  🗑️ Delete {selectedItems.length}
                 </button>
               )}
             </div>
             {/* ───────────────────────────────────────────── */}
 
 
-            <div>
-              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} > <option value="">All Categories</option> {uniqueCategories.map((cat) => ( <option key={cat} value={cat}>{formatLabel(cat)}</option> ))} </select>
-
-              <select value={filterColor} onChange={(e) => setFilterColor(e.target.value)} style={{ marginLeft: "1rem" }} > <option value="">All Colors</option> {uniqueColors.map((col) => ( <option key={col} value={col}>{formatLabel(col)}</option> ))} </select>
-
+            {/* Modern Filters */}
+            <div className="flex gap-md" style={{ marginBottom: "var(--spacing-lg)" }}>
+              <div className="form-group">
+                <select 
+                  className="form-select" 
+                  value={filterCategory} 
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                >
+                  <option value="">All Categories</option>
+                  {uniqueCategories.map((cat) => (
+                    <option key={cat} value={cat}>{formatLabel(cat)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <select 
+                  className="form-select" 
+                  value={filterColor} 
+                  onChange={(e) => setFilterColor(e.target.value)}
+                >
+                  <option value="">All Colors</option>
+                  {uniqueColors.map((col) => (
+                    <option key={col} value={col}>{formatLabel(col)}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: "1.5rem",
-                paddingTop: "1rem",
-              }}
-            >
+            {/* Modern Wardrobe Grid */}
+            <div className="grid grid-wardrobe">
               {filteredItems.map((item) => (
                 <div
                   key={item.id}
+                  className="card"
                   onClick={() => openModal(item)} 
                   aria-label={`Open details for ${item.name}`}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openModal(item)}
-                  style={{
-                    cursor: "pointer",
-                    width: "200px",
-                    margin: "10px",
-                    background: "#fff",
-                    borderRadius: "8px",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                    overflow: "hidden",
-                    position: "relative",
-                  }}
+                  style={{ cursor: "pointer", position: "relative" }}
                 >
                   {isMultiSelectMode && (
                     <input
@@ -975,52 +976,29 @@ async function suggestOutfit(options = {}) {
 
                   {item.image_url && (
                      <img
+                       className="card-image"
                        src={item.image_url}
                       alt={item.name}
-                       style={{ width:"100%",height:"240px",objectFit:"cover" }}
                      />
                    )}
-                  <div
-                    style={{
-                      padding: "0.5rem",
-                      fontWeight: "bold",
-                      textAlign: "center",
-                    }}
-                  >
-                    {formatLabel(item.color)} {formatLabel(item.name)}
+                  <div className="card-content">
+                    <h3 className="card-title">
+                      {formatLabel(item.color)} {formatLabel(item.name)}
+                    </h3>
+                    <p className="card-subtitle">
+                      {formatLabel(item.category)}
+                    </p>
                   </div>
-                  <p
-                    style={{
-                      textAlign: "center",
-                      fontSize: "0.9rem",
-                      margin: 0,
-                    }}
-                  >
-                    {formatLabel(item.category)}
-                  </p>
                   {item.tags && item.tags.length > 0 && (
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        flexWrap: "wrap",
-                        gap: "4px",
-                        padding: "4px",
-                      }}
-                    >
-                      {[...new Set(item.tags || [])].map((tag, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            background: "#eee",
-                            borderRadius: "12px",
-                            padding: "2px 8px",
-                            fontSize: "0.8rem",
-                          }}
-                        >
+                    <div className="tags" style={{ padding: "0 var(--spacing-md) var(--spacing-sm)" }}>
+                      {[...new Set(item.tags || [])].slice(0, 3).map((tag, i) => (
+                        <span key={i} className="tag">
                           {formatLabel(tag)}
                         </span>
                       ))}
+                      {item.tags.length > 3 && (
+                        <span className="tag tag-accent">+{item.tags.length - 3}</span>
+                      )}
                     </div>
                   )}
                   {/* ————————— CARD CONTROLS ————————— */}
@@ -1245,6 +1223,7 @@ async function suggestOutfit(options = {}) {
 
             </section>
           )}
+        </>
         )}
       </main>
 
