@@ -92,8 +92,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState("");
   const [staples, setStaples] = useState([]);
 
-  // 🆕 toggle between Tina agent (LangChain) and old route
-  const [useTinaAgent, setUseTinaAgent] = useState(false);
+  
 
 
   // 🔹 NEW – for the click-to-open modal
@@ -549,7 +548,7 @@ export default function App() {
     console.log("🟢 Sending to Tina agent:", options);
 
     try {
-      const res = await fetch(`${BASE_URL}/tina-agent`, {
+      const res = await fetch(`${BASE_URL}/suggest-outfit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid, city, wardrobe, theme, subTheme }),
@@ -639,9 +638,8 @@ async function suggestOutfit(options = {}) {
     const attempt = async (payload) => {
       console.log("🟢 Sending to backend:", payload);
       // 👉 toggle here: use Tina agent or old suggest-outfit
-      const endpoint = useTinaAgent ? "/tina-agent" : "/suggest-outfit";
+      const response = await fetch(`${BASE_URL}/suggest-outfit`, {
 
-      const response = await fetch(`${BASE_URL}${endpoint}`, {
 
         method: "POST",
         headers: { "Content-Type": "application/json" },
