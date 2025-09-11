@@ -154,38 +154,20 @@ export default function App() {
       fetch(`${BASE_URL}/onboarding?uid=${user.uid}`)
         .then(res => res.json())
         .then(data => {
-          if (data.error || !data.body) {
+          if (data.error) {
             console.warn("⚠️ No onboarding found, showing form...");
             setShowOnboarding(true);
           } else {
             console.log("✅ Onboarding data found:", data);
+            setShowOnboarding(false);
           }
         })
+
         .catch(err => {
           console.error("❌ Error fetching onboarding:", err);
           setShowOnboarding(true);
         });
     }
-  }, [user]);
-
-  
-  useEffect(() => {
-    const fetchOnboarding = async () => {
-      if (!user || !user.uid) return;
-
-      try {
-        const res = await fetch(`https://wow-wardrobe-backend-himjabehl.replit.app/onboarding?uid=${user.uid}`);
-        if (!res.ok) throw new Error("Not onboarded");
-        const prefs = await res.json();
-        console.log("🎯 Found onboarding prefs:", prefs);
-        setShowOnboarding(false);
-      } catch (err) {
-        console.warn("⚠️ No onboarding found, showing form...");
-        setShowOnboarding(true);
-      }
-    };
-
-    fetchOnboarding();
   }, [user]);
 
   useEffect(() => {
