@@ -32,6 +32,10 @@ localPort = 5174
 externalPort = 80
 exposeLocalhost = true
 
+[[ports]]
+localPort = 45483
+externalPort = 3001
+
 [agent]
 expertMode = true
 
