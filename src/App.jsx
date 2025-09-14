@@ -556,6 +556,44 @@ export default function App() {
 
       });
 
+      async function suggestOutfitN8N({ uid, city, occasion }) {
+        if (!uid) return;
+
+        try {
+          const res = await fetch("https://himja.app.n8n.cloud/webhook/suggest-outfit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uid, city, occasion }),
+          });
+
+          const data = await res.json();
+          console.log("🎯 N8N AI Outfits:", data);
+
+          if (data.looks && Array.isArray(data.looks)) {
+            setOutfit(
+              data.looks.map((look, idx) => ({
+                title: look.title || `Look ${idx + 1}`,
+                style_note: look.style_note || "Suggested look",
+                items: (look.items || []).map((it) => ({
+                  id: it.id,
+                  name: it.name,
+                  category: it.category,
+                  color: it.color,
+                  image_url: it.image_url,
+                })),
+              }))
+            );
+          } else {
+            console.warn("⚠️ No looks returned from N8N:", data);
+            setOutfit([]);
+          }
+        } catch (err) {
+          console.error("❌ N8N suggestOutfit failed:", err);
+          alert("Could not fetch looks from N8N");
+        }
+      }
+
+
       const rawText = await res.text();
       console.log("🎯 Tina agent result (raw from backend):", rawText);
 
@@ -1327,17 +1365,17 @@ async function suggestOutfit(options = {}) {
               <button
                 className="btn btn-primary"
                 onClick={async () => {
-                  await suggestOutfitAgent({
+                  await suggestOutfitN8N({
                     uid: user.uid,
                     city,
-                    wardrobe: items,
-                    subTheme,
+                    occasion: subTheme, // dropdown value
                   });
                 }}
                 style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
               >
-                🪄 Generate Outfit Ideas
+                🪄 Generate Outfit Ideas (via N8N)
               </button>
+
 
               {/* Modern Outfit Suggestions */}
               {outfit && outfit.length > 0 ? (
