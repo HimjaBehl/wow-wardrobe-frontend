@@ -540,115 +540,113 @@ export default function App() {
       alert("Couldn’t delete some items.");
     }
   };
-  async function suggestOutfitAgent(options = {}) {
-    const { uid, city, wardrobe, theme, subTheme } = options;
+  
 
-    if (!uid) return;
+     async function suggestOutfitAgent(options = {}) {
+       const { uid, city, wardrobe, theme, subTheme } = options;
 
-    console.log("🟢 Sending to Tina agent:", options);
+       if (!uid) return;
 
-    try {
-      const res = await fetch(`${BASE_URL}/suggest-outfit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, city, wardrobe, theme, subTheme }),
+       console.log("🟢 Sending to Tina agent:", options);
 
+       try {
+         const res = await fetch(`${BASE_URL}/suggest-outfit`, {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({ uid, city, wardrobe, theme, subTheme }),
+         });
 
-      });
+         const rawText = await res.text();
+         console.log("🎯 Tina agent result (raw from backend):", rawText);
 
-      async function suggestOutfitN8N({ uid, city, occasion }) {
-        if (!uid) return;
+         let clean = rawText.trim();
+         if (clean.startsWith("```")) {
+           clean = clean.replace(/```json/i, "").replace(/```$/, "").trim();
+         }
 
-        try {
-          const res = await fetch("https://himja.app.n8n.cloud/webhook/suggest-outfit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ uid, city, occasion }),
-          });
+         let data;
+         try {
+           data = JSON.parse(clean);
+           console.log("✅ Parsed Tina agent JSON:", data);
+         } catch (err) {
+           console.warn("⚠️ Could not parse Tina agent raw:", clean);
+           data = { looks: [] };
+         }
 
-          const data = await res.json();
-          console.log("🎯 N8N AI Outfits:", data);
+         if (!res.ok) throw new Error(data.error || "Agent failed");
 
-          if (data.looks && Array.isArray(data.looks)) {
-            setOutfit(
-              data.looks.map((look, idx) => ({
-                title: look.title || `Look ${idx + 1}`,
-                style_note: look.style_note || "Suggested look",
-                items: (look.items || []).map((it) => ({
-                  id: it.id,
-                  name: it.name,
-                  category: it.category,
-                  color: it.color,
-                  image_url: it.image_url,
-                })),
-              }))
-            );
-          } else {
-            console.warn("⚠️ No looks returned from N8N:", data);
-            setOutfit([]);
-          }
-        } catch (err) {
-          console.error("❌ N8N suggestOutfit failed:", err);
-          alert("Could not fetch looks from N8N");
-        }
-      }
+         if (!data.looks && data.look) {
+           data.looks = [ { title: "Look 1", style_note: "Auto-fixed", items: data.look } ];
+         }
 
+         if (!data.looks || !Array.isArray(data.looks)) {
+           console.warn("⚠️ Tina returned invalid schema:", data);
+           setOutfit([]);
+           return;
+         }
 
-      const rawText = await res.text();
-      console.log("🎯 Tina agent result (raw from backend):", rawText);
-
-      let clean = rawText.trim();
-      if (clean.startsWith("```")) {
-        clean = clean.replace(/```json/i, "").replace(/```$/, "").trim();
-      }
-
-      let data;
-      try {
-        data = JSON.parse(clean);
-        console.log("✅ Parsed Tina agent JSON:", data);
-      } catch (err) {
-        console.warn("⚠️ Could not parse Tina agent raw:", clean);
-        data = { looks: [] };
-      }
-
-      if (!res.ok) throw new Error(data.error || "Agent failed");
-
-      // 🔥 Fallback if Tina sends no looks
-      if (!data.looks && data.look) {
-        data.looks = [ { title: "Look 1", style_note: "Auto-fixed", items: data.look } ];
-      }
-
-      if (!data.looks || !Array.isArray(data.looks)) {
-        console.warn("⚠️ Tina returned invalid schema:", data);
-        setOutfit([]);
-        return;
-      }
+         setOutfit(
+           data.looks.map((look, idx) => ({
+             title: look.title || `Look ${idx + 1}`,
+             style_note: look.style_note || "Suggested look",
+             trends_used: look.trends_used || [],
+             items: (look.items || []).map((it) => {
+               const wardrobeItem = items.find((w) => String(w.id) === String(it.id)) || {};
+               return {
+                 id: it.id,
+                 name: wardrobeItem.name || it.name || "Unnamed",
+                 category: wardrobeItem.category || it.category || "",
+                 color: wardrobeItem.color || it.color || "",
+                 image_url: wardrobeItem.image_url || it.image_url || "",
+                 tags: wardrobeItem.tags || it.tags || [],
+               };
+             }),
+           }))
+         );
+       } catch (err) {
+         console.error("❌ Tina agent failed:", err);
+         alert("Tina agent could not generate looks.");
+       }
+     }
 
 
-      // ✅ Normal case
+// ✅ Moved outside so it’s globally accessible
+async function suggestOutfitN8N({ uid, city, occasion }) {
+  if (!uid) return;
+
+  try {
+    const res = await fetch("https://himja.app.n8n.cloud/webhook/suggest-outfit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid, city, occasion }),
+    });
+
+    const data = await res.json();
+    console.log("🎯 N8N AI Outfits:", data);
+
+    if (data.looks && Array.isArray(data.looks)) {
       setOutfit(
         data.looks.map((look, idx) => ({
           title: look.title || `Look ${idx + 1}`,
           style_note: look.style_note || "Suggested look",
-          trends_used: look.trends_used || [],
-          items: (look.items || []).map((it) => {
-            const wardrobeItem = items.find((w) => String(w.id) === String(it.id)) || {};
-            return {
-              id: it.id,
-              name: wardrobeItem.name || it.name || "Unnamed",
-              category: wardrobeItem.category || it.category || "",
-              color: wardrobeItem.color || it.color || "",
-              image_url: wardrobeItem.image_url || it.image_url || "",
-              tags: wardrobeItem.tags || it.tags || [],
-            };
-          }),
+          items: (look.items || []).map((it) => ({
+            id: it.id,
+            name: it.name,
+            category: it.category,
+            color: it.color,
+            image_url: it.image_url,
+          })),
         }))
       );
-    } catch (err) {
-      console.error("❌ Tina agent failed:", err);
-      alert("Tina agent could not generate looks.");
+    } else {
+      console.warn("⚠️ No looks returned from N8N:", data);
+      setOutfit([]);
     }
+  } catch (err) {
+    console.error("❌ N8N suggestOutfit failed:", err);
+    alert("Could not fetch looks from N8N");
   }
+}
 
   async function suggestPinterestOutfits({ uid, theme, city, weather }) {
     const res = await fetch(`${BASE_URL}/pinterest-analysis`, {
