@@ -642,8 +642,6 @@ async function suggestOutfitN8N({ uid, city, occasion }) {
           }),
         }))
       );
-    }
-
     } else {
       console.warn("⚠️ No looks returned from N8N:", data);
       setOutfit([]);
