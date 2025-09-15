@@ -627,19 +627,15 @@ async function suggestOutfitN8N({ uid, city, occasion }) {
     if (data.looks && Array.isArray(data.looks)) {
       setOutfit(
         data.looks.map((look, idx) => ({
-          title: `Look ${idx + 1}`,
-          style_note: look.note || look.style_note || "Suggested look",
-          items: (look.ids || []).map((id) => {
-            const wardrobeItem = items.find((w) => String(w.id) === String(id));
-            return {
-              id,
-              name: wardrobeItem?.name || `Item ${id}`,
-              category: wardrobeItem?.category || "",
-              color: wardrobeItem?.color || "",
-              image_url: wardrobeItem?.image_url || "",
-              tags: wardrobeItem?.tags || [],
-            };
-          }),
+          title: look.title || `Look ${idx + 1}`,
+          style_note: look.style_note || "Suggested look",
+          items: (look.items || []).map((it) => ({
+            id: it.id,
+            name: it.name,
+            category: it.category,
+            color: it.color,
+            image_url: it.image_url,
+          })),
         }))
       );
     } else {
