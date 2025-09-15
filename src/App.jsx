@@ -633,7 +633,7 @@ async function suggestOutfitN8N({ uid, city, occasion }) {
           title: `Look ${idx + 1}`,
           style_note: look.note || look.style_note || "Suggested look",
           items: (look.ids || []).map((id) => {
-            const wardrobeItem = items.find((w) => String(w.id) === String(id));
+            const wardrobeItem = items.find((w) => w.id === id);
             if (!wardrobeItem) {
               console.warn("⚠️ Missing wardrobe item for ID:", id);
             }
