@@ -625,23 +625,30 @@ async function suggestOutfitN8N({ uid, city, occasion }) {
     console.log("🎯 N8N AI Outfits:", data);
 
     if (data.looks && Array.isArray(data.looks)) {
+      console.log("👗 Wardrobe IDs:", items.map(i => i.id));
+      console.log("🎯 N8N Look IDs:", data.looks.flatMap(l => l.ids));
+
       setOutfit(
         data.looks.map((look, idx) => ({
           title: `Look ${idx + 1}`,
           style_note: look.note || look.style_note || "Suggested look",
           items: (look.ids || []).map((id) => {
-            const wardrobeItem = items.find((w) => String(w.id) === String(id)) || {};
+            const wardrobeItem = items.find((w) => String(w.id) === String(id));
+            if (!wardrobeItem) {
+              console.warn("⚠️ Missing wardrobe item for ID:", id);
+            }
             return {
               id,
-              name: wardrobeItem.name || `Item ${id}`,
-              category: wardrobeItem.category || "",
-              color: wardrobeItem.color || "",
-              image_url: wardrobeItem.image_url || "",
-              tags: wardrobeItem.tags || [],
+              name: wardrobeItem?.name || `Item ${id}`,
+              category: wardrobeItem?.category || "",
+              color: wardrobeItem?.color || "",
+              image_url: wardrobeItem?.image_url || "/placeholder.png",
+              tags: wardrobeItem?.tags || [],
             };
           }),
         }))
       );
+
     
 
     
