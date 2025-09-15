@@ -628,12 +628,18 @@ async function suggestOutfitN8N({ uid, city, occasion }) {
       console.log("👗 Wardrobe IDs:", items.map(i => i.id));
       console.log("🎯 N8N Look IDs:", data.looks.flatMap(l => l.ids));
 
+      console.log("👗 Firebase wardrobe IDs:", items.map(i => i.id));
+      console.log("🎯 N8N outfit IDs:", data.looks.flatMap(l => l.ids));
+
       setOutfit(
         data.looks.map((look, idx) => ({
           title: `Look ${idx + 1}`,
           style_note: look.note || look.style_note || "Suggested look",
           items: (look.ids || []).map((id) => {
-            const wardrobeItem = items.find((w) => w.id === id);
+            const wardrobeItem = items.find(
+              (w) => String(w.id).trim() === String(id).trim()
+            );
+
             if (!wardrobeItem) {
               console.warn("⚠️ Missing wardrobe item for ID:", id);
             }
