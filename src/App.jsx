@@ -74,8 +74,8 @@ export default function App() {
   const [constraints, setConstraints] = useState("");
   const [outfit, setOutfit] = useState(null);
   const [user, setUser] = useState(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingDone, setOnboardingDone] = useState(false);
+  const [loadingPrefs, setLoadingPrefs] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [editedTags, setEditedTags] = useState([]);
@@ -149,25 +149,26 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (user?.uid) {
-      fetch(`${BASE_URL}/onboarding?uid=${user.uid}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            console.warn("⚠️ No onboarding found, showing form...");
-            setShowOnboarding(true);
-          } else {
-            console.log("✅ Onboarding data found:", data);
-            setShowOnboarding(false);
-          }
-        })
+    if (!user?.uid) return;
 
-        .catch(err => {
-          console.error("❌ Error fetching onboarding:", err);
-          setShowOnboarding(true);
-        });
-    }
+    setLoadingPrefs(true);
+    fetch(`${BASE_URL}/onboarding?uid=${user.uid}`)
+      .then(res => res.json())
+      .then(data => {
+        const hasRealPrefs =
+          (data.gender && data.gender.trim() !== "") ||
+          (data.bodyShape && data.bodyShape.trim() !== "") ||
+          (data.complexion && data.complexion.trim() !== "");
+
+        setNeedsOnboarding(!hasRealPrefs);
+      })
+      .catch(err => {
+        console.error("❌ Error fetching onboarding:", err);
+        setNeedsOnboarding(true);
+      })
+      .finally(() => setLoadingPrefs(false));
   }, [user]);
+
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
@@ -175,18 +176,26 @@ export default function App() {
       if (firebaseUser) {
         console.log("🔥 Your UID is:", firebaseUser.uid);
         fetchItems(firebaseUser.uid);
-        const docRef = doc(db, "preferences", firebaseUser.uid);
-        getDoc(docRef).then((docSnap) => {
-          if (docSnap.exists()) {
-            setOnboardingDone(true);
-          } else {
-            setOnboardingDone(false);
-            setShowOnboarding(true);
-          }
-        });
-        setShowOnboarding(true);
       }
     });
+
+    if (loading) {
+      return (
+        <div className="loading-screen">
+          <h1 className="loading-title">W.O.W.</h1>
+          <p className="loading-subtitle">What. Outfit. When.</p>
+        </div>
+      );
+    }
+
+    if (loadingPrefs) {
+      return <p style={{ textAlign: "center", marginTop: "2rem" }}>Loading preferences…</p>;
+    }
+
+    if (user && needsOnboarding) {
+      return <Onboarding user={user} onDone={() => setNeedsOnboarding(false)} />;
+    }
+
     return () => unsubscribe();
   }, []);
 
@@ -814,15 +823,10 @@ async function suggestOutfit(options = {}) {
     );
   }
 
-  if (user && !onboardingDone) {
-    return <Onboarding user={user} onDone={() => setOnboardingDone(true)} />;
-  }
+  
 
 
-  // ✅ Add this right before return:
-  if (showOnboarding) {
-    return <Onboarding user={user} onDone={() => setShowOnboarding(false)} />;
-  }
+  
 
   return (
     <div className="app">
