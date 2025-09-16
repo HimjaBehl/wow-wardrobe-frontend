@@ -213,13 +213,8 @@ export default function App() {
         if (!res.ok) throw new Error("Failed to fetch staples");
         const staplesData = await res.json();
 
-        if (staplesData.success && staplesData.staples) {
-          const arr = Object.entries(staplesData.staples).map(([name, info]) => ({
-            name,
-            category: info.category,
-            variants: info.variants || []
-          }));
-          setStaples(arr);
+        if (staplesData.success && Array.isArray(staplesData.staples)) {
+          setStaples(staplesData.staples);
         }
       } catch (err) {
         console.error("Failed to fetch staples:", err);
