@@ -1,4 +1,5 @@
 import { doc, getDoc, deleteDoc, addDoc, collection, serverTimestamp, writeBatch } from "firebase/firestore";
+import Profile from "./Profile";
 import { useState, useEffect, useMemo } from "react";
 import "./App.css";
 import Onboarding from "./Onboarding";
@@ -1491,6 +1492,14 @@ async function suggestOutfit(options = {}) {
             </section>
           )}
 
+            {/* Profile Section */}
+            {activeTab === "profile" && (
+              <section className="section">
+                <Profile user={user} />
+              </section>
+            )}
+
+
           {/* Tag Edit Modal */}
           {showModal && selectedItem && (
             <section
@@ -1597,6 +1606,17 @@ async function suggestOutfit(options = {}) {
                 Planner
               </button>
             </li>
+            <li className="bottom-nav-item">
+              <button 
+                className={`bottom-nav-link ${activeTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+                aria-label="Profile"
+              >
+                <span className="bottom-nav-icon">👤</span>
+                Profile
+              </button>
+            </li>
+
           </ul>
         </nav>
       )}
