@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 
 export default function Onboarding({ user, onDone }) {
-  const [dislikes, setDislikes] = useState("");
-  const [bodyType, setBodyType] = useState("");
-  const [skinTone, setSkinTone] = useState("");
-  const [favColors, setFavColors] = useState("");
+  const [gender, setGender] = useState("");
+  const [bodyShape, setBodyShape] = useState("");
+  const [complexion, setComplexion] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -17,10 +16,9 @@ export default function Onboarding({ user, onDone }) {
     fetch(`${BASE_URL}/onboarding?uid=${user.uid}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.dislikes) setDislikes(data.dislikes.join(", "));
-        if (data.bodyType) setBodyType(data.bodyType);
-        if (data.skinTone) setSkinTone(data.skinTone);
-        if (data.favColors) setFavColors(data.favColors.join(", "));
+        if (data.gender) setGender(data.gender);
+        if (data.bodyShape) setBodyShape(data.bodyShape);
+        if (data.complexion) setComplexion(data.complexion);
       })
       .catch((err) => console.error("❌ Failed to load prefs:", err));
   }, [user]);
@@ -38,10 +36,9 @@ export default function Onboarding({ user, onDone }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uid: user.uid,
-          dislikes: dislikes.split(",").map((s) => s.trim()),
-          bodyType,
-          skinTone,
-          favColors: favColors.split(",").map((s) => s.trim()),
+          gender,
+          bodyShape,
+          complexion,
         }),
       });
 
@@ -63,34 +60,39 @@ export default function Onboarding({ user, onDone }) {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h2>Tell us about your styling preferences 💬</h2>
+      <h2>Tell us about yourself 👋</h2>
+      <p>We’ll personalize your styling experience ✨</p>
 
+      {/* Gender */}
+      <label>Gender</label>
+      <select
+        value={gender}
+        onChange={(e) => setGender(e.target.value)}
+        style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
+        required
+      >
+        <option value="">Select your gender</option>
+        <option value="female">👩 Female</option>
+        <option value="male">👨 Male</option>
+        <option value="nonbinary">⚧ Non-binary</option>
+        <option value="other">Other</option>
+      </select>
+
+      {/* Body Shape */}
       <input
         type="text"
-        placeholder="Dislikes (e.g., heels, neon)"
-        value={dislikes}
-        onChange={(e) => setDislikes(e.target.value)}
+        placeholder="Body Shape (e.g., pear, rectangle)"
+        value={bodyShape}
+        onChange={(e) => setBodyShape(e.target.value)}
         style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
       />
+
+      {/* Complexion */}
       <input
         type="text"
-        placeholder="Body Type (e.g., pear, rectangle)"
-        value={bodyType}
-        onChange={(e) => setBodyType(e.target.value)}
-        style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
-      />
-      <input
-        type="text"
-        placeholder="Skin Tone (e.g., warm, cool, neutral)"
-        value={skinTone}
-        onChange={(e) => setSkinTone(e.target.value)}
-        style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
-      />
-      <input
-        type="text"
-        placeholder="Favorite Colors (e.g., red, pastel pink)"
-        value={favColors}
-        onChange={(e) => setFavColors(e.target.value)}
+        placeholder="Complexion (e.g., fair, olive, deep)"
+        value={complexion}
+        onChange={(e) => setComplexion(e.target.value)}
         style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
       />
 
