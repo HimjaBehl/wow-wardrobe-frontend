@@ -978,31 +978,46 @@ async function suggestOutfit(options = {}) {
                 <span className={`expand-icon ${quickAddExpanded ? 'expanded' : ''}`}>▼</span>
               </div>
               
-              {quickAddExpanded && (
-                <div className="section-content">
-                  {quickAddExpanded && (
-                    <div className="staples-grid">
-                      {staples.flatMap((staple) =>
-                        staple.variants.map((variant, index) => (
-                          <div
-                            key={`${staple.name}-${index}`}
-                            className="staple-item"
-                            onClick={() => handleQuickAdd(variant, staple.name, staple.category)}
-                          >
-                            <img 
-                              src={variant.image_url} 
-                              alt={`${staple.name} in ${variant.color}`} 
-                              onError={(e) => (e.target.style.display = "none")}
-                            />
-                            <p className="staple-name">{staple.name}</p>
-                          </div>
-                        ))
+            {quickAddExpanded && (
+              <div className="grid grid-wardrobe">
+                {staples.flatMap((staple) =>
+                  staple.variants.map((variant, index) => (
+                    <div
+                      key={`${staple.name}-${index}`}
+                      className="card"
+                      onClick={() => handleQuickAdd(variant, staple.name, staple.category)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {/* Image */}
+                      {variant.image_url && (
+                        <img
+                          className="card-image"
+                          src={variant.image_url}
+                          alt={`${staple.name} in ${variant.color}`}
+                          onError={(e) => (e.target.style.display = "none")}
+                        />
                       )}
-                    </div>
-                  )}
 
-                </div>
-              )}
+                      {/* Content */}
+                      <div className="card-content">
+                        <h3 className="card-title">
+                          {staple.name}
+                        </h3>
+                        <p className="card-subtitle">
+                          {staple.category}
+                        </p>
+                      </div>
+
+                      {/* Tags */}
+                      <div className="tags" style={{ padding: "0 var(--spacing-md) var(--spacing-sm)" }}>
+                        <span className="tag">{variant.color}</span>
+                        <span className="tag">Staple</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
             </div>
             
             {/* 3. Search & Link Section */}
