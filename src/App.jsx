@@ -980,31 +980,27 @@ async function suggestOutfit(options = {}) {
               
               {quickAddExpanded && (
                 <div className="section-content">
-                  {staples.map((staple) => (
-                    <div key={staple.name} className="staple-group">
-                      <h4 className="staple-heading">{staple.name}</h4>
-                      <div className="variant-grid">
-                        {staple.variants.map((variant, index) => (
+                  {quickAddExpanded && (
+                    <div className="staples-grid">
+                      {staples.flatMap((staple) =>
+                        staple.variants.map((variant, index) => (
                           <div
-                            key={index}
-                            className="variant-card"
+                            key={`${staple.name}-${index}`}
+                            className="staple-item"
                             onClick={() => handleQuickAdd(variant, staple.name, staple.category)}
                           >
-                            <div className="variant-image">
-                              <img 
-                                src={variant.image_url} 
-                                alt={`${staple.name} in ${variant.color}`}
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                }}
-                              />
-                            </div>
-                            <div className="variant-color">{variant.color}</div>
+                            <img 
+                              src={variant.image_url} 
+                              alt={`${staple.name} in ${variant.color}`} 
+                              onError={(e) => (e.target.style.display = "none")}
+                            />
+                            <p className="staple-name">{staple.name}</p>
                           </div>
-                        ))}
-                      </div>
+                        ))
+                      )}
                     </div>
-                  ))}
+                  )}
+
                 </div>
               )}
             </div>
