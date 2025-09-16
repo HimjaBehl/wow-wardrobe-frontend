@@ -16,11 +16,16 @@ export default function Onboarding({ user, onDone }) {
     fetch(`${BASE_URL}/onboarding?uid=${user.uid}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.gender || data.bodyShape || data.complexion) {
-          // ✅ Returning user → skip onboarding
+        const hasRealPrefs =
+          (data.gender && data.gender.trim() !== "") ||
+          (data.bodyShape && data.bodyShape.trim() !== "") ||
+          (data.complexion && data.complexion.trim() !== "");
+
+        if (hasRealPrefs) {
+          // ✅ Only skip if real preferences exist
           if (onDone) onDone();
         } else {
-          // New user → stay on onboarding form
+          // Populate form if partial data exists
           if (data.gender) setGender(data.gender);
           if (data.bodyShape) setBodyShape(data.bodyShape);
           if (data.complexion) setComplexion(data.complexion);
@@ -28,6 +33,7 @@ export default function Onboarding({ user, onDone }) {
       })
       .catch((err) => console.error("❌ Failed to load prefs:", err));
   }, [user, onDone]);
+
 
   const savePreferences = async () => {
     if (!user?.uid) {
