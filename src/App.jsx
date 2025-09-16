@@ -10,7 +10,7 @@ import WeeklyPlanner from "./WeeklyPlanner";
 import VirtualTryOn from "./VirtualTryOn";
 
 
-const [userPrefs, setUserPrefs] = useState({});
+
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
@@ -51,6 +51,7 @@ async function likeOutfit({ uid, outfit, context = {} }) {
 /* ======================================== */
 
 export default function App() {
+  const [userPrefs, setUserPrefs] = useState({});
   const [file, setFile] = useState(null);
   const [items, setItems] = useState([]);
   const [filterCategory, setFilterCategory] = useState("");
