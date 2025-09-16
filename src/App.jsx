@@ -10,7 +10,7 @@ import WeeklyPlanner from "./WeeklyPlanner";
 import VirtualTryOn from "./VirtualTryOn";
 
 
-
+const [userPrefs, setUserPrefs] = useState({});
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
@@ -154,20 +154,22 @@ export default function App() {
 
     setLoadingPrefs(true);
     fetch(`${BASE_URL}/onboarding?uid=${user.uid}`)
-      .then(res => res.json())
-      .then(data => {
-        const hasRealPrefs =
-          (data.gender && data.gender.trim() !== "") ||
-          (data.bodyShape && data.bodyShape.trim() !== "") ||
-          (data.complexion && data.complexion.trim() !== "");
+    .then(res => res.json())
+    .then(data => {
+      const hasRealPrefs =
+        (data.gender && data.gender.trim() !== "") ||
+        (data.bodyShape && data.bodyShape.trim() !== "") ||
+        (data.complexion && data.complexion.trim() !== "");
 
-        setNeedsOnboarding(!hasRealPrefs);
-      })
-      .catch(err => {
-        console.error("❌ Error fetching onboarding:", err);
-        setNeedsOnboarding(true);
-      })
-      .finally(() => setLoadingPrefs(false));
+      setNeedsOnboarding(!hasRealPrefs);
+      setUserPrefs(data);   // ✅ save prefs globally
+    })
+    .catch(err => {
+      console.error("❌ Error fetching onboarding:", err);
+      setNeedsOnboarding(true);
+    })
+    .finally(() => setLoadingPrefs(false));
+
   }, [user]);
 
 
@@ -203,13 +205,14 @@ export default function App() {
   // Fetch staples from backend
   useEffect(() => {
     const fetchStaples = async () => {
+      if (!user?.uid || !userPrefs.gender) return; // wait for prefs
+
       try {
-        const res = await fetch(`${BASE_URL}/staples`);
+        const res = await fetch(`${BASE_URL}/staples?gender=${userPrefs.gender}`);
         if (!res.ok) throw new Error("Failed to fetch staples");
         const staplesData = await res.json();
 
         if (staplesData.success && staplesData.staples) {
-          // Convert object → array
           const arr = Object.entries(staplesData.staples).map(([name, info]) => ({
             name,
             category: info.category,
@@ -223,7 +226,9 @@ export default function App() {
     };
 
     fetchStaples();
-  }, []);
+  }, [user?.uid, userPrefs.gender]); // ✅ re-run when gender is available
+
+  
 
 
   const handleLogin = async () => {
