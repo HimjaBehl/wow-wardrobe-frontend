@@ -626,7 +626,7 @@ async function suggestOutfitN8N({ uid, city, occasion }) {
   if (!uid) return;
 
   try {
-    const res = await fetch("https://himja.app.n8n.cloud/webhook-test/suggest-outfit", {
+    const res = await fetch("https://himja.app.n8n.cloud/webhook/suggest-outfit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid, city, occasion }),
