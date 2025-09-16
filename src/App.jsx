@@ -213,12 +213,16 @@ export default function App() {
         if (!res.ok) throw new Error("Failed to fetch staples");
         const staplesData = await res.json();
 
-        if (staplesData.success && Array.isArray(staplesData.staples)) {
-          setStaples(staplesData.staples);
+      if (staplesData.success && Array.isArray(staplesData.staples)) {
+              setStaples(staplesData.staples);
+            }
+          } catch (err) {
+            console.error("Failed to fetch staples:", err);
+          }
         };
 
-    fetchStaples();
-  } [user?.uid, userPrefs.gender]; // ✅ re-run when gender is available
+        fetchStaples();
+      }, [user?.uid, userPrefs.gender]); // ✅ dependency array belongs here
 
   
 
