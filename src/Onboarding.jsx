@@ -16,12 +16,18 @@ export default function Onboarding({ user, onDone }) {
     fetch(`${BASE_URL}/onboarding?uid=${user.uid}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.gender) setGender(data.gender);
-        if (data.bodyShape) setBodyShape(data.bodyShape);
-        if (data.complexion) setComplexion(data.complexion);
+        if (data.gender || data.bodyShape || data.complexion) {
+          // ✅ Returning user → skip onboarding
+          if (onDone) onDone();
+        } else {
+          // New user → stay on onboarding form
+          if (data.gender) setGender(data.gender);
+          if (data.bodyShape) setBodyShape(data.bodyShape);
+          if (data.complexion) setComplexion(data.complexion);
+        }
       })
       .catch((err) => console.error("❌ Failed to load prefs:", err));
-  }, [user]);
+  }, [user, onDone]);
 
   const savePreferences = async () => {
     if (!user?.uid) {
@@ -45,8 +51,7 @@ export default function Onboarding({ user, onDone }) {
       const result = await res.json();
 
       if (res.ok) {
-        setSubmitted(true);
-        if (onDone) onDone();
+        setSubmitted(true); // ✅ don’t auto-call onDone
       } else {
         alert("Failed to save preferences: " + result.error);
       }
@@ -107,10 +112,26 @@ export default function Onboarding({ user, onDone }) {
         }}
         disabled={loading}
       >
-        {loading ? "Saving..." : "Save & Continue"}
+        {loading ? "Saving..." : "Save Preferences"}
       </button>
 
-      {submitted && <p style={{ marginTop: "1rem" }}>🎉 Preferences saved!</p>}
+      {submitted && (
+        <div style={{ marginTop: "1rem" }}>
+          <p>🎉 Preferences saved!</p>
+          <button
+            onClick={onDone}
+            style={{
+              marginTop: "0.5rem",
+              padding: "0.75rem 1.5rem",
+              background: "#4caf50",
+              color: "#fff",
+              border: "none",
+            }}
+          >
+            Continue to App →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
