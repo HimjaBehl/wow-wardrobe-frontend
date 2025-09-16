@@ -215,14 +215,10 @@ export default function App() {
 
         if (staplesData.success && Array.isArray(staplesData.staples)) {
           setStaples(staplesData.staples);
-        }
-      } catch (err) {
-        console.error("Failed to fetch staples:", err);
-      }
-    };
+        };
 
     fetchStaples();
-  }, [user?.uid, userPrefs.gender]); // ✅ re-run when gender is available
+  } [user?.uid, userPrefs.gender]; // ✅ re-run when gender is available
 
   
 
