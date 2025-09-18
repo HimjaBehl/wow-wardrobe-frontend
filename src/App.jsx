@@ -629,7 +629,7 @@ async function suggestOutfitN8N({ uid, city, occasion }) {
     const res = await fetch("https://himja.app.n8n.cloud/webhook/suggest-outfit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid, city, occasion }),
+      body: JSON.stringify({ uid, city, occasion,vibe }),
     });
 
     const data = await res.json();
@@ -1402,6 +1402,17 @@ async function suggestOutfit(options = {}) {
                   </select>
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Vibe</label>
+                  <input
+                    className="form-input"
+                    type="text"
+                    value={vibe}
+                    onChange={(e) => setVibe(e.target.value)}
+                    placeholder="e.g., edgy, romantic, minimalist"
+                  />
+                </div>
+
+                <div className="form-group">
                   <label className="form-label">Location</label>
                   <input
                     className="form-input"
@@ -1419,7 +1430,8 @@ async function suggestOutfit(options = {}) {
                   await suggestOutfitN8N({
                     uid: user.uid,
                     city,
-                    occasion: subTheme, // dropdown value
+                    occasion: subTheme,
+                    vibe, // dropdown value
                   });
                 }}
                 style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
