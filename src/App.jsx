@@ -1384,6 +1384,21 @@ async function suggestOutfit(options = {}) {
                     <option value="Athleisure">🏃‍♀️ Athleisure</option>
                     <option value="Brunch">🥐 Brunch</option>
                     <option value="Dinner">🍽️ Dinner</option>
+                    <option value="Gym">🏋️ Gym / Workout</option>
+                    <option value="Travel">✈️ Travel / Airport</option>
+                    <option value="Date">💖 Date Night</option>
+                    <option value="Wedding">💃 Wedding / Festive</option>
+                    <option value="Beach">🏖️ Beach / Resort</option>
+                    <option value="Formal">🎩 Formal Event / Gala</option>
+                    <option value="Interview">🗂️ Interview / Presentation</option>
+                    <option value="Shopping">🛍️ Shopping / Errands</option>
+                    <option value="Concert">🎶 Concert / Festival</option>
+                    <option value="Winter">❄️ Winter Casual / Layered</option>
+                    <option value="Summer">☀️ Summer Casual / Lightwear</option>
+                    <option value="Lounge">🛋️ Lounge / Homewear</option>
+                    <option value="Streetwear">🕶️ Streetwear / Urban</option>
+                    <option value="Business">📊 Business Casual</option>
+                    <option value="Adventure">🏔️ Outdoor Adventure / Hiking</option>
                   </select>
                 </div>
                 <div className="form-group">
