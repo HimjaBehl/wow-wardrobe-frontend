@@ -568,6 +568,8 @@ useEffect(() => {
        if (!uid) return;
 
        console.log("🟢 Sending to Tina agent:", options);
+       console.log("🟣 Payload to Tina:", { uid, city, wardrobe, theme, subTheme, gender });
+
 
        try {
          const res = await fetch(`${BASE_URL}/suggest-outfit`, {
