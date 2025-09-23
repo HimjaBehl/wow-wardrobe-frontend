@@ -1545,7 +1545,27 @@ async function suggestOutfit(options = {}) {
                     >
                       ❤️ Love This Look
                     </button>
+                  
                   </div>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      alert("❌ Disliked this look. We’ll remember your preference.");
+                      // 🔽 Optional: send to backend to log dislikes
+                      fetch(`${BASE_URL}/dislike-outfit`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          uid: user.uid,
+                          outfit: look,
+                          context: { occasion, vibe, style_mood: selectedMood },
+                        }),
+                      }).catch(err => console.error("❌ Failed to save dislike:", err));
+                    }}
+                  >
+                    ❌ Dislike
+                  </button>
+
                   {look.trends_used && look.trends_used.length > 0 && (
                     <div className="look-trends">
                       <h4 className="trends-title">🔥 Trending Inspiration</h4>
