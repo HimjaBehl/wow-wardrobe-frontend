@@ -562,20 +562,22 @@ useEffect(() => {
   
 
      async function suggestOutfitAgent(options = {}) {
-  const { uid, city, wardrobe, theme, subTheme, gender } = options;
+  const { uid, city, wardrobe, theme, subTheme } = options;
+
 
 
        if (!uid) return;
 
        console.log("🟢 Sending to Tina agent:", options);
-       console.log("🟣 Payload to Tina:", { uid, city, wardrobe, theme, subTheme, gender });
+       console.log("🟣 Payload to Tina:", { uid, city, wardrobe, theme, subTheme });
+
 
 
        try {
          const res = await fetch(`${BASE_URL}/suggest-outfit`, {
            method: "POST",
            headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({ uid, city, wardrobe, theme, subTheme, gender }),
+           body: JSON.stringify({ uid, city, wardrobe, theme, subTheme }),
          });
 
          const rawText = await res.text();
@@ -1465,7 +1467,6 @@ async function suggestOutfit(options = {}) {
   wardrobe: items,
   theme,
   subTheme,
-  gender: userPrefs.gender || "female", // fallback so backend won’t break
 });
   }
 }}
