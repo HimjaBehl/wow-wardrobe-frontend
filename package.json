@@ -4,7 +4,9 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run clean && vite build",
+    "build:prod": "npm run clean && vite build --mode production",
+    "clean": "rm -rf dist",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -15,7 +17,8 @@
     "react": "^18.2.0",
     "react-calendar": "^3.7.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.6.2"
+    "react-router-dom": "^7.6.2",
+    "terser": "^5.44.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.5.2",
