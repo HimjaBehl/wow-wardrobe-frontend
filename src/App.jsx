@@ -171,7 +171,11 @@ useEffect(() => {
         (data.complexion && data.complexion.trim() !== "");
 
       setNeedsOnboarding(!hasRealPrefs);
-      setUserPrefs(data);   // ✅ save prefs globally
+      setUserPrefs({
+  ...data,
+  dislikes: data.dislikes || [],
+});   // ✅ save prefs including dislikes
+
     })
     .catch(err => {
       console.error("❌ Error fetching onboarding:", err);
@@ -577,7 +581,15 @@ useEffect(() => {
          const res = await fetch(`${BASE_URL}/suggest-outfit`, {
            method: "POST",
            headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({ uid, city, wardrobe, theme, subTheme }),
+           body: JSON.stringify({ 
+  uid, 
+  city, 
+  wardrobe, 
+  theme, 
+  subTheme, 
+  dislikes: userPrefs.dislikes || [],   // ✅ new
+}),
+
          });
 
          const rawText = await res.text();
@@ -642,7 +654,14 @@ async function suggestOutfitN8N({ uid, city, occasion }) {
     const res = await fetch("https://himja.app.n8n.cloud/webhook/suggest-outfit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid, city, occasion,vibe }),
+      body: JSON.stringify({ 
+  uid, 
+  city, 
+  occasion, 
+  vibe, 
+  dislikes: userPrefs.dislikes || [],   // ✅ new
+}),
+
     });
 
     const data = await res.json();
@@ -747,14 +766,16 @@ async function suggestOutfit(options = {}) {
 
     // 1️⃣ First attempt — full payload
     let result = await attempt({
-      uid,
-      city,
-      occasion,
-      vibe,
-      constraints,
-      prompt,
-      style_mood,
-    });
+  uid,
+  city,
+  occasion,
+  vibe,
+  constraints,
+  prompt,
+  style_mood,
+  dislikes: userPrefs.dislikes || [],   // ✅ new
+});
+
 
     // 2️⃣ If fail and retry allowed — fallback to minimal
     if (!result || !Array.isArray(result.looks) || result.looks.length === 0) {
