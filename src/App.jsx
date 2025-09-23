@@ -63,13 +63,18 @@ export default function App() {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
+
+// AI stylist source: "n8n" or "agent"
+const [stylistSource, setStylistSource] = useState("n8n");
+
+useEffect(() => {
+  console.log("🎛️ Stylist source changed:", stylistSource);
+}, [stylistSource]);
+
+
   const [customPrompt, setCustomPrompt] = useState("");
   const [selectedMood, setSelectedMood] = useState("powerful");
   const [editItemIndex, setEditItemIndex] = useState(null);
-
-  // AI stylist source: "n8n" or "agent"
-  const [stylistSource, setStylistSource] = useState("n8n");
-
   const [editForm, setEditForm] = useState({
     name: "",
     category: "",
@@ -1441,23 +1446,26 @@ async function suggestOutfit(options = {}) {
               <button
   className="btn btn-primary"
   onClick={async () => {
-    if (stylistSource === "n8n") {
-      await suggestOutfitN8N({
-        uid: user.uid,
-        city,
-        occasion: subTheme,
-        vibe,
-      });
-    } else {
-      await suggestOutfitAgent({
-        uid: user.uid,
-        city,
-        wardrobe: items,
-        theme,
-        subTheme,
-      });
-    }
-  }}
+  console.log("🖱️ Generate clicked, source:", stylistSource);
+
+  if (stylistSource === "n8n") {
+    await suggestOutfitN8N({
+      uid: user.uid,
+      city,
+      occasion: subTheme,
+      vibe,
+    });
+  } else {
+    await suggestOutfitAgent({
+      uid: user.uid,
+      city,
+      wardrobe: items,
+      theme,
+      subTheme,
+    });
+  }
+}}
+
   style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
 >
   🪄 Generate Outfit Ideas ({stylistSource === "n8n" ? "via N8N" : "via Tina Agent"})
