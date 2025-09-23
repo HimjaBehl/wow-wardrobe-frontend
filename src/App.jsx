@@ -11,6 +11,8 @@ import VirtualTryOn from "./VirtualTryOn";
 
 
 
+// AI stylist source: "n8n" or "agent"
+const [stylistSource, setStylistSource] = useState("n8n");
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
@@ -1423,21 +1425,42 @@ async function suggestOutfit(options = {}) {
                   />
                 </div>
               </div>
+<div className="form-group">
+  <label className="form-label">Stylist Source</label>
+  <select
+    className="form-select"
+    value={stylistSource}
+    onChange={(e) => setStylistSource(e.target.value)}
+  >
+    <option value="n8n">🌐 N8N Workflow</option>
+    <option value="agent">🤖 Tina Agent (Replit)</option>
+  </select>
+</div>
 
               <button
-                className="btn btn-primary"
-                onClick={async () => {
-                  await suggestOutfitN8N({
-                    uid: user.uid,
-                    city,
-                    occasion: subTheme,
-                    vibe, // dropdown value
-                  });
-                }}
-                style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
-              >
-                🪄 Generate Outfit Ideas (via N8N)
-              </button>
+  className="btn btn-primary"
+  onClick={async () => {
+    if (stylistSource === "n8n") {
+      await suggestOutfitN8N({
+        uid: user.uid,
+        city,
+        occasion: subTheme,
+        vibe,
+      });
+    } else {
+      await suggestOutfitAgent({
+        uid: user.uid,
+        city,
+        wardrobe: items,
+        theme,
+        subTheme,
+      });
+    }
+  }}
+  style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
+>
+  🪄 Generate Outfit Ideas ({stylistSource === "n8n" ? "via N8N" : "via Tina Agent"})
+</button>
 
 
               {/* Modern Outfit Suggestions */}
