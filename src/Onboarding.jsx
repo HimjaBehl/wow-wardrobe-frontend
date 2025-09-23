@@ -4,6 +4,8 @@ export default function Onboarding({ user, onDone }) {
   const [gender, setGender] = useState("");
   const [bodyShape, setBodyShape] = useState("");
   const [complexion, setComplexion] = useState("");
+  const [dislikes, setDislikes] = useState("");
+
 
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -29,6 +31,8 @@ export default function Onboarding({ user, onDone }) {
           if (data.gender) setGender(data.gender);
           if (data.bodyShape) setBodyShape(data.bodyShape);
           if (data.complexion) setComplexion(data.complexion);
+          if (data.dislikes) setDislikes(data.dislikes.join(", "));
+
         }
       })
       .catch((err) => console.error("❌ Failed to load prefs:", err));
@@ -51,6 +55,7 @@ export default function Onboarding({ user, onDone }) {
           gender,
           bodyShape,
           complexion,
+          dislikes: dislikes.split(",").map(d => d.trim()).filter(Boolean),
         }),
       });
 
@@ -104,6 +109,13 @@ export default function Onboarding({ user, onDone }) {
         placeholder="Complexion (e.g., fair, olive, deep)"
         value={complexion}
         onChange={(e) => setComplexion(e.target.value)}
+        style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
+      />
+      <input
+        type="text"
+        placeholder="Dislikes (comma separated: e.g., heels, neon, leather)"
+        value={dislikes}
+        onChange={(e) => setDislikes(e.target.value)}
         style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
       />
 
