@@ -11,9 +11,6 @@ import VirtualTryOn from "./VirtualTryOn";
 
 
 
-// AI stylist source: "n8n" or "agent"
-const [stylistSource, setStylistSource] = useState("n8n");
-
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
 /* ========== mood-board helpers ========== */
@@ -69,6 +66,10 @@ export default function App() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [selectedMood, setSelectedMood] = useState("powerful");
   const [editItemIndex, setEditItemIndex] = useState(null);
+
+  // AI stylist source: "n8n" or "agent"
+  const [stylistSource, setStylistSource] = useState("n8n");
+
   const [editForm, setEditForm] = useState({
     name: "",
     category: "",
