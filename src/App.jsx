@@ -563,7 +563,7 @@ useEffect(() => {
   
 
      async function suggestOutfitAgent(options = {}) {
-  const { uid, city, wardrobe, theme, subTheme } = options;
+  const { uid, city, wardrobe, occasion} = options;
 
 
 
@@ -582,7 +582,7 @@ useEffect(() => {
                uid,
                city,
                wardrobe,
-               occasion,              // ✅ replaces theme/subTheme
+               occasion,   
                vibe,
                dislikes: userPrefs.dislikes || [],
              }),
@@ -710,11 +710,11 @@ async function suggestOutfitN8N({ uid, city, occasion }) {
   }
 }
 
-  async function suggestPinterestOutfits({ uid, theme, city, weather }) {
+  async function suggestPinterestOutfits({ uid, occasion, city, weather }) {
     const res = await fetch(`${BASE_URL}/pinterest-analysis`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid, theme, city, weather }),
+      body: JSON.stringify({ uid, occasion, city, weather }),
     });
     return await res.json();
   }
