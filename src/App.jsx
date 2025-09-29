@@ -55,10 +55,7 @@ export default function App() {
   const [items, setItems] = useState([]);
   const [filterCategory, setFilterCategory] = useState("");
   const [filterColor, setFilterColor] = useState("");
-  const [occasion, setOccasion] = useState("casual");
-  // 🆕 Theme selectors
-  const [theme, setTheme] = useState("Western");
-  const [subTheme, setSubTheme] = useState("Party");
+  const [occasion, setOccasion] = useState("Casual");
   const [selectedItems, setSelectedItems] = useState([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [vibe, setVibe] = useState("fun");
@@ -573,7 +570,7 @@ useEffect(() => {
        if (!uid) return;
 
        console.log("🟢 Sending to Tina agent:", options);
-       console.log("🟣 Payload to Tina:", { uid, city, wardrobe, theme, subTheme });
+       console.log("🟣 Payload to Tina:", { uid, city, wardrobe, occasion, vibe });
 
 
 
@@ -582,13 +579,14 @@ useEffect(() => {
            method: "POST",
            headers: { "Content-Type": "application/json" },
            body: JSON.stringify({ 
-  uid, 
-  city, 
-  wardrobe, 
-  theme, 
-  subTheme, 
-  dislikes: userPrefs.dislikes || [],   // ✅ new
-}),
+               uid,
+               city,
+               wardrobe,
+               occasion,              // ✅ replaces theme/subTheme
+               vibe,
+               dislikes: userPrefs.dislikes || [],
+             }),
+
 
          });
 
@@ -1409,8 +1407,8 @@ async function suggestOutfit(options = {}) {
                   <label className="form-label">Occasion</label>
                   <select
                     className="form-select"
-                    value={subTheme}
-                    onChange={(e) => setSubTheme(e.target.value)}
+                    value={occasion}
+                    onChange={(e) => setOccasion(e.target.value)}
                   >
                     <option value="Casual">😎 Casual</option>
                     <option value="Party">🎉 Party</option>
@@ -1486,8 +1484,8 @@ async function suggestOutfit(options = {}) {
   uid: user.uid,
   city,
   wardrobe: items,
-  theme,
-  subTheme,
+      occasion,
+      vibe,
 });
   }
 }}
