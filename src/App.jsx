@@ -1476,7 +1476,7 @@ async function suggestOutfit(options = {}) {
     await suggestOutfitN8N({
       uid: user.uid,
       city,
-      occasion: subTheme,
+      occasion,
       vibe,
     });
   } else {
