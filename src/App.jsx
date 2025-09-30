@@ -1344,8 +1344,9 @@ async function suggestOutfit(options = {}) {
                    )}
                   <div className="card-content">
                     <h3 className="card-title">
-                      {formatLabel(item.color)} {formatLabel(item.name)}
+                      {item.primaryTag || formatLabel(item.name)}
                     </h3>
+
                     <p className="card-subtitle">
                       {formatLabel(item.category)}
                     </p>
@@ -1746,7 +1747,8 @@ async function suggestOutfit(options = {}) {
           >
             <img src={modalItem.image_url} alt={modalItem.name} />
 
-            <h3>{formatLabel(modalItem.color)} {formatLabel(modalItem.name)}</h3>
+            <h3>{modalItem.primaryTag || formatLabel(modalItem.name)}</h3>
+
             <p className="sub">{formatLabel(modalItem.category)}</p>
 
             {modalItem.tags?.length > 0 && (
