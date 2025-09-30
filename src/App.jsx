@@ -252,27 +252,21 @@ useEffect(() => {
       const text = await res.text();
       const data = JSON.parse(text);
 
-      // 🔄 Ensure every item has an image_url
       const withUrls = data.map((item) => {
-        if (item.image_url) return item;
-
-        // 👇 Build the public URL from image_path
-        if (item.image_path) {
-          const bucket = "wowapp1406.appspot.com";  // your Firebase bucket
-          return {
-            ...item,
-            image_url: `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(
-              item.image_path
-            )}?alt=media`,
-          };
+        // 🔄 Image URL fallback
+        let imageUrl = item.image_url;
+        if (!imageUrl && item.image_path) {
+          const bucket = "wowapp1406.appspot.com";
+          imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(item.image_path)}?alt=media`;
         }
 
-        console.warn("⚠️ Missing image_url for item:", item);
-        return item;
+        return {
+          ...item,
+          image_url: imageUrl,
+          // 🔄 Normalized display name
+          displayName: item.primaryTag || formatLabel(item.name || "Unnamed"),
+        };
       });
-
-
-
 
       setItems(withUrls);
       console.log("👗 Wardrobe items loaded:", withUrls);
@@ -280,6 +274,7 @@ useEffect(() => {
       console.error("❌ Error fetching wardrobe:", e.message);
     }
   };
+
 
 
 
@@ -1343,9 +1338,7 @@ async function suggestOutfit(options = {}) {
                      />
                    )}
                   <div className="card-content">
-                    <h3 className="card-title">
-                      {item.primaryTag || formatLabel(item.name)}
-                    </h3>
+                    <h3 className="card-title">{item.displayName}</h3>
 
                     <p className="card-subtitle">
                       {formatLabel(item.category)}
