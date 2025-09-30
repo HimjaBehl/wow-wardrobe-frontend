@@ -580,10 +580,13 @@ useEffect(() => {
                occasion,   
                vibe,
                dislikes: userPrefs.dislikes || [],
+             profile: {
+                 gender: userPrefs.gender,
+                 bodyShape: userPrefs.bodyShape,
+                 complexion: userPrefs.complexion
+               }
              }),
-
-
-         });
+           });
 
          const rawText = await res.text();
          console.log("🎯 Tina agent result (raw from backend):", rawText);
