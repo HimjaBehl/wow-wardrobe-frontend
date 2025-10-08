@@ -611,11 +611,17 @@ useEffect(() => {
            data.looks = [ { title: "Look 1", style_note: "Auto-fixed", items: data.look } ];
          }
 
+         
+         if (!data.looks && Array.isArray(data.outfits)) {
+           data.looks = data.outfits;
+         }
+
          if (!data.looks || !Array.isArray(data.looks)) {
            console.warn("⚠️ Tina returned invalid schema:", data);
            setOutfit([]);
            return;
          }
+
 
          setOutfit(
            data.looks.map((look, idx) => ({
