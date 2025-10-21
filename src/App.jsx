@@ -890,8 +890,16 @@ async function suggestOutfit(options = {}) {
           <button className="btn btn-primary" onClick={handleLogin}>
             Login
           </button>
+      
         )}
       </header>
+
+      <button className="btn btn-secondary"
+              onClick={() => window.location.reload()}
+              style={{ marginTop: "1rem", width: "100%" }}>
+        Try Again
+      </button>
+
 
       {/* Main Content */}
       <main className="app-main">
