@@ -897,7 +897,7 @@ async function suggestOutfit(options = {}) {
       <main className="app-main">
         {!user ? (
           <div className="section text-center">
-            <h1 className="section-title">Welcome to W.O.W.</h1>
+            <h1 className="section-title">Welcome to W.O.W. – Your AI Stylist Assistant</h1>
             <p style={{ fontSize: '1.125rem', color: 'var(--neutral-600)', marginBottom: 'var(--spacing-xl)' }}>
               Your personal wardrobe assistant. Please login to continue.
             </p>
