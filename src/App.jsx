@@ -235,6 +235,7 @@ useEffect(() => {
 
     fetchStaples();
   }, [user?.uid, userPrefs.gender]);
+✅ dependency array belongs here
 
   
 
