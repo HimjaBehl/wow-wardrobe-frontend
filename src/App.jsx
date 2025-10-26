@@ -212,26 +212,29 @@ useEffect(() => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch staples from backend
+  // Fetch staples from backend (list of individual items)
   useEffect(() => {
     const fetchStaples = async () => {
       if (!user?.uid || !userPrefs.gender) return; // wait for prefs
-
       try {
         const res = await fetch(`${BASE_URL}/staples?gender=${userPrefs.gender}`);
         if (!res.ok) throw new Error("Failed to fetch staples");
-        const staplesData = await res.json();
+        const data = await res.json();
 
-      if (staplesData.success && Array.isArray(staplesData.staples)) {
-              setStaples(staplesData.staples);
-            }
-          } catch (err) {
-            console.error("Failed to fetch staples:", err);
-          }
-        };
+        // backend returns { success, staples } (each staple is an item)
+        const list = Array.isArray(data?.staples)
+          ? data.staples
+          : (Array.isArray(data?.items) ? data.items : []);
 
-        fetchStaples();
-      }, [user?.uid, userPrefs.gender]); // ✅ dependency array belongs here
+        setStaples(list);
+      } catch (err) {
+        console.error("Failed to fetch staples:", err);
+        setStaples([]); // safe fallback
+      }
+    };
+
+    fetchStaples();
+  }, [user?.uid, userPrefs.gender]);
 
   
 
@@ -470,7 +473,8 @@ useEffect(() => {
       }
 
       const data = await res.json();
-      setSearchResults(data.products || []);
+      setSearchResults(Array.isArray(data?.products) ? data.products : (Array.isArray(data?.items) ? data.items : []));
+
 
     } catch (err) {
       console.error("Product search failed:", err);
@@ -1022,46 +1026,47 @@ async function suggestOutfit(options = {}) {
                 <span className={`expand-icon ${quickAddExpanded ? 'expanded' : ''}`}>▼</span>
               </div>
               
-            {quickAddExpanded && (
-              <div className="grid grid-wardrobe">
-                {staples.flatMap((staple) =>
-                  staple.variants.map((variant, index) => (
+              {quickAddExpanded && (
+                <div className="grid grid-wardrobe">
+                  {staples.map((staple, index) => (
                     <div
-                      key={`${staple.name}-${index}`}
+                      key={`${staple.id || staple.name || "staple"}-${index}`}
                       className="card"
-                      onClick={() => handleQuickAdd(variant, staple.name, staple.category)}
+                      onClick={() =>
+                        handleQuickAdd(
+                          { color: staple.color || "Default", image_url: staple.image_url || "" }, // variant-like shape
+                          staple.name || "Staple",
+                          staple.category || "Staple"
+                        )
+                      }
                       style={{ cursor: "pointer" }}
                     >
                       {/* Image */}
-                      {variant.image_url && (
+                      {staple.image_url && (
                         <img
                           className="card-image"
-                          src={variant.image_url}
-                          alt={`${staple.name} in ${variant.color}`}
+                          src={staple.image_url}
+                          alt={`${staple.name || "Staple"} in ${staple.color || "Default"}`}
                           onError={(e) => (e.target.style.display = "none")}
                         />
                       )}
 
                       {/* Content */}
                       <div className="card-content">
-                        <h3 className="card-title">
-                          {staple.name}
-                        </h3>
-                        <p className="card-subtitle">
-                          {staple.category}
-                        </p>
+                        <h3 className="card-title">{staple.name || "Staple"}</h3>
+                        <p className="card-subtitle">{staple.category || "Staple"}</p>
                       </div>
 
                       {/* Tags */}
                       <div className="tags" style={{ padding: "0 var(--spacing-md) var(--spacing-sm)" }}>
-                        <span className="tag">{variant.color}</span>
+                        <span className="tag">{staple.color || "Default"}</span>
                         <span className="tag">Staple</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+
             </div>
             
             {/* 3. Search & Link Section */}
