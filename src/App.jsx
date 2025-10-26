@@ -221,7 +221,7 @@ useEffect(() => {
         if (!res.ok) throw new Error("Failed to fetch staples");
         const data = await res.json();
 
-        // backend returns { success, staples } (each staple is an item)
+        // backend returns a flat list under 'staples' (or 'items')
         const list = Array.isArray(data?.staples)
           ? data.staples
           : (Array.isArray(data?.items) ? data.items : []);
@@ -235,7 +235,7 @@ useEffect(() => {
 
     fetchStaples();
   }, [user?.uid, userPrefs.gender]);
-✅ dependency array belongs here
+
 
   
 
@@ -245,7 +245,8 @@ useEffect(() => {
       const result = await signInWithPopup(auth, provider);
       setUser(result.user);
       fetchItems(result.user.uid);
-      setShowOnboarding(true);
+      setNeedsOnboarding(true);
+
     } catch (err) {
       console.error("Login failed:", err.message);
     }
@@ -319,7 +320,8 @@ useEffect(() => {
       }
 
       const data = await res.json();
-      const tagged = (data.detected || []).map((obj) => ({
+      const tagged = (data.detectedItems || data.detected || []).map((obj) => ({
+
         ...obj,
         approved: true,
         imagePath: storagePath, // will be saved to Firestore
@@ -1035,14 +1037,13 @@ async function suggestOutfit(options = {}) {
                       className="card"
                       onClick={() =>
                         handleQuickAdd(
-                          { color: staple.color || "Default", image_url: staple.image_url || "" }, // variant-like shape
+                          { color: staple.color || "Default", image_url: staple.image_url || "" },
                           staple.name || "Staple",
                           staple.category || "Staple"
                         )
                       }
                       style={{ cursor: "pointer" }}
                     >
-                      {/* Image */}
                       {staple.image_url && (
                         <img
                           className="card-image"
@@ -1052,13 +1053,11 @@ async function suggestOutfit(options = {}) {
                         />
                       )}
 
-                      {/* Content */}
                       <div className="card-content">
                         <h3 className="card-title">{staple.name || "Staple"}</h3>
                         <p className="card-subtitle">{staple.category || "Staple"}</p>
                       </div>
 
-                      {/* Tags */}
                       <div className="tags" style={{ padding: "0 var(--spacing-md) var(--spacing-sm)" }}>
                         <span className="tag">{staple.color || "Default"}</span>
                         <span className="tag">Staple</span>
@@ -1067,6 +1066,7 @@ async function suggestOutfit(options = {}) {
                   ))}
                 </div>
               )}
+
 
             </div>
             
