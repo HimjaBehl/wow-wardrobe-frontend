@@ -7,6 +7,7 @@ import { storage, auth, provider, signInWithPopup, signOut, db } from "./firebas
 import { query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import WeeklyPlanner from "./WeeklyPlanner";
+import HomeDashboard from "./HomeDashboard";
 import VirtualTryOn from "./VirtualTryOn";
 
 
@@ -82,8 +83,9 @@ export default function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [editedTags, setEditedTags] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("wardrobe");
+  const [activeTab, setActiveTab] = useState("home");
   const [detectedItems, setDetectedItems] = useState([]);
+  const [todayPlan, setTodayPlan] = useState(null);
   
   // New upload features state
   const [uploadExpanded, setUploadExpanded] = useState(true);
@@ -184,8 +186,10 @@ export default function App() {
       if (firebaseUser) {
         console.log("🔥 Your UID is:", firebaseUser.uid);
         fetchItems(firebaseUser.uid);
+    +   fetchTodayPlan(firebaseUser.uid);
       }
     });
+
 
     if (loading) {
       return (
@@ -246,6 +250,24 @@ export default function App() {
       console.error("Login failed:", err.message);
     }
   };
+
+  const fetchTodayPlan = async (uid) => {
+    try {
+      const date = new Date().toISOString().split("T")[0];
+      const res = await fetch(`${BASE_URL}/plan-outfit?uid=${uid}&date=${date}`);
+      if (!res.ok) {
+        setTodayPlan(null);
+        return;
+      }
+      const data = await res.json();
+      // Accept `{ outfit: {...} }` or the outfit object directly.
+      setTodayPlan(data?.outfit ? data : { outfit: data });
+    } catch (e) {
+      console.error("❌ Error fetching today plan:", e);
+      setTodayPlan(null);
+    }
+  };
+
   const fetchItems = async (uid) => {
     try {
       const res = await fetch(`${BASE_URL}/wardrobe?uid=${uid}`);
@@ -371,6 +393,8 @@ export default function App() {
           throw new Error(`Failed to save item: ${item.name}`);
         }
       }
+
+      
 
       alert("✅ Selected items added to wardrobe!");
       setDetectedItems([]);
@@ -834,11 +858,7 @@ async function suggestOutfit(options = {}) {
         )}
       </header>
 
-      <button className="btn btn-secondary"
-              onClick={() => window.location.reload()}
-              style={{ marginTop: "1rem", width: "100%" }}>
-        Try Again
-      </button>
+      
 
 
       {/* Main Content */}
@@ -855,6 +875,16 @@ async function suggestOutfit(options = {}) {
           </div>
         ) : (
           <>
+
+            {activeTab === "home" && (
+              <HomeDashboard
+                user={user}
+                items={items}
+                todayPlan={todayPlan}
+                onGo={(tab) => setActiveTab(tab)}
+              />
+            )}
+
           {activeTab === "upload" && (
           <section className="section">
             <h2 className="section-title">Add to Wardrobe</h2>
@@ -1651,10 +1681,12 @@ async function suggestOutfit(options = {}) {
         }}
       >
         {[
+          { label: "Home", key: "home" },
           { label: "Wardrobe", key: "wardrobe" },
           { label: "Upload", key: "upload" },
           { label: "Stylist", key: "stylist" },
           { label: "Planner", key: "planner" },
+          { label: "Profile", key: "profile" },
         ].map((tab) => (
           <button
             key={tab.key}

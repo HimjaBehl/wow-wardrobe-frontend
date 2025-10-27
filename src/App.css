@@ -1412,3 +1412,26 @@ body {
   padding: 0.75rem 1.5rem;
   margin-left: 0.5rem;
 }
+
+/* Home */
+.home { padding: var(--spacing-lg); }
+.home-hero { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.home-title { margin:0; font-size:1.5rem; }
+.home-sub { margin:.25rem 0 0; color: var(--neutral-600); }
+.chip { border:1px solid #eee; background:#fff; border-radius:999px; padding:.5rem .9rem; }
+
+.home-grid { margin-top:1rem; display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; }
+.tile { display:flex; flex-direction:column; gap:.25rem; align-items:flex-start; border:1px solid #eee; border-radius:14px; padding:1rem; background:#fff; }
+.tile-emoji { font-size:1.4rem; line-height:1; }
+.tile-title { font-weight:600; }
+.tile-sub { color:#6b7280; font-size:.85rem; }
+
+.home-card { margin-top:1rem; border:1px solid #eee; border-radius:14px; background:#fff; padding:1rem; }
+.home-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.25rem; }
+.linklike { background:none; border:none; color:#7c3aed; font-size:.9rem; }
+.muted { color:#6b7280; }
+
+.home-row { display:flex; gap:.75rem; overflow-x:auto; padding-bottom:.25rem; }
+.home-item { min-width:86px; }
+.home-item img { width:86px; height:86px; object-fit:cover; border-radius:12px; border:1px solid #eee; }
+.caption { font-size:.8rem; margin-top:.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
