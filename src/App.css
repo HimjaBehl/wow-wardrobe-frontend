@@ -187,15 +187,17 @@ body {
 /* ─── Section Container ─────────────────────────── */
 .section {
   padding: var(--spacing-lg);
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
   width: 100%;
+  background: transparent;    /* ← remove light fill */
 }
+
 
 .section-title {
   font-size: 1.75rem;
   font-weight: var(--font-weight-bold);
-  color: var(--primary-black);
+  color: #fff;                /* ← white on black */
   margin-bottom: var(--spacing-lg);
   text-align: center;
   letter-spacing: -0.02em;
@@ -1413,26 +1415,102 @@ body {
 }
 
 /* Home */
-.home { padding: var(--spacing-lg); }
-.home-hero { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
-.home-title { margin:0; font-size:1.5rem; }
-.home-sub { margin:.25rem 0 0; color: var(--neutral-600); }
-.chip { border:1px solid var(--neutral-200); background:#fff; color:var(--neutral-900); border-radius:999px; padding:.5rem .9rem; }
+.home { 
+  padding: var(--spacing-lg); 
+  max-width: 1100px; 
+  margin: 0 auto; 
+}
 
+.home-hero { 
+  display:flex; 
+  align-items:center; 
+  justify-content:space-between; 
+  gap:1rem; 
+}
 
-.home-grid { margin-top:1rem; display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; }
+.home-title { 
+  margin:0; 
+  font-size:1.5rem; 
+  color:#fff; 
+}
 
+.home-sub { 
+  margin:.25rem 0 0; 
+  color:#c9cdd2; 
+}
 
-.home-card { margin-top:1rem; border:1px solid var(--neutral-200); border-radius:14px; background:#fff; color:var(--neutral-900); padding:1rem; }
+/* Pills */
+.chip { 
+  border:1px solid var(--neutral-200); 
+  background:#fff; 
+  color:var(--neutral-900); 
+  border-radius:999px; 
+  padding:.5rem .9rem; 
+}
 
-.home-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.25rem; }
+/* Grid of tiles */
+.home-grid { 
+  margin-top:1rem; 
+  display:grid; 
+  grid-template-columns:repeat(2,minmax(0,1fr)); 
+  gap:.75rem; 
+}
+
+/* Each tile = white card on black page */
+.tile { 
+  display:flex; 
+  flex-direction:column; 
+  gap:.25rem; 
+  align-items:flex-start; 
+  background:#fff; 
+  color:#111; 
+  border:1px solid var(--neutral-200); 
+  border-radius:14px; 
+  padding:1rem; 
+  min-height:96px;                  /* ← prevents “bars” */
+  box-shadow: var(--shadow-md); 
+  transition: transform .2s ease, box-shadow .2s ease; 
+}
+.tile:hover { 
+  transform: translateY(-2px); 
+  box-shadow: var(--shadow-lg); 
+}
+
+.tile-emoji { font-size:1.4rem; line-height:1; }
+.tile-title { font-weight:600; color:#111; }
+.tile-sub   { color:#6b7280; font-size:.85rem; }
+
+/* “Today” and “Recently added” cards */
+.home-card { 
+  margin-top:1rem; 
+  background:#fff; 
+  color:#111; 
+  border:1px solid var(--neutral-200); 
+  border-radius:14px; 
+  padding:1rem; 
+  box-shadow: var(--shadow-md); 
+}
+
+.home-card-header { 
+  display:flex; 
+  align-items:center; 
+  justify-content:space-between; 
+  margin-bottom:.25rem; 
+}
+
 .linklike { background:none; border:none; color:#7c3aed; font-size:.9rem; }
-.muted { color:#6b7280; }
 
+/* Row of thumbnails */
 .home-row { display:flex; gap:.75rem; overflow-x:auto; padding-bottom:.25rem; }
 .home-item { min-width:86px; }
-.home-item img { width:86px; height:86px; object-fit:cover; border-radius:12px; border:1px solid var(--neutral-200); }
-.caption { font-size:.8rem; margin-top:.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.home-item img { 
+  width:86px; height:86px; object-fit:cover; 
+  border-radius:12px; 
+  background:#fff; 
+  border:1px solid var(--neutral-200); 
+}
+.caption { font-size:.8rem; margin-top:.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#6b7280; }
+
 
 /* — App-wide dark page with white cards — */
 html, body, #root { background:#000; color:#fff; }
@@ -1441,14 +1519,8 @@ html, body, #root { background:#000; color:#fff; }
 .section-title, .home-title { color:#fff; }
 .section-description, .home-sub, .muted, .tile-sub, .caption { color:#c9cdd2; }
 
-/* keep cards white/dark-text */
-.card, .home-card, .tile, .outfit-look, .look-item, .variant-card, .trend-item {
-  background:#fff; 
-  color: var(--neutral-900);
-  border:1px solid var(--neutral-200);
-}
-.card-title, .tile-title, .results-title, .staple-heading, .look-title { color: var(--neutral-900); }
-.card-subtitle, .look-description { color: var(--neutral-600); }
+
+
 
 /* chips/tags back to light style */
 .tag { background: var(--neutral-100); color: var(--neutral-700); border: 0; }
@@ -1463,8 +1535,23 @@ html, body, #root { background:#000; color:#fff; }
 .section-title, .home-title { color:#fff; }
 .section-description, .home-sub, .muted, .caption { color:#c9cdd2; }
 
+/* White cards on black page — single source of truth */
 .card, .home-card, .tile, .outfit-look, .look-item, .variant-card, .trend-item {
   background:#fff;
-  color: var(--neutral-900);
+  color:#111;
   border:1px solid var(--neutral-200);
+  box-shadow: var(--shadow-md);
 }
+.card-title, .tile-title, .results-title, .staple-heading, .look-title { color:#111; }
+.card-subtitle, .look-description, .tile-sub { color:#6b7280; }
+
+/* Tighten vertical rhythm on black page */
+.app-main { padding-bottom: 5rem; }
+.home-card + .home-card { margin-top: 1rem; }
+
+/* Make “Today” placeholder text softer */
+.home-card .muted, .home-card p { color:#6b7280; }
+
+/* Buttons on black header (if any) */
+.btn-primary { background: #111; color:#fff; border:1px solid #222; }
+.btn-primary:hover { background:#1a1a1a; }
