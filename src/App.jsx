@@ -14,16 +14,6 @@ import VirtualTryOn from "./VirtualTryOn";
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
-/* ========== mood-board helpers ========== */
-async function saveOutfitToPlanner({ uid, outfit }) {
-  const date = new Date().toISOString().split("T")[0];
-  await fetch(`${BASE_URL}/plan-outfit`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ uid, date, outfit }),
-  });
-  alert("📅 Outfit saved!");
-}
 
 async function likeOutfit({ uid, outfit, context = {} }) {
   try {
@@ -245,7 +235,7 @@ export default function App() {
       if (firebaseUser) {
         console.log("🔥 Your UID is:", firebaseUser.uid);
         fetchItems(firebaseUser.uid);
-    +   fetchTodayPlan(firebaseUser.uid);
+    fetchTodayPlan(firebaseUser.uid);
       }
     });
 
@@ -747,16 +737,27 @@ export default function App() {
              style_note: look.style_note || "Suggested look",
              trends_used: look.trends_used || [],
              items: (look.items || []).map((it) => {
-               const wardrobeItem = items.find((w) => String(w.id) === String(it.id)) || {};
+               // Try wardrobe match by id, then by image URL (Tina may return image or image_url)
+               const byId    = items.find(w => String(w.id) === String(it.id));
+               const tinaUrl = it.image_url || it.image || "";
+               const byImage = tinaUrl ? items.find(w => w.image_url && w.image_url === tinaUrl) : null;
+               const w       = byId || byImage || null;
+
                return {
-                 id: it.id,
-                 name: wardrobeItem.name || it.name || "Unnamed",
-                 category: wardrobeItem.category || it.category || "",
-                 color: wardrobeItem.color || it.color || "",
-                 image_url: wardrobeItem.image_url || it.image_url || "",
-                 tags: wardrobeItem.tags || it.tags || [],
+                 // Prefer Tina’s data, fill gaps from wardrobe
+                 id        : it.id ?? w?.id,
+                 name      : it.name ?? w?.name ?? "Unnamed",
+                 category  : it.category ?? w?.category ?? "",
+                 color     : it.color ?? w?.color ?? "",
+                 image_url : tinaUrl || w?.image_url || "",
+                 tags      : Array.isArray(it.tags) ? it.tags : (w?.tags || []),
+
+                 // keep Tina’s metadata if present
+                 taxonomyPath : it.taxonomyPath,
+                 attributes   : it.attributes,
                };
              }),
+
            }))
          );
        } catch (err) {
@@ -1026,7 +1027,8 @@ async function suggestOutfit(options = {}) {
                       <img src={URL.createObjectURL(file)} alt="Preview" className="preview-image" />
                       <button 
                         className="btn btn-primary"
-                        onClick={handleAutoTag}
+                        onClick={handleUpload}
+
                         style={{ marginTop: "var(--spacing-md)" }}
                       >
                         ✨ Auto-Tag & Detect Items
@@ -1901,32 +1903,7 @@ async function suggestOutfit(options = {}) {
           </section>
         )}
 
-        {/* Modern Modals */}
-        {/* 📌  NEW: wardrobe-card details modal         */}
-        {isModalOpen && modalItem && (
-          <div className="wow-overlay" onClick={closeModal}>
-            <div
-              className="wow-modal"
-              onClick={(e) => e.stopPropagation()}   // keep clicks inside
-            >
-              <img src={modalItem.image_url} alt={modalItem.name} />
-
-              <h3>{modalItem.primaryTag || formatLabel(modalItem.name)}</h3>
-
-              <p className="sub">{formatLabel(modalItem.category)}</p>
-
-              {modalItem.tags?.length > 0 && (
-                <div className="tags">
-                  {[...new Set(modalItem.tags)].map((t, i) => (
-                    <span key={i}>{formatLabel(t)}</span>
-                  ))}
-                </div>
-              )}
-
-              <button onClick={closeModal}>Close</button>
-            </div>
-          </div>
-        )}
+       
         {/* -------------------------------------------- */}
 
       <nav
