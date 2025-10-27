@@ -61,6 +61,65 @@ export default function App() {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
+  const [todayPlan, setTodayPlan] = useState(null);
+  // ── Add-to-Calendar modal state ──────────────────────────────
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [planForm, setPlanForm] = useState({
+    date: new Date().toISOString().split("T")[0],
+    title: "",
+    note: ""
+  });
+  const [planLook, setPlanLook] = useState(null);
+
+  const openPlanModal = (look) => {
+    setPlanLook(look);
+    setPlanForm((prev) => ({
+      ...prev,
+      title: look?.title || "Planned Look",
+      // keep today's date by default
+    }));
+    setShowPlanModal(true);
+  };
+
+  const closePlanModal = () => {
+    setShowPlanModal(false);
+    setPlanLook(null);
+  };
+
+  // submit to backend and refresh planner
+  const addLookToCalendar = async () => {
+    if (!user?.uid || !planLook) return;
+    try {
+      const payload = {
+        uid   : user.uid,
+        date  : planForm.date,               // YYYY-MM-DD
+        outfit: {
+          title: planForm.title,
+          note : planForm.note,
+          items: planLook.items || []
+        }
+      };
+
+      const res = await fetch(`${BASE_URL}/plan-outfit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(`Failed to add to calendar: ${t}`);
+      }
+
+      // Optional: quick feedback + refresh (today will only show if date == today)
+      alert("🗓️ Added to your calendar!");
+      closePlanModal();
+      fetchTodayPlan(user.uid);
+    } catch (err) {
+      console.error("Add-to-calendar failed:", err);
+      alert("Couldn’t add to calendar. Please try again.");
+    }
+  };
 
 
 
@@ -86,8 +145,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [detectedItems, setDetectedItems] = useState([]);
   const [openEditors, setOpenEditors] = useState({}); // idx -> true/false
-
-  const [todayPlan, setTodayPlan] = useState(null);
   
   // New upload features state
   const [uploadExpanded, setUploadExpanded] = useState(true);
@@ -951,9 +1008,9 @@ async function suggestOutfit(options = {}) {
                     </div>
                     
                     <div className="upload-zone">
-                      <div className="upload-icon">📱</div>
+                      <div className="upload-icon">📸</div>
                       <h4>Take Photo</h4>
-                      <p>Use camera</p>
+                      <p>Use your camera</p>
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -965,12 +1022,12 @@ async function suggestOutfit(options = {}) {
                   </div>
                   
                   {file && (
-                    <div className="selected-file">
-                      <p>📄 {file.name}</p>
+                    <div className="upload-preview">
+                      <img src={URL.createObjectURL(file)} alt="Preview" className="preview-image" />
                       <button 
                         className="btn btn-primary"
-                        onClick={handleUpload}
-                        style={{ marginTop: "var(--spacing-md)", width: "100%" }}
+                        onClick={handleAutoTag}
+                        style={{ marginTop: "var(--spacing-md)" }}
                       >
                         ✨ Auto-Tag & Detect Items
                       </button>
@@ -981,8 +1038,8 @@ async function suggestOutfit(options = {}) {
             </div>
 
             {/* Detected Items Results */}
-                {detectedItems.length > 0 && (
-                  <div className="upload-results">
+            {detectedItems.length > 0 && (
+              <div className="upload-results">
                     <h3 className="section-subtitle">✨ Detected Items</h3>
 
                     <div className="detected-items">
@@ -1588,12 +1645,13 @@ async function suggestOutfit(options = {}) {
                   </div>
 
                   <div className="look-actions">
-                    <button 
+                    <button
                       className="btn btn-outline"
-                      onClick={() => saveOutfitToPlanner({ uid: user.uid, outfit: look })}
+                      onClick={() => openPlanModal(look)}
                     >
-                      💾 Save to Planner
+                      🗓️ Add to Calendar
                     </button>
+
                     <button
                       className="btn btn-accent"
                       onClick={() =>
@@ -1769,6 +1827,107 @@ async function suggestOutfit(options = {}) {
         </div>
       )}
       {/* -------------------------------------------- */}
+
+        {showPlanModal && (
+          <section
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 2000,
+            }}
+            aria-modal="true"
+            role="dialog"
+          >
+            <div
+              style={{
+                background: "white",
+                padding: "1.5rem",
+                borderRadius: 12,
+                width: "92%",
+                maxWidth: 480,
+                boxShadow: "0 10px 30px rgba(0,0,0,0.15)"
+              }}
+            >
+              <h3 style={{ marginTop: 0 }}>Add to Calendar</h3>
+
+              <label className="form-label" style={{ display: "block", marginTop: 10 }}>
+                Date
+              </label>
+              <input
+                type="date"
+                className="form-input"
+                value={planForm.date}
+                onChange={(e) => setPlanForm({ ...planForm, date: e.target.value })}
+                style={{ width: "100%" }}
+              />
+
+              <label className="form-label" style={{ display: "block", marginTop: 12 }}>
+                Title
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                value={planForm.title}
+                onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })}
+                placeholder="e.g., Airport Travel Look"
+                style={{ width: "100%" }}
+              />
+
+              <label className="form-label" style={{ display: "block", marginTop: 12 }}>
+                Note
+              </label>
+              <textarea
+                className="form-input"
+                value={planForm.note}
+                onChange={(e) => setPlanForm({ ...planForm, note: e.target.value })}
+                placeholder="Add any extra comments…"
+                rows={4}
+                style={{ width: "100%" }}
+              />
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+                <button className="btn btn-secondary" onClick={closePlanModal}>
+                  Cancel
+                </button>
+                <button className="btn btn-primary" onClick={addLookToCalendar}>
+                  ➕ Add
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Modern Modals */}
+        {/* 📌  NEW: wardrobe-card details modal         */}
+        {isModalOpen && modalItem && (
+          <div className="wow-overlay" onClick={closeModal}>
+            <div
+              className="wow-modal"
+              onClick={(e) => e.stopPropagation()}   // keep clicks inside
+            >
+              <img src={modalItem.image_url} alt={modalItem.name} />
+
+              <h3>{modalItem.primaryTag || formatLabel(modalItem.name)}</h3>
+
+              <p className="sub">{formatLabel(modalItem.category)}</p>
+
+              {modalItem.tags?.length > 0 && (
+                <div className="tags">
+                  {[...new Set(modalItem.tags)].map((t, i) => (
+                    <span key={i}>{formatLabel(t)}</span>
+                  ))}
+                </div>
+              )}
+
+              <button onClick={closeModal}>Close</button>
+            </div>
+          </div>
+        )}
+        {/* -------------------------------------------- */}
 
       <nav
         style={{
