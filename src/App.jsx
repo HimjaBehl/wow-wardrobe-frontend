@@ -357,6 +357,19 @@ export default function App() {
     setDetectedItems(updated);
   };
 
+  const openEditDetected = (index) => {
+    const it = detectedItems[index] || {};
+    setEditItemIndex(index);
+    setEditForm({
+      name: it.name || "",
+      category: it.category || "",
+      color: it.color || "",
+      // show tags as a comma-separated string for the input
+      tags: Array.isArray(it.tags) ? it.tags.join(", ") : (it.tags || "")
+    });
+  };
+
+
   const confirmSelectedItems = async () => {
     const approved = detectedItems.filter((item) => item.approved);
 
@@ -993,10 +1006,11 @@ async function suggestOutfit(options = {}) {
               </div>
               
               {quickAddExpanded && (
-                <div className="grid grid-wardrobe">
-                  {staples.map((staple, index) => (
-                    <div
-                      key={`${staple.id || staple.name || "staple"}-${index}`}
+                <div className="section-content">
+                  <div className="grid">
+                    {staples.map((staple, index) => (
+                      <div 
+                        key={`${staple.id || staple.name || "staple"}-${index}`}
                       className="card"
                       onClick={() =>
                         handleQuickAdd(
@@ -1028,7 +1042,8 @@ async function suggestOutfit(options = {}) {
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
+            )}
 
 
             </div>

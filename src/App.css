@@ -265,3 +265,14 @@ a{ color:var(--link); }
 .card, .home-card, .tile, .outfit-look, .look-item, .variant-card, .trend-item,
 .detected-item, .upload-section, .section-content, .section-header,
 .selected-file, .upload-zone, .color-modal{ color:var(--ink) !important; }
+
+.detected-item-title-row{
+  display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+}
+.linklike.small{
+  font-size:.875rem;
+  padding:0;
+  background:none;
+  border:none;
+  cursor:pointer;
+}
