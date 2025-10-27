@@ -61,12 +61,7 @@ export default function App() {
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
 
-// AI stylist source: "n8n" or "agent"
-const [stylistSource, setStylistSource] = useState("n8n");
 
-useEffect(() => {
-  console.log("🎛️ Stylist source changed:", stylistSource);
-}, [stylistSource]);
 
 
   const [customPrompt, setCustomPrompt] = useState("");
@@ -655,71 +650,9 @@ useEffect(() => {
      }
 
 
-// ✅ Moved outside so it’s globally accessible
-async function suggestOutfitN8N({ uid, city, occasion }) {
-  if (!uid) return;
 
-  try {
-    const res = await fetch("https://himja.app.n8n.cloud/webhook/suggest-outfit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-  uid, 
-  city, 
-  occasion, 
-  vibe, 
-  dislikes: userPrefs.dislikes || [],   // ✅ new
-}),
 
-    });
 
-    const data = await res.json();
-    console.log("🎯 N8N AI Outfits:", data);
-
-    if (data.looks && Array.isArray(data.looks)) {
-      console.log("👗 Wardrobe IDs:", items.map(i => i.id));
-      console.log("🎯 N8N Look IDs:", data.looks.flatMap(l => l.ids));
-
-      console.log("👗 Firebase wardrobe IDs:", items.map(i => i.id));
-      console.log("🎯 N8N outfit IDs:", data.looks.flatMap(l => l.ids));
-
-      setOutfit(
-        data.looks.map((look, idx) => ({
-          title: `Look ${idx + 1}`,
-          style_note: look.note || look.style_note || "Suggested look",
-          items: (look.ids || []).map((id) => {
-            const wardrobeItem = items.find(
-              (w) => String(w.id).trim() === String(id).trim()
-            );
-
-            if (!wardrobeItem) {
-              console.warn("⚠️ Missing wardrobe item for ID:", id);
-            }
-            return {
-              id,
-              name: wardrobeItem?.name || `Item ${id}`,
-              category: wardrobeItem?.category || "",
-              color: wardrobeItem?.color || "",
-              image_url: wardrobeItem?.image_url || "/placeholder.png",
-              tags: wardrobeItem?.tags || [],
-            };
-          }),
-        }))
-      );
-
-    
-
-    
-
-    } else {
-      console.warn("⚠️ No looks returned from N8N:", data);
-      setOutfit([]);
-    }
-  } catch (err) {
-    console.error("❌ N8N suggestOutfit failed:", err);
-    alert("Could not fetch looks from N8N");
-  }
-}
 
   async function suggestPinterestOutfits({ uid, occasion, city, weather }) {
     const res = await fetch(`${BASE_URL}/pinterest-analysis`, {
@@ -1472,45 +1405,23 @@ async function suggestOutfit(options = {}) {
                   />
                 </div>
               </div>
-<div className="form-group">
-  <label className="form-label">Stylist Source</label>
-  <select
-    className="form-select"
-    value={stylistSource}
-    onChange={(e) => setStylistSource(e.target.value)}
-  >
-    <option value="n8n">🌐 N8N Workflow</option>
-    <option value="agent">🤖 Tina Agent (Replit)</option>
-  </select>
-</div>
 
               <button
-  className="btn btn-primary"
-  onClick={async () => {
-  console.log("🖱️ Generate clicked, source:", stylistSource);
-
-  if (stylistSource === "n8n") {
-    await suggestOutfitN8N({
-      uid: user.uid,
-      city,
-      occasion,
-      vibe,
-    });
-  } else {
-    await suggestOutfitAgent({
-  uid: user.uid,
-  city,
-  wardrobe: items,
-      occasion,
-      vibe,
-});
-  }
-}}
-
-  style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
->
-  🪄 Generate Outfit Ideas ({stylistSource === "n8n" ? "via N8N" : "via Tina Agent"})
-</button>
+                className="btn btn-primary"
+                onClick={async () => {
+                  console.log("🖱️ Generate clicked (Tina Agent)");
+                  await suggestOutfitAgent({
+                    uid: user.uid,
+                    city,
+                    wardrobe: items,
+                    occasion,
+                    vibe,
+                  });
+                }}
+                style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
+              >
+                🪄 Generate Outfit Ideas
+              </button>
 
 
               {/* Modern Outfit Suggestions */}
@@ -1694,64 +1605,7 @@ async function suggestOutfit(options = {}) {
         )}
       </main>
 
-      {/* Modern Bottom Navigation */}
-      {user && (
-        <nav className="bottom-nav">
-          <ul className="bottom-nav-list">
-            <li className="bottom-nav-item">
-              <button 
-                className={`bottom-nav-link ${activeTab === 'wardrobe' ? 'active' : ''}`}
-                onClick={() => setActiveTab('wardrobe')}
-                aria-label="Wardrobe"
-              >
-                <span className="bottom-nav-icon">👗</span>
-                Wardrobe
-              </button>
-            </li>
-            <li className="bottom-nav-item">
-              <button 
-                className={`bottom-nav-link ${activeTab === 'upload' ? 'active' : ''}`}
-                onClick={() => setActiveTab('upload')}
-                aria-label="Upload"
-              >
-                <span className="bottom-nav-icon">📱</span>
-                Upload
-              </button>
-            </li>
-            <li className="bottom-nav-item">
-              <button 
-                className={`bottom-nav-link ${activeTab === 'stylist' ? 'active' : ''}`}
-                onClick={() => setActiveTab('stylist')}
-                aria-label="AI Stylist"
-              >
-                <span className="bottom-nav-icon">✨</span>
-                Stylist
-              </button>
-            </li>
-            <li className="bottom-nav-item">
-              <button 
-                className={`bottom-nav-link ${activeTab === 'planner' ? 'active' : ''}`}
-                onClick={() => setActiveTab('planner')}
-                aria-label="Planner"
-              >
-                <span className="bottom-nav-icon">📅</span>
-                Planner
-              </button>
-            </li>
-            <li className="bottom-nav-item">
-              <button 
-                className={`bottom-nav-link ${activeTab === 'profile' ? 'active' : ''}`}
-                onClick={() => setActiveTab('profile')}
-                aria-label="Profile"
-              >
-                <span className="bottom-nav-icon">👤</span>
-                Profile
-              </button>
-            </li>
-
-          </ul>
-        </nav>
-      )}
+      
 
       {/* Modern Modals */}
       {/* 📌  NEW: wardrobe-card details modal         */}
