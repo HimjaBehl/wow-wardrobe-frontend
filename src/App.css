@@ -276,3 +276,31 @@ a{ color:var(--link); }
   border:none;
   cursor:pointer;
 }
+
+.detected-item-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.linklike.small {
+  font-size: 0.875rem;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--accent-purple, #b388ff);
+}
+.detected-editor .form-row {
+  margin-top: 0.5rem;
+}
+.detected-editor .form-label {
+  font-size: 0.85rem;
+  color: var(--neutral-600);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.muted {
+  color: var(--neutral-500);
+  font-size: 0.85rem;
+}

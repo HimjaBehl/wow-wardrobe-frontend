@@ -85,6 +85,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("home");
   const [detectedItems, setDetectedItems] = useState([]);
+  const [openEditors, setOpenEditors] = useState({}); // idx -> true/false
+
   const [todayPlan, setTodayPlan] = useState(null);
   
   // New upload features state
@@ -355,6 +357,26 @@ export default function App() {
     const updated = [...detectedItems];
     updated[index].approved = !updated[index].approved;
     setDetectedItems(updated);
+  };
+
+  const toggleEditor = (index) => {
+    setOpenEditors((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  const handleDetectedChange = (index, field, value) => {
+    setDetectedItems((prev) =>
+      prev.map((it, i) => {
+        if (i !== index) return it;
+        if (field === "tags") {
+          const arr = value
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean);
+          return { ...it, tags: arr, _tagsInput: value };
+        }
+        return { ...it, [field]: value };
+      })
+    );
   };
 
   const openEditDetected = (index) => {
@@ -959,51 +981,121 @@ async function suggestOutfit(options = {}) {
             </div>
 
             {/* Detected Items Results */}
-            {detectedItems.length > 0 && (
-              <div className="upload-results">
-                <h3 className="section-subtitle">✨ Detected Items</h3>
-                <div className="detected-items">
-                  {detectedItems.map((item, i) => (
-                    <div key={i} className="detected-item card">
-                      <div className="detected-item-image">
-                        <img src={item.image_url} alt={item.name} className="preview-image" />
-                        <div className="checkbox-overlay">
-                          <input
-                            type="checkbox"
-                            checked={item.approved}
-                            onChange={() => toggleItemApproval(i)}
-                            className="item-checkbox"
-                          />
+                {detectedItems.length > 0 && (
+                  <div className="upload-results">
+                    <h3 className="section-subtitle">✨ Detected Items</h3>
+
+                    <div className="detected-items">
+                      {detectedItems.map((item, i) => (
+                        <div key={i} className="detected-item card">
+                          {/* Image + checkbox */}
+                          <div className="detected-item-image">
+                            <img src={item.image_url} alt={item.name} className="preview-image" />
+                            <div className="checkbox-overlay">
+                              <input
+                                type="checkbox"
+                                checked={!!item.approved}
+                                onChange={() => toggleItemApproval(i)}
+                                className="item-checkbox"
+                                aria-label="Select item for saving"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Content */}
+                          <div className="detected-item-content">
+                            <div className="detected-item-title-row">
+                              <h4 className="detected-item-title">{item.name || "Unnamed"}</h4>
+                              <button
+                                type="button"
+                                className="linklike small"
+                                onClick={() => toggleEditor(i)}
+                                aria-expanded={!!openEditors[i]}
+                              >
+                                {openEditors[i] ? "Done" : "✏️ Edit"}
+                              </button>
+                            </div>
+
+                            {/* Read view */}
+                            {!openEditors[i] && (
+                              <p className="detected-item-details">
+                                {(item.category || "—")} •{" "}
+                                <span className="color-highlight">{item.color || "—"}</span>
+                              </p>
+                            )}
+
+                            {/* Inline editor */}
+                            {openEditors[i] && (
+                              <div className="detected-editor">
+                                <div className="form-row">
+                                  <label className="form-label">Name</label>
+                                  <input
+                                    className="form-input"
+                                    type="text"
+                                    value={item.name || ""}
+                                    onChange={(e) => handleDetectedChange(i, "name", e.target.value)}
+                                    placeholder="e.g., T-shirt"
+                                  />
+                                </div>
+
+                                <div className="form-row">
+                                  <label className="form-label">Category</label>
+                                  <input
+                                    className="form-input"
+                                    type="text"
+                                    value={item.category || ""}
+                                    onChange={(e) => handleDetectedChange(i, "category", e.target.value)}
+                                    placeholder="e.g., Clothing/Upper"
+                                  />
+                                </div>
+
+                                <div className="form-row">
+                                  <label className="form-label">Color</label>
+                                  <input
+                                    className="form-input"
+                                    type="text"
+                                    value={item.color || ""}
+                                    onChange={(e) => handleDetectedChange(i, "color", e.target.value)}
+                                    placeholder="e.g., White"
+                                  />
+                                </div>
+
+                                <div className="form-row">
+                                  <label className="form-label">Tags</label>
+                                  <input
+                                    className="form-input"
+                                    type="text"
+                                    value={
+                                      item._tagsInput ??
+                                      (Array.isArray(item.tags)
+                                        ? item.tags.join(", ")
+                                        : item.tags || "")
+                                    }
+                                    onChange={(e) => handleDetectedChange(i, "tags", e.target.value)}
+                                    placeholder="comma, separated, tags"
+                                  />
+                                </div>
+
+                                <p className="muted" style={{ marginTop: 6 }}>
+                                  These edits will be used when saving to your wardrobe.
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="detected-item-content">
-                        <h4 className="detected-item-title">{item.name}</h4>
-                        <p className="detected-item-details">
-                          {item.category} • <span className="color-highlight">{item.color}</span>
-                        </p>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <button 
-                  className="btn btn-primary"
-                  onClick={confirmSelectedItems}
-                  style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
-                >
-                  ➕ Add Selected to Wardrobe
-                </button>
-              </div>
-            )}
-            
-            {/* 2. Quick Add Section */}
-            <div className="upload-section">
-              <div 
-                className="section-header"
-                onClick={() => setQuickAddExpanded(!quickAddExpanded)}
-              >
-                <h3 className="section-subtitle">⚡ Quick Add Staples</h3>
-                <span className={`expand-icon ${quickAddExpanded ? 'expanded' : ''}`}>▼</span>
-              </div>
+
+                    <button
+                      className="btn btn-primary"
+                      onClick={confirmSelectedItems}
+                      style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
+                    >
+                      ➕ Add Selected to Wardrobe
+                    </button>
+                  </div>
+                )}
+
               
               {quickAddExpanded && (
                 <div className="section-content">
@@ -1045,9 +1137,6 @@ async function suggestOutfit(options = {}) {
               </div>
             )}
 
-
-            </div>
-            
             {/* 3. Search & Link Section */}
             <div className="upload-section">
               <div 
@@ -1117,6 +1206,7 @@ async function suggestOutfit(options = {}) {
                 {toastMessage}
               </div>
             )}
+
           </section>
           )}
           {editItemIndex !== null && (
@@ -1643,7 +1733,6 @@ async function suggestOutfit(options = {}) {
                   </button>
                 </div>
               </div>
-
             </section>
           )}
         </>
