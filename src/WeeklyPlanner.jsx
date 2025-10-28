@@ -11,18 +11,18 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
   const [plannedOutfits, setPlannedOutfits] = useState({});
   const [user, setUser] = useState(null);
 
-  // ✅ Get logged-in user
+  // ✅ Track logged-in user (but allow uid prop as fallback)
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-    });
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => setUser(firebaseUser));
     return () => unsub();
   }, []);
 
-  // ✅ Fetch outfit plans for current week
+  const effectiveUid = user?.uid || uid || null;
+
+  // ✅ Fetch outfit plans for the current week
   useEffect(() => {
     const fetchPlannedOutfits = async () => {
-      if (!user) return;
+      if (!effectiveUid) return;
 
       const start = new Date(selectedDate);
       start.setDate(start.getDate() - start.getDay()); // Sunday
@@ -35,7 +35,7 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
       try {
         const q = query(
           collection(db, "outfit_plans"),
-          where("uid", "==", user.uid),
+          where("uid", "==", effectiveUid),
           where("date", ">=", startKey),
           where("date", "<=", endKey)
         );
@@ -54,7 +54,7 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
     };
 
     fetchPlannedOutfits();
-  }, [selectedDate, user]);
+  }, [selectedDate, effectiveUid]);
 
   const formatDateKey = (date) => date.toISOString().split("T")[0];
 
@@ -72,11 +72,10 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
     setPlannedOutfits((prev) => ({ ...prev, [key]: outfitData }));
 
     try {
-      const myUid = user?.uid;
-      if (!myUid) return alert("User not logged in.");
+      if (!effectiveUid) return alert("User not logged in.");
 
-      await setDoc(doc(db, "outfit_plans", `${myUid}_${key}`), {
-        uid: myUid,
+      await setDoc(doc(db, "outfit_plans", `${effectiveUid}_${key}`), {
+        uid: effectiveUid,
         date: key,
         outfit: outfitData,
       });
@@ -104,6 +103,7 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
           <Calendar value={selectedDate} onChange={setSelectedDate} />
         </div>
         <button
+          type="button"
           onClick={handleAddOutfit}
           className="btn btn-primary"
           style={{ marginTop: "var(--spacing-lg)" }}
@@ -124,25 +124,18 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
               <button
                 type="button"
                 className={`week-day-card card ${isSelected ? "selected" : ""}`}
-                key={idx}
+                key={key}
                 onClick={() => {
                   setSelectedDate(date);
                   if (data) {
                     onOpenPlan({
-                      id: `${user?.uid || "u"}_${key}`,
+                      id: `${effectiveUid || "u"}_${key}`,
                       date: key,
                       outfit: data,
                     });
                   }
                 }}
                 aria-label={`Open planned outfit for ${key}`}
-                style={{
-                  textAlign: "left",
-                  background: "transparent",
-                  border: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                }}
               >
                 <div className="day-header">
                   <h4 className="day-name">
@@ -150,6 +143,7 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
                   </h4>
                   <p className="day-date">{date.getDate()}</p>
                 </div>
+
                 <div className="day-content">
                   {data ? (
                     <>
@@ -173,29 +167,21 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
           <div className="planned-grid">
             {Object.entries(plannedOutfits)
               .sort(([a], [b]) => new Date(a) - new Date(b))
-              .map(([key, outfit], i) => {
+              .map(([key, outfit]) => {
                 const date = new Date(key);
                 return (
                   <button
                     type="button"
-                    key={i}
+                    key={key}
                     className="planned-outfit-card card"
                     onClick={() =>
                       onOpenPlan({
-                        id: `${user?.uid || "u"}_${key}`,
+                        id: `${effectiveUid || "u"}_${key}`,
                         date: key,
                         outfit,
                       })
                     }
                     aria-label={`Open planned outfit for ${key}`}
-                    style={{
-                      textAlign: "left",
-                      width: "100%",
-                      background: "transparent",
-                      border: "none",
-                      padding: 0,
-                      cursor: "pointer",
-                    }}
                   >
                     <div className="planned-date">
                       <span className="date-day">{date.getDate()}</span>
@@ -203,6 +189,7 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
                         {date.toLocaleDateString("en-US", { month: "short" })}
                       </span>
                     </div>
+
                     <div className="planned-details">
                       <h4 className="planned-title">{outfit.title}</h4>
                       <p className="planned-note">{outfit.note}</p>
