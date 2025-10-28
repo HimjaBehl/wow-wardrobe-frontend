@@ -33,13 +33,10 @@ function normalizeUrl(u = "") {
   }
 }
 function sameImage(a, b) {
-  const A = normalizeUrl(a);
-  const B = normalizeUrl(b);
-  if (A === B) return true;
-  // fallback: compare tail of the path (filename-ish)
-  const tail = (s) => (s.split("/").pop() || "").toLowerCase();
-  return tail(A) && tail(A) === tail(B);
+  // strict: normalized full URL only (no filename fallback)
+  return normalizeUrl(a) === normalizeUrl(b);
 }
+
 
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
 const SHOW_INSPIRATION = false;
@@ -741,18 +738,24 @@ export default function App() {
            method: "POST",
            headers: { "Content-Type": "application/json" },
            body: JSON.stringify({ 
-               uid,
-               city,
-               wardrobe,
-               occasion,   
-               vibe,
-               dislikes: userPrefs.dislikes || [],
+             uid,
+             city,
+             wardrobe: items.map(w => ({
+               id: w.id,
+               image_url: w.image_url,
+               name: w.displayName || w.name || "",
+               category: w.category || "",
+               color: w.color || ""
+             })),
+             occasion,
+             vibe,
+             dislikes: userPrefs.dislikes || [],
              profile: {
-                 gender: userPrefs.gender,
-                 bodyShape: userPrefs.bodyShape,
-                 complexion: userPrefs.complexion
-               }
-             }),
+               gender: userPrefs.gender,
+               bodyShape: userPrefs.bodyShape,
+               complexion: userPrefs.complexion
+             }
+           }),
            });
 
          const rawText = await res.text();
@@ -800,13 +803,22 @@ export default function App() {
                const tinaUrl = it.image_url || it.image || "";
                const tinaId  = it.wardrobe_id ?? it.id;
 
-               // 1) Strict: ID match first
-               let w = tinaId != null ? items.find((wi) => String(wi.id) === String(tinaId)) : null;
-
-               // 2) Exact image match (ignore query params)
+               let w = null;
+               // 1) ID match via map
+               if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId));
+               // 2) URL match via normalized key
                if (!w && tinaUrl) {
-                 w = items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
+                 const key = normalizeUrl(tinaUrl);
+                 w = WARDROBE_BY_URL.get(key);
                }
+
+               // 🔍 helpful debug if nothing matched
+               if (!w) {
+                 console.warn("⚠️ Tina item did not match wardrobe", {
+                   tinaId, tinaUrl: normalizeUrl(tinaUrl)
+                 });
+               }
+
 
                // 3) If still not found → drop unless you want inspiration visible
                if (!w && !SHOW_INSPIRATION) return null;
@@ -951,15 +963,22 @@ async function suggestOutfit(options = {}) {
                 if (!w && !SHOW_INSPIRATION) return null;
 
                 return w
-                  ? {
-                      id: w.id,
-                      
-                      category: w.category || it.category || "",
-                      color: w.color || it.color || "",
-                      image_url: w.image_url,
-                      tags: Array.isArray(w.tags) ? w.tags : [],
-                      source: "wardrobe",
-                    }
+                ? {
+                    id: w.id,
+                    name: w.displayName || w.name || it.name || (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
+                    category: w.category || it.category || "",
+                    color: w.color || it.color || "",
+                    image_url: w.image_url,
+                    tags: Array.isArray(w.tags) ? w.tags : [],
+                    source: "wardrobe",
+                  }
+                  if (w) {
+                    console.debug("✅ Matched Tina item to wardrobe", {
+                      tinaId, tinaUrl: normalizeUrl(tinaUrl),
+                      matchedId: w.id,
+                      matchedUrl: normalizeUrl(w.image_url)
+                    });
+                  }
                   : {
                       id: it.id || `insp-${i}`,
                       name: it.name || "Inspiration",
