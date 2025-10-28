@@ -789,7 +789,7 @@ export default function App() {
                return w
                  ? {
                      id: w.id,
-                     name: w.name || it.name || `Item ${i + 1}`,
+                     name: w.displayName || w.name || it.name || (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
                      category: w.category || it.category || "",
                      color: w.color || it.color || "",
                      image_url: w.image_url,
@@ -922,7 +922,7 @@ async function suggestOutfit(options = {}) {
                 return w
                   ? {
                       id: w.id,
-                      name: w.name || it.name || `Item ${i + 1}`,
+                      
                       category: w.category || it.category || "",
                       color: w.color || it.color || "",
                       image_url: w.image_url,
@@ -1717,11 +1717,16 @@ async function suggestOutfit(options = {}) {
                             alt={hydrated.name}
                           />
                           <div className="look-item-info">
+                            <p className="look-item-name" style={{ margin: 0, fontWeight: 600 }}>
+                              {hydrated?.name
+                                || hydrated?.displayName
+                                || (hydrated?.category ? formatLabel(hydrated.category) : `Item ${i + 1}`)}
+                            </p>
                             {hydrated.source === "inspiration" && (
                               <span className="tag" style={{ marginTop: 6 }}>Inspiration</span>
                             )}
-
                           </div>
+
                         </div>
                       );
                     })}
