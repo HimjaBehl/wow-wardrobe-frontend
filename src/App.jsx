@@ -19,15 +19,28 @@ const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 function normalizeUrl(u = "") {
   try {
     const url = new URL(u);
-    url.search = ""; // drop query (?alt=media etc.)
+    url.search = "";               // drop query (?alt=media etc.)
+    // normalize double-encoded firebase paths
+    url.pathname = decodeURIComponent(url.pathname || "");
     return url.toString();
   } catch {
-    return (u || "").split("?")[0]; // fallback
+    const base = (u || "").split("?")[0];
+    try {
+      return decodeURIComponent(base);
+    } catch {
+      return base;
+    }
   }
 }
 function sameImage(a, b) {
-  return normalizeUrl(a) === normalizeUrl(b);
+  const A = normalizeUrl(a);
+  const B = normalizeUrl(b);
+  if (A === B) return true;
+  // fallback: compare tail of the path (filename-ish)
+  const tail = (s) => (s.split("/").pop() || "").toLowerCase();
+  return tail(A) && tail(A) === tail(B);
 }
+
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
 const SHOW_INSPIRATION = false;
 
@@ -216,6 +229,19 @@ export default function App() {
 
   // 🆕 derive dropdown lists from current wardrobe 
   const uniqueCategories = useMemo( () => [...new Set(items.map((it) => it.category).filter(Boolean))], [items] ); const uniqueColors = useMemo( () => [...new Set(items.map((it) => it.color).filter(Boolean))], [items] );
+
+  // 🔎 Wardrobe indexes for fast matching
+  const WARDROBE_BY_ID = useMemo(() => {
+    const m = new Map();
+    for (const w of items) m.set(String(w.id), w);
+    return m;
+  }, [items]);
+
+  const WARDROBE_BY_URL = useMemo(() => {
+    const m = new Map();
+    for (const w of items) if (w.image_url) m.set(normalizeUrl(w.image_url), w);
+    return m;
+  }, [items]);
 
   const formatLabel = (str = "") => {
     return str
@@ -913,10 +939,15 @@ async function suggestOutfit(options = {}) {
                 const tinaUrl = it.image_url || it.image || "";
                 const tinaId  = it.wardrobe_id ?? it.id;
 
-                let w = tinaId != null ? items.find((wi) => String(wi.id) === String(tinaId)) : null;
+                let w = null;
+                // 1) ID match
+                if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId));
+                // 2) URL match (normalized)
                 if (!w && tinaUrl) {
-                  w = items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
+                  const key = normalizeUrl(tinaUrl);
+                  w = WARDROBE_BY_URL.get(key) || items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
                 }
+
                 if (!w && !SHOW_INSPIRATION) return null;
 
                 return w
