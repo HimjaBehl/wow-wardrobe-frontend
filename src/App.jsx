@@ -7,6 +7,7 @@ import { storage, auth, provider, signInWithPopup, signOut, db } from "./firebas
 import { query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import WeeklyPlanner from "./WeeklyPlanner";
+import PlanViewer from "./PlanViewer";
 import HomeDashboard from "./HomeDashboard";
 import VirtualTryOn from "./VirtualTryOn";
 
@@ -1924,6 +1925,9 @@ async function suggestOutfit(options = {}) {
 
        
         {/* -------------------------------------------- */}
+      {viewOpen && viewPlan && (
+        <PlanViewer open={viewOpen} plan={viewPlan} onClose={closePlanViewer} />
+      )}
 
       <nav
         style={{
