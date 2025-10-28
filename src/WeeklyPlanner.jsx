@@ -6,7 +6,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "./Planner.css";
 
-export default function WeeklyPlanner() {
+export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [plannedOutfits, setPlannedOutfits] = useState({});
   const [user, setUser] = useState(null);
@@ -16,7 +16,6 @@ export default function WeeklyPlanner() {
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
     });
-
     return () => unsub();
   }, []);
 
@@ -43,8 +42,8 @@ export default function WeeklyPlanner() {
 
         const snapshot = await getDocs(q);
         const plans = {};
-        snapshot.forEach((doc) => {
-          const data = doc.data();
+        snapshot.forEach((snap) => {
+          const data = snap.data();
           plans[data.date] = data.outfit;
         });
 
@@ -62,7 +61,6 @@ export default function WeeklyPlanner() {
   const handleAddOutfit = async () => {
     const key = formatDateKey(selectedDate);
     const title = prompt("Enter outfit title:");
-
     if (!title) return;
 
     const outfitData = {
@@ -71,17 +69,14 @@ export default function WeeklyPlanner() {
       note: "Work meeting",
     };
 
-    setPlannedOutfits({
-      ...plannedOutfits,
-      [key]: outfitData,
-    });
+    setPlannedOutfits((prev) => ({ ...prev, [key]: outfitData }));
 
     try {
-      const uid = user?.uid;
-      if (!uid) return alert("User not logged in.");
+      const myUid = user?.uid;
+      if (!myUid) return alert("User not logged in.");
 
-      await setDoc(doc(db, "outfit_plans", `${uid}_${key}`), {
-        uid,
+      await setDoc(doc(db, "outfit_plans", `${myUid}_${key}`), {
+        uid: myUid,
         date: key,
         outfit: outfitData,
       });
@@ -108,7 +103,11 @@ export default function WeeklyPlanner() {
         <div className="calendar-container">
           <Calendar value={selectedDate} onChange={setSelectedDate} />
         </div>
-        <button onClick={handleAddOutfit} className="btn btn-primary" style={{marginTop: "var(--spacing-lg)"}}>
+        <button
+          onClick={handleAddOutfit}
+          className="btn btn-primary"
+          style={{ marginTop: "var(--spacing-lg)" }}
+        >
           ✨ Plan New Outfit
         </button>
       </div>
@@ -120,14 +119,35 @@ export default function WeeklyPlanner() {
             const key = formatDateKey(date);
             const data = plannedOutfits[key];
             const isSelected = key === formatDateKey(selectedDate);
+
             return (
-              <div
+              <button
+                type="button"
                 className={`week-day-card card ${isSelected ? "selected" : ""}`}
                 key={idx}
-                onClick={() => setSelectedDate(date)}
+                onClick={() => {
+                  setSelectedDate(date);
+                  if (data) {
+                    onOpenPlan({
+                      id: `${user?.uid || "u"}_${key}`,
+                      date: key,
+                      outfit: data,
+                    });
+                  }
+                }}
+                aria-label={`Open planned outfit for ${key}`}
+                style={{
+                  textAlign: "left",
+                  background: "transparent",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                }}
               >
                 <div className="day-header">
-                  <h4 className="day-name">{date.toLocaleDateString('en-US', { weekday: 'short' })}</h4>
+                  <h4 className="day-name">
+                    {date.toLocaleDateString("en-US", { weekday: "short" })}
+                  </h4>
                   <p className="day-date">{date.getDate()}</p>
                 </div>
                 <div className="day-content">
@@ -141,7 +161,7 @@ export default function WeeklyPlanner() {
                     <p className="no-plan">No outfit planned</p>
                   )}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -156,17 +176,39 @@ export default function WeeklyPlanner() {
               .map(([key, outfit], i) => {
                 const date = new Date(key);
                 return (
-                  <div key={i} className="planned-outfit-card card">
+                  <button
+                    type="button"
+                    key={i}
+                    className="planned-outfit-card card"
+                    onClick={() =>
+                      onOpenPlan({
+                        id: `${user?.uid || "u"}_${key}`,
+                        date: key,
+                        outfit,
+                      })
+                    }
+                    aria-label={`Open planned outfit for ${key}`}
+                    style={{
+                      textAlign: "left",
+                      width: "100%",
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                    }}
+                  >
                     <div className="planned-date">
                       <span className="date-day">{date.getDate()}</span>
-                      <span className="date-month">{date.toLocaleDateString('en-US', { month: 'short' })}</span>
+                      <span className="date-month">
+                        {date.toLocaleDateString("en-US", { month: "short" })}
+                      </span>
                     </div>
                     <div className="planned-details">
                       <h4 className="planned-title">{outfit.title}</h4>
                       <p className="planned-note">{outfit.note}</p>
                       <span className="tag">{outfit.vibe}</span>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
           </div>

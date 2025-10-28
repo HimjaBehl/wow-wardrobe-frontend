@@ -52,6 +52,21 @@ export default function App() {
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [todayPlan, setTodayPlan] = useState(null);
+
+  // 🔎 Viewer for a saved plan/outfit
+  const [viewOpen, setViewOpen] = useState(false);
+  const [viewPlan, setViewPlan] = useState(null);
+
+  const openPlanViewer = (plan) => {
+    // plan expected shape: { id, date: 'YYYY-MM-DD', outfit: { title, note, items: [...] } }
+    setViewPlan(plan);
+    setViewOpen(true);
+  };
+
+  const closePlanViewer = () => {
+    setViewOpen(false);
+    setViewPlan(null);
+  };
   // ── Add-to-Calendar modal state ──────────────────────────────
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [planForm, setPlanForm] = useState({
@@ -1723,12 +1738,16 @@ async function suggestOutfit(options = {}) {
           )}
 
           {/* Weekly Planner */}
-          {activeTab === "planner" && (
-            <section style={{ marginTop: "2rem" }}>
-              <h2>🗓️ Weekly Outfit Planner</h2>
-              <WeeklyPlanner />
-            </section>
-          )}
+            {activeTab === "planner" && (
+              <section style={{ marginTop: "2rem" }}>
+                <h2>🗓️ Weekly Outfit Planner</h2>
+                <WeeklyPlanner
+                  uid={user?.uid}
+                  onOpenPlan={openPlanViewer}   // 👈 pass viewer callback
+                />
+              </section>
+            )}
+
 
             {/* Profile Section */}
             {activeTab === "profile" && (
