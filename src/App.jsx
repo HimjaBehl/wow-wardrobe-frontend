@@ -15,6 +15,23 @@ import VirtualTryOn from "./VirtualTryOn";
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
+// —— Normalizers to compare images/ids reliably ——
+function normalizeUrl(u = "") {
+  try {
+    const url = new URL(u);
+    url.search = ""; // drop query (?alt=media etc.)
+    return url.toString();
+  } catch {
+    return (u || "").split("?")[0]; // fallback
+  }
+}
+function sameImage(a, b) {
+  return normalizeUrl(a) === normalizeUrl(b);
+}
+// Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
+const SHOW_INSPIRATION = false;
+
+
 
 async function likeOutfit({ uid, outfit, context = {} }) {
   try {
@@ -752,27 +769,44 @@ export default function App() {
              title: look.title || `Look ${idx + 1}`,
              style_note: look.style_note || "Suggested look",
              trends_used: look.trends_used || [],
-             items: (look.items || []).map((it) => {
-               // Try wardrobe match by id, then by image URL (Tina may return image or image_url)
-               const byId    = items.find(w => String(w.id) === String(it.id));
+             items: (look.items || [])
+             .map((it, i) => {
                const tinaUrl = it.image_url || it.image || "";
-               const byImage = tinaUrl ? items.find(w => w.image_url && w.image_url === tinaUrl) : null;
-               const w       = byId || byImage || null;
+               const tinaId  = it.wardrobe_id ?? it.id;
 
-               return {
-                 // Prefer Tina’s data, fill gaps from wardrobe
-                 id        : it.id ?? w?.id,
-                 name      : it.name ?? w?.name ?? "Unnamed",
-                 category  : it.category ?? w?.category ?? "",
-                 color     : it.color ?? w?.color ?? "",
-                 image_url : tinaUrl || w?.image_url || "",
-                 tags      : Array.isArray(it.tags) ? it.tags : (w?.tags || []),
+               // 1) Strict: ID match first
+               let w = tinaId != null ? items.find((wi) => String(wi.id) === String(tinaId)) : null;
 
-                 // keep Tina’s metadata if present
-                 taxonomyPath : it.taxonomyPath,
-                 attributes   : it.attributes,
-               };
-             }),
+               // 2) Exact image match (ignore query params)
+               if (!w && tinaUrl) {
+                 w = items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
+               }
+
+               // 3) If still not found → drop unless you want inspiration visible
+               if (!w && !SHOW_INSPIRATION) return null;
+
+               // Prefer the wardrobe item if found; otherwise keep as inspiration
+               return w
+                 ? {
+                     id: w.id,
+                     name: w.name || it.name || `Item ${i + 1}`,
+                     category: w.category || it.category || "",
+                     color: w.color || it.color || "",
+                     image_url: w.image_url,
+                     tags: Array.isArray(w.tags) ? w.tags : [],
+                     source: "wardrobe",
+                   }
+                 : {
+                     id: it.id || `insp-${i}`,
+                     name: it.name || "Inspiration",
+                     category: it.category || "",
+                     color: it.color || "",
+                     image_url: tinaUrl,
+                     tags: Array.isArray(it.tags) ? it.tags : [],
+                     source: "inspiration",
+                   };
+             })
+             .filter(Boolean),
 
            }))
          );
@@ -873,13 +907,41 @@ async function suggestOutfit(options = {}) {
         result.looks.map((look) => ({
           title : look.title,
           style_note: look.style_note || "Suggested look",
-          items : dedupe(
-            (look.items || []).map((it) => ({
-              ...it,
-              image_url: it.image_url || it.image,
-              name     : it.name      || `Item ${it.idx ?? "?"}`,
-            }))
+          items: dedupe(
+            (look.items || [])
+              .map((it, i) => {
+                const tinaUrl = it.image_url || it.image || "";
+                const tinaId  = it.wardrobe_id ?? it.id;
+
+                let w = tinaId != null ? items.find((wi) => String(wi.id) === String(tinaId)) : null;
+                if (!w && tinaUrl) {
+                  w = items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
+                }
+                if (!w && !SHOW_INSPIRATION) return null;
+
+                return w
+                  ? {
+                      id: w.id,
+                      name: w.name || it.name || `Item ${i + 1}`,
+                      category: w.category || it.category || "",
+                      color: w.color || it.color || "",
+                      image_url: w.image_url,
+                      tags: Array.isArray(w.tags) ? w.tags : [],
+                      source: "wardrobe",
+                    }
+                  : {
+                      id: it.id || `insp-${i}`,
+                      name: it.name || "Inspiration",
+                      category: it.category || "",
+                      color: it.color || "",
+                      image_url: tinaUrl,
+                      tags: Array.isArray(it.tags) ? it.tags : [],
+                      source: "inspiration",
+                    };
+              })
+              .filter(Boolean)
           ),
+
         }))
       );
     }
@@ -1655,7 +1717,10 @@ async function suggestOutfit(options = {}) {
                             alt={hydrated.name}
                           />
                           <div className="look-item-info">
-                            <p className="look-item-name">{hydrated.name || `Item ${piece.idx}`}</p>
+                            {hydrated.source === "inspiration" && (
+                              <span className="tag" style={{ marginTop: 6 }}>Inspiration</span>
+                            )}
+
                           </div>
                         </div>
                       );
