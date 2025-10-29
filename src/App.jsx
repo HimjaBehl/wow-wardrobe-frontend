@@ -33,9 +33,23 @@ function normalizeUrl(u = "") {
   }
 }
 function sameImage(a, b) {
-  // strict: normalized full URL only (no filename fallback)
-  return normalizeUrl(a) === normalizeUrl(b);
+  if (!a || !b) return false;
+
+  const A = normalizeUrl(a);
+  const B = normalizeUrl(b);
+
+  // ✅ Exact normalized match
+  if (A === B) return true;
+
+  // ✅ Ignore bucket prefixes (wowapp1406 → wowapp) and token params
+  const clean = (s) => s.replace(/wowapp\d*/g, "wowapp").replace(/\?.*$/, "");
+  if (clean(A) === clean(B)) return true;
+
+  // ✅ Partial match: last 40 chars of the path (helps with encoded image names)
+  const tail = (s) => s.split("/").pop().slice(-40);
+  return tail(A) && tail(A) === tail(B);
 }
+
 
 
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
@@ -962,6 +976,14 @@ async function suggestOutfit(options = {}) {
 
                 if (!w && !SHOW_INSPIRATION) return null;
 
+                if (w) {
+                  console.debug("✅ Matched Tina item to wardrobe", {
+                    tinaId, tinaUrl: normalizeUrl(tinaUrl),
+                    matchedId: w.id,
+                    matchedUrl: normalizeUrl(w.image_url)
+                  });
+                }
+
                 return w
                 ? {
                     id: w.id,
@@ -972,14 +994,7 @@ async function suggestOutfit(options = {}) {
                     tags: Array.isArray(w.tags) ? w.tags : [],
                     source: "wardrobe",
                   }
-                  if (w) {
-                    console.debug("✅ Matched Tina item to wardrobe", {
-                      tinaId, tinaUrl: normalizeUrl(tinaUrl),
-                      matchedId: w.id,
-                      matchedUrl: normalizeUrl(w.image_url)
-                    });
-                  }
-                  : {
+                : {
                       id: it.id || `insp-${i}`,
                       name: it.name || "Inspiration",
                       category: it.category || "",
