@@ -812,53 +812,17 @@ export default function App() {
              title: look.title || `Look ${idx + 1}`,
              style_note: look.style_note || "Suggested look",
              trends_used: look.trends_used || [],
-             items: (look.items || [])
-             .map((it, i) => {
-               const tinaUrl = it.image_url || it.image || "";
-               const tinaId  = it.wardrobe_id ?? it.id;
-
-               let w = null;
-               // 1) ID match via map
-               if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId));
-               // 2) URL match via normalized key
-               if (!w && tinaUrl) {
-                 const key = normalizeUrl(tinaUrl);
-                 w = WARDROBE_BY_URL.get(key);
-               }
-
-               // 🔍 helpful debug if nothing matched
-               if (!w) {
-                 console.warn("⚠️ Tina item did not match wardrobe", {
-                   tinaId, tinaUrl: normalizeUrl(tinaUrl)
-                 });
-               }
-
-
-               // 3) If still not found → drop unless you want inspiration visible
-               if (!w && !SHOW_INSPIRATION) return null;
-
-               // Prefer the wardrobe item if found; otherwise keep as inspiration
-               return w
-                 ? {
-                     id: w.id,
-                     name: w.displayName || w.name || it.name || (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
-                     category: w.category || it.category || "",
-                     color: w.color || it.color || "",
-                     image_url: w.image_url,
-                     tags: Array.isArray(w.tags) ? w.tags : [],
-                     source: "wardrobe",
-                   }
-                 : {
-                     id: it.id || `insp-${i}`,
-                     name: it.name || "Inspiration",
-                     category: it.category || "",
-                     color: it.color || "",
-                     image_url: tinaUrl,
-                     tags: Array.isArray(it.tags) ? it.tags : [],
-                     source: "inspiration",
-                   };
-             })
-             .filter(Boolean),
+               items: (look.items || [])
+               .map((it, i) => ({
+                 id       : it.id || it.wardrobe_id || `tina-${i}`,
+                 name     : it.name || it.displayName || (it.category ? formatLabel(it.category) : `Item ${i + 1}`),
+                 category : it.category || "",
+                 color    : it.color || "",
+                 image_url: it.image_url || it.image || "",
+                 tags     : Array.isArray(it.tags) ? it.tags : [],
+                 source   : it.source || "wardrobe",
+               }))
+               .filter(piece => !!piece.image_url),
 
            }))
          );
@@ -1014,11 +978,15 @@ async function suggestOutfit(options = {}) {
 
 
   // 🔸 remove any exact-duplicate items (same image_url)
-  function dedupe(list = []) {
-    const map = new Map();
-    list.forEach((it) => map.set(`${it.idx}-${it.image_url}`, it)); // idx + url
-    return [...map.values()];
-  }
+function dedupe(list = []) {
+  const map = new Map();
+  list.forEach((it) => {
+    const key = String(it.id || normalizeUrl(it.image_url) || Math.random());
+    map.set(key, it);
+  });
+  return [...map.values()];
+}
+
 
 
 
