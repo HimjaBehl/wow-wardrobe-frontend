@@ -807,25 +807,46 @@ export default function App() {
          }
 
 
-         setOutfit(
-           data.looks.map((look, idx) => ({
-             title: look.title || `Look ${idx + 1}`,
-             style_note: look.style_note || "Suggested look",
-             trends_used: look.trends_used || [],
-               items: (look.items || [])
-               .map((it, i) => ({
-                 id       : it.id || it.wardrobe_id || `tina-${i}`,
-                 name     : it.name || it.displayName || (it.category ? formatLabel(it.category) : `Item ${i + 1}`),
-                 category : it.category || "",
-                 color    : it.color || "",
-                 image_url: it.image_url || it.image || "",
-                 tags     : Array.isArray(it.tags) ? it.tags : [],
-                 source   : it.source || "wardrobe",
-               }))
-               .filter(piece => !!piece.image_url),
+         const preparedLooks = data.looks
+            // client-side safety net: drop incomplete looks
+            .filter(isCompleteLook)
+            .map((look, idx) => {
+              const mappedItems = (look.items || [])
+                .map((it, i) => ({
+                  id       : it.id || it.wardrobe_id || `tina-${i}`,
+                  name     : it.name || it.displayName || (it.category ? formatLabel(it.category) : `Item ${i + 1}`),
+                  category : it.category || "",
+                  color    : it.color || "",
+                  image_url: it.image_url || it.image || "",
+                  tags     : Array.isArray(it.tags) ? it.tags : [],
+                  source   : it.source || "wardrobe",
+                }))
+                .filter(piece => !!piece.image_url);
 
-           }))
-         );
+              const { title, note } = sanitizeCopy(
+                look.title || `Look ${idx + 1}`,
+                look.style_note || "Suggested look",
+                mappedItems
+              );
+
+              // carry backend validation through (if present)
+              const validation = look.validation?.styleRules || null;
+
+              return {
+                title,
+                style_note: note,
+                trends_used: look.trends_used || [],
+                validation,
+                items: mappedItems,
+              };
+            });
+
+          setOutfit(preparedLooks);
+
+         if (preparedLooks.length === 0) {
+            alert("No complete looks could be made from the current wardrobe. Try adding footwear (and a bag for women) or switch the occasion.");
+          }
+
        } catch (err) {
          console.error("❌ Tina agent failed:", err);
          alert("Tina agent could not generate looks.");
@@ -986,6 +1007,52 @@ function dedupe(list = []) {
   });
   return [...map.values()];
 }
+
+  // ✅ What counts as a complete look on the client (belt/jewelry optional)
+  function isCompleteLook(look = {}) {
+    const cats = (look.items || []).map(p => (p.category || "").toLowerCase());
+    const hasTop       = cats.some(c => /top|shirt|tee|t-?shirt|blouse|kurta/.test(c));
+    const hasBottom    = cats.some(c => /bottom|jeans|pants|trouser|skirt|shorts|palazzo|salwar/.test(c));
+    const hasFootwear  = cats.some(c => /footwear|shoe|sandal|heel|sneaker|jutti|boot/.test(c));
+    const hasOnePiece  = cats.some(c => /dress|jumpsuit|saree/.test(c));
+    const onlyAccessories = cats.length > 0 && cats.every(c => /accessor|sunglass|watch|bag|belt|scarf|dupatta|stole|shawl/.test(c));
+    return !onlyAccessories && ((hasTop && hasBottom && hasFootwear) || (hasOnePiece && hasFootwear));
+  }
+
+  // ✅ Keep title/note honest if model copy drifts (belt/jewelry wording is okay)
+  function sanitizeCopy(title = "", note = "", items = []) {
+    const text = `${title} ${note}`.toLowerCase();
+    const cats = items.map(it => (it.category || "").toLowerCase());
+    const haveDress    = cats.some(c => /dress|jumpsuit|gown/.test(c));
+    const haveHeels    = cats.some(c => /heel/.test(c)) && cats.some(c => /footwear|shoe|sandal|heel|sneaker|jutti|boot/.test(c));
+    let safeTitle = title;
+    let safeNote  = note;
+
+    if (!haveDress && /dress|gown/.test(text)) {
+      safeTitle = safeTitle.replace(/dress|gown/ig, "look");
+      safeNote  = safeNote.replace(/dress|gown/ig, "outfit");
+    }
+    if (!haveHeels && /heels?/.test(text)) {
+      safeNote  = safeNote.replace(/heels?/ig, "footwear");
+    }
+
+    // If copy is now too vague, add factual pieces summary
+    const names = items.map(h => h.name || h.category || "").filter(Boolean);
+    if (!/top|bottom|footwear|dress|jumpsuit|outer/i.test(safeNote)) {
+      safeNote = `${safeNote ? safeNote + " " : ""}Pieces: ${names.slice(0,3).join(", ")}.`;
+    }
+
+    return { title: safeTitle.trim() || "Polished Look", note: safeNote.trim() };
+  }
+
+  // ✅ Badge helpers to show what was auto-added by backend
+  function hasBag(items = []) {
+    return items.some(i => /(bag|handbag|tote|purse)/i.test((i.name||i.category||"")));
+  }
+  function hasBelt(items = []) {
+    return items.some(i => /belt/i.test((i.name||"")));
+  }
+
 
 
 
@@ -1732,11 +1799,26 @@ function dedupe(list = []) {
               {/* Modern Outfit Suggestions */}
               {outfit && outfit.length > 0 ? (
             <div className="outfit-suggestions">
-              {outfit.map((look, idx) => (
+              {outfit.filter(isCompleteLook).map((look, idx) => (
+              
                 <div key={idx} className="outfit-look">
                   <div className="look-header">
                     <h3 className="look-title">✨ {look.title || `Look ${idx + 1}`}</h3>
                     <p className="look-description">{look.style_note}</p>
+                    {(() => {
+                      // show when backend fixed/completed (we look for our backend phrasing OR evidence)
+                       const note = (look.style_note || "").toLowerCase();
+                       const autoCompleted = /completed with real wardrobe items|added matching footwear|minor backend fix/i.test(note);
+                       const showBag  = userPrefs.gender?.toLowerCase() === "female" && hasBag(look.items);
+                       const showBelt = userPrefs.gender?.toLowerCase() === "male"   && hasBelt(look.items);
+                       return (
+                         <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                           {autoCompleted && <span className="tag">Auto-completed</span>}
+                           {showBag && <span className="tag">Bag included</span>}
+                           {showBelt && <span className="tag">Belt added</span>}
+                         </div>
+                       );
+                     })()}
                   </div>
 
                   <div className="look-items">
