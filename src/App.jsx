@@ -128,6 +128,45 @@ export default function App() {
     setShowPlanModal(true);
   };
 
+  const handleRegenerate = async (look, reason) => {
+    try {
+      const payload = {
+        uid: user?.uid,
+        wardrobe: items,
+        city,
+        occasion,
+        vibe,
+        reason, // e.g. "swap-top"
+      };
+
+      console.log("♻️ One-tap regen payload:", payload);
+
+      const res = await fetch(`${BASE_URL}/suggest-outfit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (Array.isArray(data.looks)) {
+        setOutfit(
+          data.looks
+            .filter(isCompleteLook)
+            .map((lk, i) => ({
+              title: lk.title || `Look ${i + 1}`,
+              style_note: lk.style_note || "Updated look",
+              items: lk.items || [],
+            }))
+        );
+      } else {
+        alert("Couldn’t regenerate this look.");
+      }
+    } catch (err) {
+      console.error("♻️ Regen failed:", err);
+      alert("Error regenerating look — see console.");
+    }
+  };
+
   const closePlanModal = () => {
     setShowPlanModal(false);
     setPlanLook(null);
@@ -1912,6 +1951,7 @@ function dedupe(list = []) {
                   </div>
 
                   <div className="look-actions">
+                    {/* existing buttons */}
                     <button
                       className="btn btn-outline"
                       onClick={() => openPlanModal(look)}
@@ -1931,8 +1971,23 @@ function dedupe(list = []) {
                     >
                       ❤️ Love This Look
                     </button>
-                  
+
+                    {/* 🆕 one-tap regen controls */}
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => handleRegenerate(look, "swap-top")}
+                    >
+                      ♻️ Same vibe, different top
+                    </button>
+
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => handleRegenerate(look, "change-shoes")}
+                    >
+                      👟 Change shoes
+                    </button>
                   </div>
+
                   <button
                     className="btn btn-secondary"
                     onClick={() => {

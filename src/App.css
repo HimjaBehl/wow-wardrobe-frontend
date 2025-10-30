@@ -304,3 +304,11 @@ a{ color:var(--link); }
   color: var(--neutral-500);
   font-size: 0.85rem;
 }
+
+.look-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
