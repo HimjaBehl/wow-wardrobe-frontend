@@ -128,45 +128,7 @@ export default function App() {
     setShowPlanModal(true);
   };
 
-  const handleRegenerate = async (look, reason) => {
-    try {
-      const payload = {
-        uid: user?.uid,
-        wardrobe: items,
-        city,
-        occasion,
-        vibe,
-        reason, // e.g. "swap-top"
-      };
-
-      console.log("♻️ One-tap regen payload:", payload);
-
-      const res = await fetch(`${BASE_URL}/suggest-outfit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (Array.isArray(data.looks)) {
-        setOutfit(
-          data.looks
-            .filter(isCompleteLook)
-            .map((lk, i) => ({
-              title: lk.title || `Look ${i + 1}`,
-              style_note: lk.style_note || "Updated look",
-              items: lk.items || [],
-            }))
-        );
-      } else {
-        alert("Couldn’t regenerate this look.");
-      }
-    } catch (err) {
-      console.error("♻️ Regen failed:", err);
-      alert("Error regenerating look — see console.");
-    }
-  };
-
+  
   const closePlanModal = () => {
     setShowPlanModal(false);
     setPlanLook(null);
@@ -754,6 +716,27 @@ export default function App() {
     }
   };
   
+  // One-tap regenerate variants (swap a piece / change just shoes etc.)
+  async function handleRegenerate(baseLook, intent = "") {
+    if (!user?.uid) return;
+
+    const constraintHints = {
+      "swap-top": "Keep everything same but replace the TOP with a different option from the same wardrobe.",
+      "change-shoes": "Keep the outfit but change only the FOOTWEAR to a better match from the wardrobe.",
+      "cooler": "Keep the vibe, make it cooler-weather appropriate with layers.",
+      "warmer": "Keep the vibe, make it warmer-weather appropriate with lighter fabrics.",
+    };
+
+    await suggestOutfitAgent({
+      uid: user.uid,
+      city,
+      wardrobe: items,
+      occasion,
+      vibe,
+      // pass a soft instruction for the agent
+      constraints: constraintHints[intent] || ""
+    });
+  }
 
      async function suggestOutfitAgent(options = {}) {
   const { uid, city, wardrobe, occasion} = options;
@@ -775,12 +758,13 @@ export default function App() {
              uid,
              city,
              wardrobe: items.map(w => ({
-               id: w.id,
-               image_url: w.image_url,
+               id: String(w.id),                            // ✅ force string id
+               image_url: w.image_url || "",
                name: w.displayName || w.name || "",
                category: w.category || "",
                color: w.color || ""
              })),
+
              occasion,
              vibe,
              dislikes: userPrefs.dislikes || [],
@@ -796,9 +780,12 @@ export default function App() {
          console.log("🎯 Tina agent result (raw from backend):", rawText);
 
          let clean = rawText.trim();
-         if (clean.startsWith("```")) {
-           clean = clean.replace(/```json/i, "").replace(/```$/, "").trim();
-         }
+         // Strip any code fences (```json ... ```)
+         clean = clean
+           .replace(/^```(?:json)?/i, "")
+           .replace(/```$/i, "")
+           .trim();
+
 
          let data;
          try {
@@ -836,17 +823,22 @@ export default function App() {
                 const tinaUrl = it.image_url || it.image || "";
                 const tinaId  = it.wardrobe_id ?? it.id;
 
-                // 1) Try ID match
+                // 1) Strongest: exact ID match
                 let w = null;
-                if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId));
-
-                // 2) Try URL match (normalized)
-                if (!w && tinaUrl) {
-                  const key = normalizeUrl(tinaUrl);
-                  w = WARDROBE_BY_URL.get(key) || items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
+                if (tinaId !== undefined && tinaId !== null) {
+                  w = WARDROBE_BY_ID.get(String(tinaId));
                 }
 
-                if (!w && !SHOW_INSPIRATION) return null;
+                // 2) Next: normalized URL exact match → then fuzzy tail match
+                if (!w && tinaUrl) {
+                  const key = normalizeUrl(tinaUrl);
+                  w = WARDROBE_BY_URL.get(key);
+                  if (!w) {
+                    w = items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
+                  }
+                }
+
+                if (!w && !SHOW_INSPIRATION) return null; // ✅ drop invented pieces
 
                 return w
                   ? {
@@ -869,6 +861,7 @@ export default function App() {
                     };
               })
               .filter(Boolean);
+
 
 
               const { title, note } = sanitizeCopy(
