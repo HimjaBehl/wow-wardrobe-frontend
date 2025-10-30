@@ -761,8 +761,21 @@ export default function App() {
   // single entry point for swap
   async function handleSwap(baseLook, targetGroup) {
     if (!user?.uid) return;
-    const instruction = buildSwapInstruction(baseLook, targetGroup);
-    setSwapOpenIdx(null);  // close the menu
+
+    // lock every piece that is NOT the target group
+    const lockedIds = (baseLook?.items || [])
+      .filter(p => groupOf(p.category) !== targetGroup)
+      .map(p => String(p.id))
+      .filter(Boolean);
+
+    const instruction = [
+      `Swap only the ${targetGroup.toUpperCase()}.`,
+      `Keep all other items IDENTICAL (locked wardrobe ids): ${lockedIds.join(", ") || "none"}.`,
+      `Use ONLY real wardrobe items; do not invent.`,
+      `Respect same occasion and vibe.`
+    ].join(" ");
+
+    setSwapOpenIdx?.(null);
 
     await suggestOutfitAgent({
       uid: user.uid,
@@ -770,9 +783,66 @@ export default function App() {
       wardrobe: items,
       occasion,
       vibe,
-      constraints: instruction
+      constraints: instruction,
+      swapTarget: targetGroup,      // 👈 pass target
+      lockedIds,                    // 👈 pass hard locks
+      baseLook                       // 👈 pass original so we can enforce on client
     });
   }
+
+
+  // What bucket does a category belong to?
+  function groupOf(category = "") {
+    const c = (category || "").toLowerCase();
+    if (/(dress|gown|jumpsuit|saree|lehenga|anarkali)/i.test(c)) return "dress";
+    if (/(footwear|shoe|sandal|heel|sneaker|jutti|boot)/i.test(c)) return "footwear";
+    if (/(bag|handbag|tote|purse|clutch)/i.test(c)) return "bag";
+    if (/(bottom|jeans|pants|trouser|skirt|shorts|palazzo|salwar|gharara|sharara|dhoti)/i.test(c)) return "bottom";
+    return "top";
+  }
+
+  // Turn a look into buckets
+  function bucketByGroup(items = []) {
+    const out = { top: [], bottom: [], footwear: [], bag: [], dress: [], other: [] };
+    for (const it of items) {
+      const g = groupOf(it.category);
+      if (out[g]) out[g].push(it);
+      else out.other.push(it);
+    }
+    return out;
+  }
+
+  // Enforce locks: keep every group except targetGroup from baseLook; take targetGroup from newLook
+  function applyLocks(baseLook, newLook, targetGroup) {
+    const baseB = bucketByGroup(baseLook.items || []);
+    const newB  = bucketByGroup(newLook.items  || []);
+    const result = [];
+
+    // keep all locked groups exactly as-is
+    for (const g of ["top","bottom","bag","dress"]) {
+      if (g === targetGroup) continue;
+      result.push(...baseB[g]);
+    }
+    // footwear is also locked unless it's the target
+    if (targetGroup !== "footwear") result.push(...baseB.footwear);
+
+    // now inject the swapped group from the new look
+    const swapped = newB[targetGroup] && newB[targetGroup].length ? newB[targetGroup] : baseB[targetGroup];
+    result.push(...swapped);
+
+    // keep any 'other' (belts/scarves etc.) from base
+    result.push(...baseB.other);
+
+    // dedupe by id to avoid doubles
+    const seen = new Set();
+    return result.filter(it => {
+      const key = String(it.id || it.image_url);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
 
   // One-tap regenerate variants (swap a piece / change just shoes etc.)
   async function handleRegenerate(baseLook, intent = "") {
@@ -797,7 +867,7 @@ export default function App() {
   }
 
   async function suggestOutfitAgent(options = {}) {
-  const { uid, city, wardrobe, occasion, vibe, constraints } = options;
+  const { uid, city, wardrobe, occasion, vibe, constraints = "", swapTarget, lockedIds = [], baseLook } = options;
 
 
 
@@ -832,7 +902,9 @@ export default function App() {
                bodyShape: userPrefs.bodyShape,
                complexion: userPrefs.complexion
              },
-             constraints
+             constraints,
+             locked_ids: lockedIds,       // 👈 NEW (backend may honor)
+               swap_target: swapTarget      // 👈 NEW (backend may honor)
            }),
            });
 
@@ -942,10 +1014,20 @@ export default function App() {
               };
             });
 
-         const finalLooks = (preparedLooks || []).filter(
+         // If this was a swap request, hard-enforce locks on the client
+         let patchedLooks = preparedLooks;
+         if (swapTarget && baseLook && Array.isArray(preparedLooks)) {
+           patchedLooks = preparedLooks.map((lk) => ({
+             ...lk,
+             items: applyLocks(baseLook, lk, swapTarget)
+           }));
+         }
+
+         const finalLooks = (patchedLooks || []).filter(
            l => Array.isArray(l.items) && l.items.length > 0
          );
          setOutfit(finalLooks);
+
 
 
          if (preparedLooks.length === 0) {
