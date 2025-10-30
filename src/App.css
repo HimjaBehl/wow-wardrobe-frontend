@@ -211,20 +211,11 @@ img{ display:block; max-width:100%; }
 .upload-section{ border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; }
 .section-header{
   display:flex; align-items:center; justify-content:space-between;
-  padding:var(--lg); background:#f7f7f7; border-bottom:1px solid #e7e7e7;
-  cursor:pointer; user-select:none;
+  padding:var(--lg); background:#f7f7f7; border-bottom:1px solid #e7e7e7);
 }
-
 .section-content{ padding:var(--xl); }
-.expand-icon{
-  display:inline-block;
-  font-size:.8rem;
-  color:#6b7280;
-  transition:transform .2s ease;
-  transform:rotate(-90deg);
-}
+.expand-icon{ font-size:.8rem; color:#6b7280; transition:transform .2s ease; transform:rotate(-90deg); }
 .expand-icon.expanded{ transform:rotate(0deg); }
-
 
 /* Modal */
 .modal-overlay{
@@ -313,24 +304,3 @@ a{ color:var(--link); }
   color: var(--neutral-500);
   font-size: 0.85rem;
 }
-
-/* ——— Upload & Staples grids used by JSX ——— */
-.grid{ display:grid; gap:var(--md); }
-.grid-wardrobe{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:var(--md); }
-.results-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:var(--md); }
-.results-title{ color:var(--ink); font-weight:var(--fw-600); margin:var(--md) 0; }
-.product-card{ overflow:hidden; }
-.product-image{ width:100%; height:160px; object-fit:cover; display:block; }
-.search-results{ margin-top:var(--md); }
-
-/* Detected items — checkbox overlay */
-.detected-item-image{ position:relative; }
-.checkbox-overlay{
-  position:absolute; top:8px; right:8px;
-  background:rgba(255,255,255,.9); border:1px solid var(--border);
-  border-radius:8px; padding:4px; box-shadow:var(--shadow-sm);
-}
-.item-checkbox{ width:18px; height:18px; cursor:pointer; }
-
-/* Upload section spacing */
-.upload-section{ margin-top:var(--md); }
