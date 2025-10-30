@@ -1374,6 +1374,58 @@ function dedupe(list = []) {
               </div>
             )}
 
+            {/* 2. Quick Add Staples Section */}
+            <div className="upload-section">
+              <div
+                className="section-header"
+                onClick={() => setQuickAddExpanded(!quickAddExpanded)}
+              >
+                <h3 className="section-subtitle">🧺 Quick Add Staples</h3>
+                <span className={`expand-icon ${quickAddExpanded ? 'expanded' : ''}`}>▼</span>
+              </div>
+
+              {quickAddExpanded && (
+                <div className="section-content">
+                  <div className="grid">
+                    {staples.length === 0 && <p>No staples found. Try again later.</p>}
+                    {staples.map((staple, index) => (
+                      <div
+                        key={`${staple.id || staple.name || "staple"}-${index}`}
+                        className="card"
+                        onClick={() =>
+                          handleQuickAdd(
+                            { color: staple.color || "Default", image_url: staple.image_url || "" },
+                            staple.name || "Staple",
+                            staple.category || "Staple"
+                          )
+                        }
+                        style={{ cursor: "pointer" }}
+                      >
+                        {staple.image_url && (
+                          <img
+                            className="card-image"
+                            src={staple.image_url}
+                            alt={`${staple.name || "Staple"} in ${staple.color || "Default"}`}
+                            onError={(e) => (e.target.style.display = "none")}
+                          />
+                        )}
+
+                        <div className="card-content">
+                          <h3 className="card-title">{staple.name || "Staple"}</h3>
+                          <p className="card-subtitle">{staple.category || "Staple"}</p>
+                        </div>
+
+                        <div className="tags" style={{ padding: "0 var(--spacing-md) var(--spacing-sm)" }}>
+                          <span className="tag">{staple.color || "Default"}</span>
+                          <span className="tag">Staple</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* 3. Search & Link Section */}
             <div className="upload-section">
               <div 
