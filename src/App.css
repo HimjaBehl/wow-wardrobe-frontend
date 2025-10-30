@@ -196,7 +196,19 @@ img{ display:block; max-width:100%; }
 .look-item{ overflow:hidden; }
 .look-item-image{ width:100%; height:180px; object-fit:cover; display:block; }
 .look-item-info{ padding:var(--md); text-align:center; }
-.look-item-name{ font-weight:var(--fw-500); color:var(--ink); font-size:.9rem; }
+.look-item-name {
+  font-weight: var(--fw-500);
+  color: #111 !important;          /* force dark text on light card */
+  font-size: .9rem;
+}
+
+.look-description,
+.look-title,
+.card-title,
+.card-subtitle {
+  color: #111 !important;
+}
+
 
 /* Trends */
 .look-trends{ background:#f8fafc; border:1px solid var(--border); border-radius:var(--r-lg); padding:var(--lg); margin-top:var(--lg); box-shadow:var(--shadow-sm); }
@@ -311,4 +323,50 @@ a{ color:var(--link); }
   gap: 0.5rem;
   justify-content: center;
   margin-top: 1rem;
+}
+
+/* Safety override: keep text dark inside cards regardless of parent background */
+.card, .look-item, .look-item-info, .outfit-look {
+  color: #111 !important;
+}
+
+/* --- Fix: outline pills showing only icons --- */
+.btn-outline,
+.icon-pill,
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  background: #fff;
+  color: #111 !important;            /* force dark text on white background */
+  border: 1.5px solid #111;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+/* If any rules hide the label (common: .icon-only on small screens), undo them */
+.btn-outline .label,
+.icon-pill .label,
+.pill-btn .label,
+.btn-outline span {
+  display: inline !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  font-weight: 600;
+}
+
+/* keep icons visible but not tinted white */
+.btn-outline svg,
+.icon-pill svg,
+.pill-btn svg {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+/* nicer hover */
+.btn-outline:hover,
+.icon-pill:hover,
+.pill-btn:hover {
+  background: #f8f8f8;
+  border-color: #222;
 }
