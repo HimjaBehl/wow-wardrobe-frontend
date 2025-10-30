@@ -299,36 +299,17 @@ export default function App() {
   }, [user]);
 
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        console.log("🔥 Your UID is:", firebaseUser.uid);
-        fetchItems(firebaseUser.uid);
-    fetchTodayPlan(firebaseUser.uid);
-      }
-    });
-
-
-    if (loading) {
-      return (
-        <div className="loading-screen">
-          <h1 className="loading-title">W.O.W.</h1>
-          <p className="loading-subtitle">What. Outfit. When.</p>
-        </div>
-      );
-    }
-
-    if (loadingPrefs) {
-      return <p style={{ textAlign: "center", marginTop: "2rem" }}>Loading preferences…</p>;
-    }
-
-    if (user && needsOnboarding) {
-      return <Onboarding user={user} onDone={() => setNeedsOnboarding(false)} />;
-    }
-
-    return () => unsubscribe();
-  }, []);
+    useEffect(() => {
+      const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+        setUser(firebaseUser);
+        if (firebaseUser) {
+          console.log("🔥 Your UID is:", firebaseUser.uid);
+          fetchItems(firebaseUser.uid);
+          fetchTodayPlan(firebaseUser.uid);
+        }
+      });
+      return () => unsubscribe();
+    }, []);
 
   // Fetch staples from backend (list of individual items)
   useEffect(() => {
@@ -812,16 +793,44 @@ export default function App() {
             .filter(isCompleteLook)
             .map((look, idx) => {
               const mappedItems = (look.items || [])
-                .map((it, i) => ({
-                  id       : it.id || it.wardrobe_id || `tina-${i}`,
-                  name     : it.name || it.displayName || (it.category ? formatLabel(it.category) : `Item ${i + 1}`),
-                  category : it.category || "",
-                  color    : it.color || "",
-                  image_url: it.image_url || it.image || "",
-                  tags     : Array.isArray(it.tags) ? it.tags : [],
-                  source   : it.source || "wardrobe",
-                }))
-                .filter(piece => !!piece.image_url);
+              .map((it, i) => {
+                const tinaUrl = it.image_url || it.image || "";
+                const tinaId  = it.wardrobe_id ?? it.id;
+
+                // 1) Try ID match
+                let w = null;
+                if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId));
+
+                // 2) Try URL match (normalized)
+                if (!w && tinaUrl) {
+                  const key = normalizeUrl(tinaUrl);
+                  w = WARDROBE_BY_URL.get(key) || items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
+                }
+
+                if (!w && !SHOW_INSPIRATION) return null;
+
+                return w
+                  ? {
+                      id: w.id,
+                      name: w.displayName || w.name || it.name || (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
+                      category: w.category || it.category || "",
+                      color: w.color || it.color || "",
+                      image_url: w.image_url,
+                      tags: Array.isArray(w.tags) ? w.tags : [],
+                      source: "wardrobe",
+                    }
+                  : {
+                      id: it.id || `insp-${i}`,
+                      name: it.name || "Inspiration",
+                      category: it.category || "",
+                      color: it.color || "",
+                      image_url: tinaUrl,
+                      tags: Array.isArray(it.tags) ? it.tags : [],
+                      source: "inspiration",
+                    };
+              })
+              .filter(Boolean);
+
 
               const { title, note } = sanitizeCopy(
                 look.title || `Look ${idx + 1}`,
@@ -1011,10 +1020,13 @@ function dedupe(list = []) {
   // ✅ What counts as a complete look on the client (belt/jewelry optional)
   function isCompleteLook(look = {}) {
     const cats = (look.items || []).map(p => (p.category || "").toLowerCase());
-    const hasTop       = cats.some(c => /top|shirt|tee|t-?shirt|blouse|kurta/.test(c));
-    const hasBottom    = cats.some(c => /bottom|jeans|pants|trouser|skirt|shorts|palazzo|salwar/.test(c));
+    const hasTop = cats.some(c => /top|shirt|tee|t-?shirt|blouse|kurta|kameez|choli/.test(c));
+
+    const hasBottom = cats.some(c => /bottom|jeans|pants|trouser|skirt|shorts|palazzo|salwar|gharara|sharara|dhoti/.test(c));
+
     const hasFootwear  = cats.some(c => /footwear|shoe|sandal|heel|sneaker|jutti|boot/.test(c));
-    const hasOnePiece  = cats.some(c => /dress|jumpsuit|saree/.test(c));
+    const hasOnePiece  = cats.some(c => /dress|jumpsuit|saree|lehenga|gown|anarkali/.test(c));
+
     const onlyAccessories = cats.length > 0 && cats.every(c => /accessor|sunglass|watch|bag|belt|scarf|dupatta|stole|shawl/.test(c));
     return !onlyAccessories && ((hasTop && hasBottom && hasFootwear) || (hasOnePiece && hasFootwear));
   }
