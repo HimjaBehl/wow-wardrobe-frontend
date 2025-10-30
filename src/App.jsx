@@ -56,7 +56,8 @@ function sameImage(a, b) {
 
 
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
-const SHOW_INSPIRATION = false;
+const SHOW_INSPIRATION = true;
+
 
 
 
@@ -337,7 +338,7 @@ export default function App() {
         const res = await fetch(`${BASE_URL}/staples?gender=${userPrefs.gender}`);
         if (!res.ok) { setStaples([]); return; } // quiet fallback on 404/500
         const data = await res.json();
-        ...
+        const list = Array.isArray(data) ? data : (data.staples || []);
         setStaples(list);
 
       } catch (err) {
@@ -937,73 +938,65 @@ export default function App() {
          }
 
 
-         const preparedLooks = data.looks
-            // client-side safety net: drop incomplete looks
-            .filter(isCompleteLook)
-            .map((look, idx) => {
-              const mappedItems = (look.items || [])
-              .map((it, i) => {
-                const tinaUrl = it.image_url || it.image || "";
-                const tinaId  = it.wardrobe_id ?? it.id;
+         const preparedLooks = (data.looks || []).map((look, idx) => {
+           const mappedItems = (look.items || [])
+             .map((it, i) => {
+               const tinaUrl = it.image_url || it.image || "";
+               const tinaId  = it.wardrobe_id ?? it.id ?? it.idx ?? it.item_id; // 👈 add fallbacks
 
-                // 1) Strongest: exact ID match
-                let w = null;
-                if (tinaId !== undefined && tinaId !== null) {
-                  w = WARDROBE_BY_ID.get(String(tinaId));
-                }
+               // 1) ID match
+               let w = null;
+               if (tinaId !== undefined && tinaId !== null) {
+                 w = WARDROBE_BY_ID.get(String(tinaId));
+               }
 
-                // 2) Next: normalized URL exact match → then fuzzy tail match
-                if (!w && tinaUrl) {
-                  const key = normalizeUrl(tinaUrl);
-                  w = WARDROBE_BY_URL.get(key);
-                  if (!w) {
-                    w = items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
-                  }
-                }
+               // 2) URL match (normalized then fuzzy)
+               if (!w && tinaUrl) {
+                 const key = normalizeUrl(tinaUrl);
+                 w = WARDROBE_BY_URL.get(key) || items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
+               }
 
-                if (!w && !SHOW_INSPIRATION) return null; // ✅ drop invented pieces
+               if (!w && !SHOW_INSPIRATION) return null;
 
-                return w
-                  ? {
-                      id: w.id,
-                      name: w.displayName || w.name || it.name || (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
-                      category: w.category || it.category || "",
-                      color: w.color || it.color || "",
-                      image_url: w.image_url,
-                      tags: Array.isArray(w.tags) ? w.tags : [],
-                      source: "wardrobe",
-                    }
-                  : {
-                      id: it.id || `insp-${i}`,
-                      name: it.name || "Inspiration",
-                      category: it.category || "",
-                      color: it.color || "",
-                      image_url: tinaUrl,
-                      tags: Array.isArray(it.tags) ? it.tags : [],
-                      source: "inspiration",
-                    };
-              })
-              .filter(Boolean);
+               return w
+                 ? {
+                     id: w.id,
+                     name: w.displayName || w.name || it.name || (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
+                     category: w.category || it.category || "",
+                     color: w.color || it.color || "",
+                     image_url: w.image_url,
+                     tags: Array.isArray(w.tags) ? w.tags : [],
+                     source: "wardrobe",
+                   }
+                 : {
+                     id: it.id || `insp-${i}`,
+                     name: it.name || "Inspiration",
+                     category: it.category || "",
+                     color: it.color || "",
+                     image_url: tinaUrl,
+                     tags: Array.isArray(it.tags) ? it.tags : [],
+                     source: "inspiration",
+                   };
+             })
+             .filter(Boolean);
 
+           const { title, note } = sanitizeCopy(
+             look.title || `Look ${idx + 1}`,
+             look.style_note || "Suggested look",
+             mappedItems
+           );
 
+           const validation = look.validation?.styleRules || null;
 
-              const { title, note } = sanitizeCopy(
-                look.title || `Look ${idx + 1}`,
-                look.style_note || "Suggested look",
-                mappedItems
-              );
+           return {
+             title,
+             style_note: note,
+             trends_used: look.trends_used || [],
+             validation,
+             items: mappedItems,
+           };
+         });
 
-              // carry backend validation through (if present)
-              const validation = look.validation?.styleRules || null;
-
-              return {
-                title,
-                style_note: note,
-                trends_used: look.trends_used || [],
-                validation,
-                items: mappedItems,
-              };
-            });
 
          // If this was a swap request, hard-enforce locks on the client
          let patchedLooks = preparedLooks;
@@ -1126,7 +1119,8 @@ async function suggestOutfit(options = {}) {
             (look.items || [])
               .map((it, i) => {
                 const tinaUrl = it.image_url || it.image || "";
-                const tinaId  = it.wardrobe_id ?? it.id;
+                const tinaId  = it.wardrobe_id ?? it.id ?? it.idx ?? it.item_id;
+
 
                 let w = null;
                 // 1) ID match
@@ -1189,7 +1183,8 @@ function dedupe(list = []) {
   // ✅ What counts as a complete look on the client (belt/jewelry optional)
   function isCompleteLook(look = {}) {
     const cats = (look.items || []).map(p => (p.category || "").toLowerCase());
-    const hasTop = cats.some(c => /top|shirt|tee|t-?shirt|blouse|kurta|kameez|choli/.test(c));
+    const hasTop = cats.some(c => /top|shirt|tee|t-?shirt|blouse|kurta|kameez|choli|outer|blazer|jacket|coat/.test(c));
+
 
     const hasBottom = cats.some(c => /bottom|jeans|pants|trouser|skirt|shorts|palazzo|salwar|gharara|sharara|dhoti/.test(c));
 
@@ -2029,11 +2024,10 @@ function dedupe(list = []) {
               </button>
 
 
-              {/* Modern Outfit Suggestions */}
               {outfit && outfit.length > 0 ? (
-            <div className="outfit-suggestions">
-              {outfit.filter(isCompleteLook).map((look, idx) => (
-              
+                <div className="outfit-suggestions">
+                  {outfit.map((look, idx) => (
+
                 <div key={idx} className="outfit-look">
                   <div className="look-header">
                     <h3 className="look-title">✨ {look.title || `Look ${idx + 1}`}</h3>
