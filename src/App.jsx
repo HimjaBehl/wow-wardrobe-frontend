@@ -337,7 +337,7 @@ export default function App() {
         const res = await fetch(`${BASE_URL}/staples?gender=${userPrefs.gender}`);
         if (!res.ok) { setStaples([]); return; } // quiet fallback on 404/500
         const data = await res.json();
-        const list = Array.isArray(data) ? data : (data.staples || []);
+        ...
         setStaples(list);
 
       } catch (err) {
@@ -2102,22 +2102,7 @@ function dedupe(list = []) {
                       ❤️ Love This Look
                     </button>
 
-                    {/* 🆕 one-tap regen controls */}
-                    {/* one-tap regen legacy shortcuts (keep if you like) */}
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => handleRegenerate(look, "swap-top")}
-                    >
-                      ♻️ Same vibe, different top
-                    </button>
-
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => handleSwap(look, "footwear")}
-                    >
-                      👟 Change shoes
-                    </button>
-
+                    
 
                     {/* 🔁 NEW: Swap menu */}
                     <div style={{ position: "relative", display: "inline-block" }}>
