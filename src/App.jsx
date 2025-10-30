@@ -46,8 +46,11 @@ function sameImage(a, b) {
   if (clean(A) === clean(B)) return true;
 
   // ✅ Partial match: last 40 chars of the path (helps with encoded image names)
-  const tail = (s) => s.split("/").pop().slice(-40);
-  return tail(A) && tail(A) === tail(B);
+  const tail = (s) => {
+    const last = (s || "").split("/").pop() || "";
+    return last.slice(-40);
+  };
+  return !!tail(A) && tail(A) === tail(B);
 }
 
 
@@ -387,7 +390,8 @@ export default function App() {
           ...item,
           image_url: imageUrl,
           // 🔄 Normalized display name
-          displayName: item.primaryTag || formatLabel(item.name || "Unnamed"),
+          displayName: item.primaryTag || formatLabel(item.name || item.category || "Unnamed"),
+
         };
       });
 
@@ -738,15 +742,16 @@ export default function App() {
     });
   }
 
-     async function suggestOutfitAgent(options = {}) {
-  const { uid, city, wardrobe, occasion} = options;
+  async function suggestOutfitAgent(options = {}) {
+  const { uid, city, wardrobe, occasion, vibe, constraints } = options;
 
 
 
        if (!uid) return;
 
        console.log("🟢 Sending to Tina agent:", options);
-       console.log("🟣 Payload to Tina:", { uid, city, wardrobe, occasion, vibe });
+    console.log("🟣 Payload to Tina:", { uid, city, wardrobe, occasion, vibe, constraints });
+
 
 
 
@@ -772,7 +777,8 @@ export default function App() {
                gender: userPrefs.gender,
                bodyShape: userPrefs.bodyShape,
                complexion: userPrefs.complexion
-             }
+             },
+             constraints
            }),
            });
 
@@ -882,7 +888,11 @@ export default function App() {
               };
             });
 
-          setOutfit(preparedLooks);
+         const finalLooks = (preparedLooks || []).filter(
+           l => Array.isArray(l.items) && l.items.length > 0
+         );
+         setOutfit(finalLooks);
+
 
          if (preparedLooks.length === 0) {
             alert("No complete looks could be made from the current wardrobe. Try adding footwear (and a bag for women) or switch the occasion.");
@@ -2128,7 +2138,8 @@ function dedupe(list = []) {
           >
             <img src={modalItem.image_url} alt={modalItem.name} />
 
-            <h3>{modalItem.primaryTag || formatLabel(modalItem.name)}</h3>
+            <h3>{modalItem.primaryTag || formatLabel(modalItem.name || modalItem.category || "Wardrobe Item")}</h3>
+
 
             <p className="sub">{formatLabel(modalItem.category)}</p>
 
