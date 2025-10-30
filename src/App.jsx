@@ -279,7 +279,7 @@ export default function App() {
       // Any click not on a swap menu/button closes it
       const el = e.target;
       if (!el.closest) return;
-      if (!el.closest(".look-actions")) setSwapOpenIdx(null);
+      if (!el.closest(".look-actions")) if (typeof setSwapOpenIdx === "function") setSwapOpenIdx(null);
     }
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
@@ -314,17 +314,20 @@ export default function App() {
   }, [user]);
 
 
-    useEffect(() => {
-      const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-        setUser(firebaseUser);
-        if (firebaseUser) {
-          console.log("🔥 Your UID is:", firebaseUser.uid);
-          fetchItems(firebaseUser.uid);
-          fetchTodayPlan(firebaseUser.uid);
-        }
-      });
-      return () => unsubscribe();
-    }, []);
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        console.log("🔥 Your UID is:", firebaseUser.uid);
+        Promise.allSettled([fetchItems(firebaseUser.uid), fetchTodayPlan(firebaseUser.uid)])
+          .finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
 
   // Fetch staples from backend (list of individual items)
   useEffect(() => {
@@ -332,15 +335,11 @@ export default function App() {
       if (!user?.uid || !userPrefs.gender) return; // wait for prefs
       try {
         const res = await fetch(`${BASE_URL}/staples?gender=${userPrefs.gender}`);
-        if (!res.ok) throw new Error("Failed to fetch staples");
+        if (!res.ok) { setStaples([]); return; } // quiet fallback on 404/500
         const data = await res.json();
-
-        // backend returns a flat list under 'staples' (or 'items')
-        const list = Array.isArray(data?.staples)
-          ? data.staples
-          : (Array.isArray(data?.items) ? data.items : []);
-
+        const list = Array.isArray(data) ? data : (data.staples || []);
         setStaples(list);
+
       } catch (err) {
         console.error("Failed to fetch staples:", err);
         setStaples([]); // safe fallback
@@ -791,15 +790,7 @@ export default function App() {
   }
 
 
-  // What bucket does a category belong to?
-  function groupOf(category = "") {
-    const c = (category || "").toLowerCase();
-    if (/(dress|gown|jumpsuit|saree|lehenga|anarkali)/i.test(c)) return "dress";
-    if (/(footwear|shoe|sandal|heel|sneaker|jutti|boot)/i.test(c)) return "footwear";
-    if (/(bag|handbag|tote|purse|clutch)/i.test(c)) return "bag";
-    if (/(bottom|jeans|pants|trouser|skirt|shorts|palazzo|salwar|gharara|sharara|dhoti)/i.test(c)) return "bottom";
-    return "top";
-  }
+  
 
   // Turn a look into buckets
   function bucketByGroup(items = []) {
@@ -2122,10 +2113,11 @@ function dedupe(list = []) {
 
                     <button
                       className="btn btn-outline"
-                      onClick={() => handleRegenerate(look, "change-shoes")}
+                      onClick={() => handleSwap(look, "footwear")}
                     >
                       👟 Change shoes
                     </button>
+
 
                     {/* 🔁 NEW: Swap menu */}
                     <div style={{ position: "relative", display: "inline-block" }}>
