@@ -206,6 +206,10 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState("");
   const [staples, setStaples] = useState([]);
 
+  // 🔁 swap menu state: which look index is open (or null)
+  const [swapOpenIdx, setSwapOpenIdx] = useState(null);
+
+
   
 
 
@@ -271,9 +275,16 @@ export default function App() {
   
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
+    function onDocClick(e) {
+      // Any click not on a swap menu/button closes it
+      const el = e.target;
+      if (!el.closest) return;
+      if (!el.closest(".look-actions")) setSwapOpenIdx(null);
+    }
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
   }, []);
+
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -719,14 +730,57 @@ export default function App() {
       alert("Couldn’t delete some items.");
     }
   };
-  
+
+  // ——— Swap helpers ———
+  function groupOf(category = "") {
+    const c = (category || "").toLowerCase();
+    if (/(dress|gown|jumpsuit|saree|lehenga|anarkali)/i.test(c)) return "dress";
+    if (/(footwear|shoe|sandal|heel|sneaker|jutti|boot)/i.test(c)) return "footwear";
+    if (/(bag|handbag|tote|purse|clutch)/i.test(c)) return "bag";
+    if (/(bottom|jeans|pants|trouser|skirt|shorts|palazzo|salwar|gharara|sharara|dhoti)/i.test(c)) return "bottom";
+    // default to top for shirts, tees, kurtas, blouses, etc.
+    return "top";
+  }
+
+  function buildSwapInstruction(baseLook, targetGroup) {
+    // lock everything that is NOT the target group
+    const keepIds = (baseLook?.items || [])
+      .filter(p => groupOf(p.category) !== targetGroup)
+      .map(p => String(p.id))
+      .filter(Boolean);
+
+    // polite + explicit for the agent:
+    return [
+      `Swap only the ${targetGroup.toUpperCase()}.`,
+      `Keep all other items identical (lock these wardrobe ids): ${keepIds.join(", ") || "none"}.`,
+      `Use ONLY real wardrobe items; do not invent.`,
+      `Respect same occasion and vibe.`
+    ].join(" ");
+  }
+
+  // single entry point for swap
+  async function handleSwap(baseLook, targetGroup) {
+    if (!user?.uid) return;
+    const instruction = buildSwapInstruction(baseLook, targetGroup);
+    setSwapOpenIdx(null);  // close the menu
+
+    await suggestOutfitAgent({
+      uid: user.uid,
+      city,
+      wardrobe: items,
+      occasion,
+      vibe,
+      constraints: instruction
+    });
+  }
+
   // One-tap regenerate variants (swap a piece / change just shoes etc.)
   async function handleRegenerate(baseLook, intent = "") {
     if (!user?.uid) return;
 
     const constraintHints = {
       "swap-top": "Keep everything same but replace the TOP with a different option from the same wardrobe.",
-      "change-shoes": "Keep the outfit but change only the FOOTWEAR to a better match from the wardrobe.",
+      "change-shoes": "Swap only the FOOTWEAR. Keep all other items identical. Use ONLY real wardrobe items.",
       "cooler": "Keep the vibe, make it cooler-weather appropriate with layers.",
       "warmer": "Keep the vibe, make it warmer-weather appropriate with lighter fabrics.",
     };
@@ -1976,6 +2030,7 @@ function dedupe(list = []) {
                     </button>
 
                     {/* 🆕 one-tap regen controls */}
+                    {/* one-tap regen legacy shortcuts (keep if you like) */}
                     <button
                       className="btn btn-outline"
                       onClick={() => handleRegenerate(look, "swap-top")}
@@ -1989,6 +2044,50 @@ function dedupe(list = []) {
                     >
                       👟 Change shoes
                     </button>
+
+                    {/* 🔁 NEW: Swap menu */}
+                    <div style={{ position: "relative", display: "inline-block" }}>
+                      <button
+                        className="btn btn-outline"
+                        onClick={() => setSwapOpenIdx(swapOpenIdx === idx ? null : idx)}
+                      >
+                        🔁 Swap…
+                      </button>
+
+                      {swapOpenIdx === idx && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "110%",
+                            left: 0,
+                            background: "#fff",
+                            border: "1px solid #ddd",
+                            borderRadius: 10,
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                            padding: 10,
+                            zIndex: 50,
+                            minWidth: 220
+                          }}
+                        >
+                          <p style={{ margin: "4px 8px 8px", fontWeight: 600 }}>Swap only this piece:</p>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "top")}>Top</button>
+                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "bottom")}>Bottom</button>
+                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "footwear")}>Footwear</button>
+                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "bag")}>Bag</button>
+                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "dress")}>Dress</button>
+                          </div>
+                          <button
+                            className="btn"
+                            onClick={() => setSwapOpenIdx(null)}
+                            style={{ marginTop: 8, width: "100%" }}
+                          >
+                            Close
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                   </div>
 
                   <button
