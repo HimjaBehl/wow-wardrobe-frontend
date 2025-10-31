@@ -56,7 +56,7 @@ function sameImage(a, b) {
 
 
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
-const SHOW_INSPIRATION = true;
+const SHOW_INSPIRATION = false;
 
 
 /* ======================================== */
@@ -1798,7 +1798,7 @@ function dedupe(list = []) {
 
 
             {/* Modern Filters */}
-            <div className="flex gap-md" style={{ marginBottom: "var(--spacing-lg)" }}>
+            <div className="filter-bar">
               <div className="form-group">
                 <select 
                   className="form-select" 
@@ -1826,7 +1826,7 @@ function dedupe(list = []) {
             </div>
 
             {/* Modern Wardrobe Grid */}
-            <div className="grid grid-wardrobe">
+            <div className="wardrobe-grid">
               {filteredItems.map((item) => (
                 <div
                   key={item.id}
@@ -1920,7 +1920,8 @@ function dedupe(list = []) {
 
           {/* AI Stylist Section */}
           {activeTab === "stylist" && (
-            <section className="section">
+            <section className="section section-wardrobe">
+
               <h2 className="section-title">AI Style Assistant</h2>
               <p className="section-description">
                 Let our AI stylist create personalized looks from your wardrobe ✨
@@ -2117,12 +2118,10 @@ function dedupe(list = []) {
                           >
                             Close
                           </button>
-                        </div>
-                      )}
+                        </div>                      )}
                     </div>
                   </div>
-
-                  {look.trends_used && look.trends_used.length > 0 && (
+                  {look.trends_used?.length > 0 && (
                     <div className="look-trends">
                       <h4 className="trends-title">🔥 Trending Inspiration</h4>
                       <div className="trends-list">

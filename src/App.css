@@ -370,3 +370,178 @@ a{ color:var(--link); }
   background: #f8f8f8;
   border-color: #222;
 }
+
+/* ---------- Wardrobe Aesthetic Refresh ---------- */
+
+/* full-page subtle gradient and darker canvas */
+.section-wardrobe {
+  background: radial-gradient(1200px 600px at 50% -200px, #0e0e0f 0%, #050506 45%, #000 100%);
+  padding-top: calc(var(--spacing-xl) + 52px); /* extra to make room for sticky filters */
+  min-height: calc(100vh - 120px);
+}
+
+/* sticky, floating filter bar */
+.filter-bar {
+  position: sticky;
+  top: 64px;                /* just below header */
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto var(--spacing-xl);
+  width: min(920px, 92vw);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  padding: 10px 14px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+
+.filter-bar .form-group { margin: 0; }
+.filter-bar .form-select {
+  color: #fff;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 8px 12px;
+  font-weight: 500;
+  appearance: none;
+}
+.filter-bar .form-select option {
+  color: #111;       /* dropdown panel text */
+}
+
+/* auto-fit responsive grid (cards) */
+.wardrobe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  width: min(1100px, 94vw);
+  margin: 0 auto;
+}
+
+/* wardrobe cards get a glass card look */
+.wardrobe-grid .card {
+  --glass: rgba(255,255,255,0.06);
+  background: var(--glass);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.wardrobe-grid .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 38px rgba(0,0,0,0.35);
+  border-color: rgba(255,255,255,0.16);
+}
+
+/* image */
+.wardrobe-grid .card-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;             /* always neat crops */
+  background: #0f0f10;
+  display: block;
+}
+
+/* text block */
+.wardrobe-grid .card-content {
+  padding: 10px 12px 6px;
+}
+.wardrobe-grid .card-title {
+  color: #fff;
+  font-size: .98rem;
+  line-height: 1.2;
+  font-weight: 600;
+  margin: 2px 0 4px;
+}
+.wardrobe-grid .card-subtitle {
+  color: #a2a2a8;
+  font-size: .78rem;
+  letter-spacing: .2px;
+  margin: 0 0 6px;
+}
+
+/* tags */
+.wardrobe-grid .tags { 
+  display: flex; 
+  gap: 6px; 
+  flex-wrap: wrap; 
+  padding: 0 12px 12px; 
+}
+.wardrobe-grid .tag {
+  font-size: .72rem;
+  color: #d7d7dd;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.wardrobe-grid .tag-accent {
+  background: #ff72a6;
+  color: #1b0d16;
+  border-color: #ff72a6;
+}
+
+/* tiny pill controls top-right of card */
+.card-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+.card-controls span {
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.15);
+  width: 28px; height: 28px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: transform .15s ease, background .15s ease;
+}
+.card-controls span:hover { transform: scale(1.06); background: rgba(0,0,0,0.6); }
+
+/* multi-select checkbox appearance */
+.wardrobe-grid input[type="checkbox"] {
+  accent-color: #ff72a6;
+  background: #fff;
+  border-radius: 4px;
+}
+
+/* modal polish (your existing modal classes) */
+.wow-overlay {
+  background: rgba(0,0,0,.6);
+}
+.wow-modal {
+  background: #0f0f11;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  width: min(560px, 92vw);
+  padding: 18px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+}
+.wow-modal img {
+  width: 100%;
+  height: 320px;
+  object-fit: contain;
+  background: #0b0b0c;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+.wow-modal .sub { color:#a3a3aa; margin-top: 6px; }
+.wow-modal .tags { margin-top: 10px; gap: 8px; }
+
+/* keep Upload/Stylist/Planner unaffected */
+.section:not(.section-wardrobe) .filter-bar,
+.section:not(.section-wardrobe) .wardrobe-grid {
+  all: revert;
+}
