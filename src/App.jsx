@@ -59,31 +59,6 @@ function sameImage(a, b) {
 const SHOW_INSPIRATION = true;
 
 
-
-
-async function likeOutfit({ uid, outfit, context = {} }) {
-  try {
-    const res = await fetch(`${BASE_URL}/like-outfit`, {
-     method : "POST",
-      headers: { "Content-Type": "application/json" },
-      body   : JSON.stringify({ uid, outfit, context }),
-    });
-
-    /** 🔍 DEBUG */
-    console.log("➡️  like-outfit response status:", res.status);
-
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Backend replied ${res.status}: ${txt.slice(0,200)}`);
-    }
-
-    alert("❤️  Look liked");
-  } catch (err) {
-    console.error("❌ likeOutfit failed:", err);
-    alert("Couldn’t like this look – see console.");
-  }
-}
-
 /* ======================================== */
 
 export default function App() {
@@ -222,7 +197,7 @@ export default function App() {
 
   const saveLook = async (lookObj) => {
     try {
-      await fetch(`${BASE_URL}/like-outfit`, {
+      await fetch(`${BASE_URL}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2080,23 +2055,28 @@ function dedupe(list = []) {
                       className="btn btn-outline"
                       onClick={() => openPlanModal(look)}
                     >
-                      🗓️ Add to Calendar
+                      📅 Add to Calendar
                     </button>
 
                     <button
                       className="btn btn-accent"
-                      onClick={() =>
-                        likeOutfit({
-                          uid    : user.uid,
-                          outfit : look,
-                          context: { occasion, vibe, style_mood: selectedMood },
-                        })
-                      }
+                      onClick={async () => {
+                        await fetch(`${BASE_URL}/feedback`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            uid: user.uid,
+                            outfit_ids: (look?.items || []).map(i => i.id),
+                            vibe,
+                            occasion,
+                            liked: true,
+                          }),
+                        });
+                        alert("❤️ Loved this look!");
+                      }}
                     >
                       ❤️ Love This Look
                     </button>
-
-                    
 
                     {/* 🔁 NEW: Swap menu */}
                     <div style={{ position: "relative", display: "inline-block" }}>
@@ -2140,27 +2120,7 @@ function dedupe(list = []) {
                         </div>
                       )}
                     </div>
-
                   </div>
-
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      alert("❌ Disliked this look. We’ll remember your preference.");
-                      // 🔽 Optional: send to backend to log dislikes
-                      fetch(`${BASE_URL}/dislike-outfit`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          uid: user.uid,
-                          outfit: look,
-                          context: { occasion, vibe, style_mood: selectedMood },
-                        }),
-                      }).catch(err => console.error("❌ Failed to save dislike:", err));
-                    }}
-                  >
-                    ❌ Dislike
-                  </button>
 
                   {look.trends_used && look.trends_used.length > 0 && (
                     <div className="look-trends">
