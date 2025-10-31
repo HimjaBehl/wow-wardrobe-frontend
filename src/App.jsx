@@ -10,6 +10,7 @@ import WeeklyPlanner from "./WeeklyPlanner";
 import PlanViewer from "./PlanViewer";
 import HomeDashboard from "./HomeDashboard";
 import VirtualTryOn from "./VirtualTryOn";
+// near the other imports
 import TrendsPanel from "./trendPanel";
 
 
@@ -60,6 +61,7 @@ function sameImage(a, b) {
 
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
 const SHOW_INSPIRATION = false;
+const SHOW_TRENDS = false; 
 
 
 /* ======================================== */
@@ -1310,9 +1312,12 @@ function dedupe(list = []) {
                   onGo={(tab) => setActiveTab(tab)}
                 />
                 {/* 🔥 Trends below the dashboard */}
-                <section className="section" style={{ marginTop: "1rem" }}>
-                  <TrendsPanel initialQuery={vibe || "general"} initialLimit={8} />
-                </section>
+                {SHOW_TRENDS && (
+                  <section className="section" style={{ marginTop: "1rem" }}>
+                    <TrendsPanel initialQuery="general" initialLimit={8} />
+                  </section>
+                )}
+
               </>
             )}
 
