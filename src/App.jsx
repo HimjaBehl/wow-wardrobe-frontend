@@ -14,6 +14,8 @@ import TrendsPanel from "./trendPanel";
 
 
 
+
+
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
 // —— Normalizers to compare images/ids reliably ——
@@ -1300,13 +1302,20 @@ function dedupe(list = []) {
           <>
 
             {activeTab === "home" && (
-              <HomeDashboard
-                user={user}
-                items={items}
-                todayPlan={todayPlan}
-                onGo={(tab) => setActiveTab(tab)}
-              />
+              <>
+                <HomeDashboard
+                  user={user}
+                  items={items}
+                  todayPlan={todayPlan}
+                  onGo={(tab) => setActiveTab(tab)}
+                />
+                {/* 🔥 Trends below the dashboard */}
+                <section className="section" style={{ marginTop: "1rem" }}>
+                  <TrendsPanel initialQuery={vibe || "general"} initialLimit={8} />
+                </section>
+              </>
             )}
+
 
           {activeTab === "upload" && (
           <section className="section">
