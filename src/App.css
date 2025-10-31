@@ -325,10 +325,14 @@ a{ color:var(--link); }
   margin-top: 1rem;
 }
 
-/* Safety override: keep text dark inside cards regardless of parent background */
-.card, .look-item, .look-item-info, .outfit-look {
+/* Safety override: keep text dark inside cards EXCEPT in wardrobe section */
+.section:not(.section-wardrobe) .card,
+.section:not(.section-wardrobe) .look-item,
+.section:not(.section-wardrobe) .look-item-info,
+.section:not(.section-wardrobe) .outfit-look {
   color: #111 !important;
 }
+
 
 /* --- Fix: outline pills showing only icons --- */
 .btn-outline,
@@ -424,6 +428,7 @@ a{ color:var(--link); }
 
 /* wardrobe cards get a glass card look */
 .wardrobe-grid .card {
+  position: relative;
   --glass: rgba(255,255,255,0.06);
   background: var(--glass);
   border: 1px solid rgba(255,255,255,0.08);
@@ -432,6 +437,7 @@ a{ color:var(--link); }
   overflow: hidden;
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
+
 .wardrobe-grid .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 38px rgba(0,0,0,0.35);
@@ -439,10 +445,8 @@ a{ color:var(--link); }
 }
 
 /* image */
-.wardrobe-grid .card-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;             /* always neat crops */
+.wardrobe-grid .card-image { height: 180px; }
+           /* always neat crops */
   background: #0f0f10;
   display: block;
 }
