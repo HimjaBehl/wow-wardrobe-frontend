@@ -10,6 +10,7 @@ import WeeklyPlanner from "./WeeklyPlanner";
 import PlanViewer from "./PlanViewer";
 import HomeDashboard from "./HomeDashboard";
 import VirtualTryOn from "./VirtualTryOn";
+import TrendsPanel from "./trendPanel";
 
 
 
