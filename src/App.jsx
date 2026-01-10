@@ -57,6 +57,32 @@ function sameImage(a, b) {
   return !!tail(A) && tail(A) === tail(B);
 }
 
+// —— Category normalizer (frontend) ——
+// We store categories like "Clothing/Bottoms" or "Footwear/Heels" but UI + swap logic needs canonical buckets.
+function normalizeCategoryFront(category = "", name = "") {
+  const c = String(category || "").toLowerCase();
+  const n = String(name || "").toLowerCase();
+
+  // Use taxonomy path style strings too ("Clothing/Bottoms")
+  if (c.includes("bottom") || c.includes("pants") || c.includes("trouser") || c.includes("jeans")) return "Bottom";
+  if (c.includes("top") || c.includes("upper") || c.includes("shirt") || c.includes("tee") || c.includes("blouse")) return "Top";
+  if (c.includes("dress") || c.includes("gown")) return "Dress";
+  if (c.includes("outerwear") || c.includes("blazer") || c.includes("coat") || c.includes("jacket") || c.includes("suit")) return "Outerwear";
+  if (c.includes("footwear") || c.includes("heel") || c.includes("shoe") || c.includes("sandal") || c.includes("sneaker") || c.includes("boot")) return "Footwear";
+  if (c.includes("bag") || c.includes("handbag") || c.includes("tote") || c.includes("clutch") || c.includes("purse")) return "Bag";
+  if (c.includes("accessory") || c.includes("belt") || c.includes("sunglass") || c.includes("jewelry") || c.includes("jewellery") || c.includes("bracelet") || c.includes("watch")) return "Accessory";
+
+  // If category is weak (like "Misc") infer from name
+  if (/trouser|pants|jeans|chinos|skirt|shorts|palazzo|salwar|gharara|sharara|dhoti/.test(n)) return "Bottom";
+  if (/shirt|t-?shirt|tee|blouse|kurta|kameez|sweater|hoodie/.test(n)) return "Top";
+  if (/dress|gown|jumpsuit|saree|lehenga|anarkali/.test(n)) return "Dress";
+  if (/blazer|jacket|coat|suit/.test(n)) return "Outerwear";
+  if (/heel|shoe|sneaker|boot|sandal|loafer|mule|trainer/.test(n)) return "Footwear";
+  if (/bag|tote|purse|clutch|backpack/.test(n)) return "Bag";
+  if (/belt|watch|sunglass|jewel|earring|bracelet/.test(n)) return "Accessory";
+
+  return category || "Misc";
+}
 
 
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
@@ -713,20 +739,26 @@ export default function App() {
   };
 
   // ——— Swap helpers ———
-  function groupOf(category = "") {
-    const c = (category || "").toLowerCase();
-    if (/(dress|gown|jumpsuit|saree|lehenga|anarkali)/i.test(c)) return "dress";
-    if (/(footwear|shoe|sandal|heel|sneaker|jutti|boot)/i.test(c)) return "footwear";
-    if (/(bag|handbag|tote|purse|clutch)/i.test(c)) return "bag";
-    if (/(bottom|jeans|pants|trouser|skirt|shorts|palazzo|salwar|gharara|sharara|dhoti)/i.test(c)) return "bottom";
-    // default to top for shirts, tees, kurtas, blouses, etc.
+  function groupOf(category = "", name = "") {
+    // Normalize to canonical bucket labels first
+    const norm = normalizeCategoryFront(category, name).toLowerCase();
+
+    if (/dress|gown|jumpsuit|saree|lehenga|anarkali/.test(norm)) return "dress";
+    if (/footwear|shoe|sandal|heel|sneaker|jutti|boot/.test(norm)) return "footwear";
+    if (/bag|handbag|tote|purse|clutch/.test(norm)) return "bag";
+    if (/bottom|jeans|pants|trouser|skirt|shorts|palazzo|salwar|gharara|sharara|dhoti/.test(norm)) return "bottom";
+
+    // Treat outerwear as top-slot for swap purposes (unless you want an explicit "outer" group later)
+    if (/outerwear|blazer|jacket|coat|suit/.test(norm)) return "top";
+
     return "top";
   }
+
 
   function buildSwapInstruction(baseLook, targetGroup) {
     // lock everything that is NOT the target group
     const keepIds = (baseLook?.items || [])
-      .filter(p => groupOf(p.category) !== targetGroup)
+      .filter(p => groupOf(p.category, p.name) !== targetGroup)
       .map(p => String(p.id))
       .filter(Boolean);
 
@@ -745,7 +777,7 @@ export default function App() {
 
     // lock every piece that is NOT the target group
     const lockedIds = (baseLook?.items || [])
-      .filter(p => groupOf(p.category) !== targetGroup)
+      
       .map(p => String(p.id))
       .filter(Boolean);
 
