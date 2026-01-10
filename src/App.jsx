@@ -956,62 +956,41 @@ export default function App() {
 
          const preparedLooks = (data.looks || []).map((look, idx) => {
            const mappedItems = (look.items || [])
-             .map((it, i) => {
-               const tinaUrl = it.image_url || it.image || "";
-               const tinaId  = it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.id;
-               const tinaIdx = it.idx ?? it.index ?? it.wardrobe_idx;
- // 👈 add fallbacks
+           .map((it, i) => {
+             const tinaId  = it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.id;
+             const tinaIdx = it.idx ?? it.index ?? it.wardrobe_idx;
 
-               // 1) ID match
-               let w = null;
+             let w = null;
 
-               // 1) Match by wardrobe_id (best)
-               if (tinaId !== undefined && tinaId !== null) {
-                 w = WARDROBE_BY_ID.get(String(tinaId));
+             // 1) Strict ID match (best)
+             if (tinaId != null) {
+               w = WARDROBE_BY_ID.get(String(tinaId)) || null;
+             }
+
+             // 2) Strict IDX match (only if valid)
+             if (!w && tinaIdx != null && !Number.isNaN(Number(tinaIdx))) {
+               const j = Number(tinaIdx);
+               if (j >= 0 && j < items.length) {
+                 w = items[j];
                }
+             }
 
-               // 2) Match by idx (second best, but VERY reliable for your case)
-               if (!w && tinaIdx !== undefined && tinaIdx !== null && !Number.isNaN(Number(tinaIdx))) {
-                 const j = Number(tinaIdx);
-                 if (j >= 0 && j < items.length) w = items[j];
-               }
+             // ❌ IMPORTANT: NO URL fuzzy matching fallback (this is what caused mismatches)
+             // If it didn't match strictly, drop it.
+             if (!w) return null;
 
-               // 3) URL match (last resort only)
-               if (!w && tinaUrl) {
-                 const key = normalizeUrl(tinaUrl);
-                 w = WARDROBE_BY_URL.get(key) || items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
-               }
+             return {
+               id: w.id,
+               name: w.displayName || w.name || it.name || (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
+               category: w.category || it.category || "",
+               color: w.color || it.color || "",
+               image_url: w.image_url,
+               tags: Array.isArray(w.tags) ? w.tags : [],
+               source: "wardrobe",
+             };
+           })
+           .filter(Boolean);
 
-
-               // 2) URL match (normalized then fuzzy)
-               if (!w && tinaUrl) {
-                 const key = normalizeUrl(tinaUrl);
-                 w = WARDROBE_BY_URL.get(key) || items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
-               }
-
-               if (!w && !SHOW_INSPIRATION) return null;
-
-               return w
-                 ? {
-                     id: w.id,
-                     name: w.displayName || w.name || it.name || (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
-                     category: w.category || it.category || "",
-                     color: w.color || it.color || "",
-                     image_url: w.image_url,
-                     tags: Array.isArray(w.tags) ? w.tags : [],
-                     source: "wardrobe",
-                   }
-                 : {
-                     id: it.id || `insp-${i}`,
-                     name: it.name || "Inspiration",
-                     category: it.category || "",
-                     color: it.color || "",
-                     image_url: tinaUrl,
-                     tags: Array.isArray(it.tags) ? it.tags : [],
-                     source: "inspiration",
-                   };
-             })
-             .filter(Boolean);
 
            const { title, note } = sanitizeCopy(
              look.title || `Look ${idx + 1}`,
@@ -1195,13 +1174,27 @@ async function suggestOutfit(options = {}) {
                     };
               })
               .filter(Boolean)
-          ),
+          )if ((look.items || []).length !== mappedItems.length) {
+              console.warn("🧨 DROPPED items due to no strict match:", {
+                returnedByBackend: look.items,
+                matchedOnClient: mappedItems
+              });
+            }
 
-        }))
-      );
-    }
-  }
+            const { title, note } = sanitizeCopy(
+              look.title || `Look ${idx + 1}`,
+              look.style_note || "Suggested look",
+              mappedItems
+            );
 
+            return {
+              title,
+              style_note: note,
+              trends_used: look.trends_used || [],
+              validation: look.validation?.styleRules || null,
+              items: mappedItems,
+            };
+          });
 
   // 🔸 remove any exact-duplicate items (same image_url)
 function dedupe(list = []) {
