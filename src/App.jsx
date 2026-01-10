@@ -537,9 +537,10 @@ export default function App() {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this item?")) return;
     try {
-      const res = await fetch(`${BASE_URL}/wardrobe/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${BASE_URL}/wardrobe/${id}?uid=${user.uid}`, {
+          method: "DELETE",
+        });
+
       if (res.ok) {
         alert("Item deleted!");
         fetchItems(user.uid);
