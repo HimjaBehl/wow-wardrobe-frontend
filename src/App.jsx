@@ -991,6 +991,12 @@ export default function App() {
            })
            .filter(Boolean);
 
+           if ((look.items || []).length !== mappedItems.length) {
+             console.warn("🧨 DROPPED items due to no strict match:", {
+               returnedByBackend: look.items,
+               matchedOnClient: mappedItems
+             });
+           }
 
            const { title, note } = sanitizeCopy(
              look.title || `Look ${idx + 1}`,
@@ -1174,37 +1180,22 @@ async function suggestOutfit(options = {}) {
                     };
               })
               .filter(Boolean)
-          )if ((look.items || []).length !== mappedItems.length) {
-              console.warn("🧨 DROPPED items due to no strict match:", {
-                returnedByBackend: look.items,
-                matchedOnClient: mappedItems
-              });
-            }
-
-            const { title, note } = sanitizeCopy(
-              look.title || `Look ${idx + 1}`,
-              look.style_note || "Suggested look",
-              mappedItems
-            );
-
-            return {
-              title,
-              style_note: note,
-              trends_used: look.trends_used || [],
-              validation: look.validation?.styleRules || null,
-              items: mappedItems,
-            };
-          });
+          ),
+        }))
+      );
+    }
+  }
 
   // 🔸 remove any exact-duplicate items (same image_url)
-function dedupe(list = []) {
-  const map = new Map();
-  list.forEach((it) => {
-    const key = String(it.id || normalizeUrl(it.image_url) || Math.random());
-    map.set(key, it);
-  });
-  return [...map.values()];
-}
+  function dedupe(list = []) {
+    const map = new Map();
+    list.forEach((it) => {
+      const key = String(it.id || normalizeUrl(it.image_url) || Math.random());
+      map.set(key, it);
+    });
+    return [...map.values()];
+  }
+
 
   // ✅ What counts as a complete look on the client (belt/jewelry optional)
   function isCompleteLook(look = {}) {
