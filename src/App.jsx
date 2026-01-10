@@ -891,13 +891,16 @@ export default function App() {
            body: JSON.stringify({ 
              uid,
              city,
-             wardrobe: items.map(w => ({
-               id: String(w.id),                            // ✅ force string id
+             wardrobe: items.map((w, idx) => ({
+               idx,                                // ✅ crucial
+               wardrobe_id: String(w.id),           // ✅ explicit id name for the model
+               id: String(w.id),                    // keep for backward compat
                image_url: w.image_url || "",
                name: w.displayName || w.name || "",
                category: w.category || "",
                color: w.color || ""
              })),
+
 
              occasion,
              vibe,
@@ -955,13 +958,30 @@ export default function App() {
            const mappedItems = (look.items || [])
              .map((it, i) => {
                const tinaUrl = it.image_url || it.image || "";
-               const tinaId  = it.wardrobe_id ?? it.id ?? it.idx ?? it.item_id; // 👈 add fallbacks
+               const tinaId  = it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.id;
+               const tinaIdx = it.idx ?? it.index ?? it.wardrobe_idx;
+ // 👈 add fallbacks
 
                // 1) ID match
                let w = null;
+
+               // 1) Match by wardrobe_id (best)
                if (tinaId !== undefined && tinaId !== null) {
                  w = WARDROBE_BY_ID.get(String(tinaId));
                }
+
+               // 2) Match by idx (second best, but VERY reliable for your case)
+               if (!w && tinaIdx !== undefined && tinaIdx !== null && !Number.isNaN(Number(tinaIdx))) {
+                 const j = Number(tinaIdx);
+                 if (j >= 0 && j < items.length) w = items[j];
+               }
+
+               // 3) URL match (last resort only)
+               if (!w && tinaUrl) {
+                 const key = normalizeUrl(tinaUrl);
+                 w = WARDROBE_BY_URL.get(key) || items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
+               }
+
 
                // 2) URL match (normalized then fuzzy)
                if (!w && tinaUrl) {
