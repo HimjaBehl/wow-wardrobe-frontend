@@ -12,26 +12,20 @@ export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
           </h1>
           <p className="home-sub">What outfit are we planning today?</p>
         </div>
-        <button className="chip" onClick={() => onGo("stylist")}>Style me ✨</button>
+        <button className="btn btn-accent home-primary-cta" onClick={() => onGo("stylist")}>
+          ✨ Style me for today
+        </button>
+
       </div>
 
       {/* Tiles */}
-      <div className="home-grid">
+      <div className="home-grid home-grid-2">
         <button className="tile" onClick={() => onGo("wardrobe")}>
           <span className="tile-emoji">👗</span>
           <span className="tile-title">Wardrobe</span>
           <span className="tile-sub">{items.length} items</span>
         </button>
-        <button className="tile" onClick={() => onGo("stylist")}>
-          <span className="tile-emoji">🪄</span>
-          <span className="tile-title">Stylist</span>
-          <span className="tile-sub">Ideas for today</span>
-        </button>
-        <button className="tile" onClick={() => onGo("planner")}>
-          <span className="tile-emoji">🗓️</span>
-          <span className="tile-title">Planner</span>
-          <span className="tile-sub">This week</span>
-        </button>
+
         <button className="tile" onClick={() => onGo("upload")}>
           <span className="tile-emoji">➕</span>
           <span className="tile-title">Add Item</span>
@@ -39,11 +33,14 @@ export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
         </button>
       </div>
 
+
       {/* Today glance (opens Planner) */}
-      <div className="home-card" onClick={() => onGo("planner")} role="button">
+        <div className="home-card" onClick={() => onGo(firstLook ? "planner" : "stylist")} role="button">
+
         <div className="home-card-header">
           <h3>Today</h3>
-          <span className="linklike">Open Planner →</span>
+          <span className="linklike">{firstLook ? "View plan →" : "Create a look →"}</span>
+
         </div>
         {firstLook ? (
           <>
@@ -58,7 +55,8 @@ export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
             </div>
           </>
         ) : (
-          <p className="muted">No outfit saved yet. Tap to plan your look.</p>
+      <p className="muted">No outfit saved yet. Tap to create a look.</p>
+
         )}
       </div>
 
