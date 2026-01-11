@@ -967,13 +967,22 @@ export default function App() {
                w = WARDROBE_BY_ID.get(String(tinaId)) || null;
              }
 
-             // 2) Strict IDX match (only if valid)
-             if (!w && tinaIdx != null && !Number.isNaN(Number(tinaIdx))) {
+             if (tinaId != null && !w) {
+               console.warn("🧨 Tina returned an ID not found in wardrobe (dropping item):", {
+                 tinaId: String(tinaId),
+                 tinaItem: it
+               });
+             }
+
+
+             // 2) IDX match ONLY when Tina did NOT provide an ID
+             if (tinaId == null && !w && tinaIdx != null && !Number.isNaN(Number(tinaIdx))) {
                const j = Number(tinaIdx);
                if (j >= 0 && j < items.length) {
                  w = items[j];
                }
              }
+
 
              // ❌ IMPORTANT: NO URL fuzzy matching fallback (this is what caused mismatches)
              // If it didn't match strictly, drop it.
@@ -997,6 +1006,10 @@ export default function App() {
                matchedOnClient: mappedItems
              });
            }
+           console.log("🧩 Tina->UI mapping", {
+             tina: (look.items || []).map(x => ({ id: x.id, wardrobe_id: x.wardrobe_id, idx: x.idx, image_url: x.image_url, name: x.name })),
+             rendered: mappedItems.map(x => ({ id: x.id, image_url: x.image_url, name: x.name }))
+           });
 
            const { title, note } = sanitizeCopy(
              look.title || `Look ${idx + 1}`,
