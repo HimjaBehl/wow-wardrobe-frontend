@@ -257,11 +257,14 @@ export default function App() {
   const uniqueCategories = useMemo( () => [...new Set(items.map((it) => it.category).filter(Boolean))], [items] ); const uniqueColors = useMemo( () => [...new Set(items.map((it) => it.color).filter(Boolean))], [items] );
 
   // 🔎 Wardrobe indexes for fast matching
-  const WARDROBE_BY_ID = useMemo(() => {
-    const m = new Map();
-    for (const w of items) m.set(String(w.id), w);
-    return m;
-  }, [items]);
+    const WARDROBE_BY_ID = useMemo(() => {
+      const m = new Map();
+      for (const w of items) {
+        if (w.id) m.set(String(w.id), w);
+        if (w.doc_id) m.set(String(w.doc_id), w); // safety
+      }
+      return m;
+    }, [items]);
 
   const WARDROBE_BY_URL = useMemo(() => {
     const m = new Map();
@@ -405,11 +408,17 @@ export default function App() {
 
         return {
           ...item,
-          image_url: imageUrl,
-          // 🔄 Normalized display name
-          displayName: item.primaryTag || formatLabel(item.name || item.category || "Unnamed"),
 
+          // ✅ FORCE canonical ID
+          id: String(item.id || item.doc_id || item.firestoreId),
+
+          image_url: imageUrl,
+
+          displayName:
+            item.primaryTag ||
+            formatLabel(item.name || item.category || "Unnamed"),
         };
+
       });
 
       setItems(withUrls);
@@ -891,15 +900,15 @@ export default function App() {
            body: JSON.stringify({ 
              uid,
              city,
-             wardrobe: items.map((w, idx) => ({
-               idx,                                // ✅ crucial
-               wardrobe_id: String(w.id),           // ✅ explicit id name for the model
-               id: String(w.id),                    // keep for backward compat
-               image_url: w.image_url || "",
+             wardrobe: items.map((w) => ({
+               wardrobe_id: String(w.id),   // 👈 Firestore ID only
+               id: String(w.id),
+               image_url: w.image_url,
                name: w.displayName || w.name || "",
                category: w.category || "",
                color: w.color || ""
              })),
+
 
 
              occasion,
@@ -975,13 +984,7 @@ export default function App() {
              }
 
 
-             // 2) IDX match ONLY when Tina did NOT provide an ID
-             if (tinaId == null && !w && tinaIdx != null && !Number.isNaN(Number(tinaIdx))) {
-               const j = Number(tinaIdx);
-               if (j >= 0 && j < items.length) {
-                 w = items[j];
-               }
-             }
+             
 
 
              // ❌ IMPORTANT: NO URL fuzzy matching fallback (this is what caused mismatches)
