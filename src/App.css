@@ -549,3 +549,147 @@ a{ color:var(--link); }
 .section:not(.section-wardrobe) .wardrobe-grid {
   all: revert;
 }
+
+/* =========================
+   HOME — Mobile-first polish
+   ========================= */
+
+.home {
+  padding: 16px;
+  max-width: 720px;     /* keeps it elegant on desktop */
+  margin: 0 auto;
+}
+
+.home-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.home-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+.home-sub {
+  margin: 6px 0 0;
+  opacity: 0.8;
+}
+
+/* Big CTA */
+.home-primary-cta {
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Grid: 2 cards always, but tighter + responsive */
+.home-grid {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.home-grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Tile */
+.tile {
+  border-radius: 16px;
+  padding: 14px;
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  min-height: 84px;     /* shorter */
+}
+
+.tile-emoji {
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+.tile-title {
+  font-weight: 700;
+}
+
+.tile-sub {
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+/* Cards */
+.home-card {
+  border-radius: 18px;
+  padding: 14px;
+  margin-top: 12px;
+}
+
+.home-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* Horizontal list: snap + compact */
+.home-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-row::-webkit-scrollbar {
+  height: 6px;
+}
+.home-row::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+}
+
+/* Compact item card in rows */
+.home-item {
+  width: 84px;                  /* smaller */
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.home-item img {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+.caption {
+  margin: 6px 0 0;
+  font-size: 12px;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile: stack tiles 1-column */
+@media (max-width: 520px) {
+  .home-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .home-primary-cta {
+    width: 100%;
+  }
+}
