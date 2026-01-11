@@ -19,7 +19,6 @@ import TrendsPanel from "./trendPanel";
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
-const [stylistLoading, setStylistLoading] = useState(false);
 
 const uiCopy = {
   home: {
@@ -229,6 +228,7 @@ export default function App() {
     color: "",
     tags: "",
   });
+  const [stylistLoading, setStylistLoading] = useState(false);
   const [constraints, setConstraints] = useState("");
   const [outfit, setOutfit] = useState(null);
   const [user, setUser] = useState(null);
