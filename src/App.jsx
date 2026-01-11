@@ -257,14 +257,24 @@ export default function App() {
   const uniqueCategories = useMemo( () => [...new Set(items.map((it) => it.category).filter(Boolean))], [items] ); const uniqueColors = useMemo( () => [...new Set(items.map((it) => it.color).filter(Boolean))], [items] );
 
   // 🔎 Wardrobe indexes for fast matching
-    const WARDROBE_BY_ID = useMemo(() => {
-      const m = new Map();
-      for (const w of items) {
-        if (w.id) m.set(String(w.id), w);
-        if (w.doc_id) m.set(String(w.doc_id), w); // safety
-      }
-      return m;
-    }, [items]);
+  // 🔎 Wardrobe indexes for fast matching
+  // 🔎 Wardrobe indexes for fast matching
+  const WARDROBE_BY_ID = useMemo(() => {
+    const m = new Map();
+    for (const w of items) {
+      // canonical id (Firestore doc id)
+      if (w.id) m.set(String(w.id), w);
+
+      // older field, same doc id
+      if (w.doc_id) m.set(String(w.doc_id), w);
+
+      // strict idx mapping
+      if (w.idx != null) m.set(`idx:${String(w.idx)}`, w);
+    }
+    return m;
+  }, [items]);
+
+
 
   const WARDROBE_BY_URL = useMemo(() => {
     const m = new Map();
@@ -398,35 +408,47 @@ export default function App() {
       const text = await res.text();
       const data = JSON.parse(text);
 
-      const withUrls = data.map((item) => {
-        // 🔄 Image URL fallback
+      const withUrls = (Array.isArray(data) ? data : []).map((item, idx) => {
+        // ✅ Always compute a stable image_url
         let imageUrl = item.image_url;
         if (!imageUrl && item.image_path) {
           const bucket = "wowapp1406.appspot.com";
-          imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(item.image_path)}?alt=media`;
+          imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(
+            item.image_path
+          )}?alt=media`;
         }
+
+        // ✅ Canonical Firestore doc id
+        const docId = String(item.doc_id || item.firestoreId || item.id || "");
 
         return {
           ...item,
 
-          // ✅ FORCE canonical ID
-          id: String(item.id || item.doc_id || item.firestoreId),
+          // ✅ IMPORTANT: UI canonical id is Firestore doc id
+          id: docId,
 
+          // keep doc_id for backwards compatibility
+          doc_id: docId,
+
+          // idx (if present); else we can store undefined (don't invent)
+          idx: item.idx != null ? String(item.idx) : undefined,
+
+          // always have a public image_url
           image_url: imageUrl,
 
           displayName:
             item.primaryTag ||
             formatLabel(item.name || item.category || "Unnamed"),
         };
-
       });
 
       setItems(withUrls);
-      console.log("👗 Wardrobe items loaded:", withUrls);
     } catch (e) {
       console.error("❌ Error fetching wardrobe:", e.message);
+      setItems([]);
     }
   };
+
 
 
 
@@ -784,11 +806,11 @@ export default function App() {
   async function handleSwap(baseLook, targetGroup) {
     if (!user?.uid) return;
 
-    // lock every piece that is NOT the target group
     const lockedIds = (baseLook?.items || [])
-      
-      .map(p => String(p.id))
-      .filter(Boolean);
+    .filter(p => groupOf(p.category, p.name) !== targetGroup)
+    .map(p => String(p.id))
+    .filter(Boolean);
+
 
     const instruction = [
       `Swap only the ${targetGroup.toUpperCase()}.`,
@@ -901,20 +923,16 @@ export default function App() {
              uid,
              city,
              wardrobe: items.map((w) => ({
-               wardrobe_id: String(w.id),   // 👈 Firestore ID only
-               id: String(w.id),
+               wardrobe_id: String(w.id),                 // ✅ Firestore doc id
+               id: String(w.id),                          // backward compat
+               idx: w.idx != null ? String(w.idx) : undefined,
                image_url: w.image_url,
                name: w.displayName || w.name || "",
                category: w.category || "",
-               color: w.color || ""
+               color: w.color || "",
              })),
 
-
-
-             occasion,
-             vibe,
-             dislikes: userPrefs.dislikes || [],
-             profile: {
+  profile: {
                gender: userPrefs.gender,
                bodyShape: userPrefs.bodyShape,
                complexion: userPrefs.complexion
@@ -966,8 +984,9 @@ export default function App() {
          const preparedLooks = (data.looks || []).map((look, idx) => {
            const mappedItems = (look.items || [])
            .map((it, i) => {
-             const tinaId  = it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.id;
+             const tinaId = it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.doc_id ?? it.id;
              const tinaIdx = it.idx ?? it.index ?? it.wardrobe_idx;
+             const tinaUrl = it.image_url ?? it.image_uri ?? it.image ?? it.url ?? "";
 
              let w = null;
 
@@ -976,20 +995,26 @@ export default function App() {
                w = WARDROBE_BY_ID.get(String(tinaId)) || null;
              }
 
-             if (tinaId != null && !w) {
-               console.warn("🧨 Tina returned an ID not found in wardrobe (dropping item):", {
-                 tinaId: String(tinaId),
-                 tinaItem: it
-               });
+             // 2) Strict IDX match fallback (still strict, not fuzzy)
+             if (!w && tinaIdx != null) {
+               w = WARDROBE_BY_ID.get(`idx:${String(tinaIdx)}`) || null;
              }
 
+             // 3) If strict id match fails, try exact normalized URL match (NOT fuzzy).
+             if (!w && tinaUrl) {
+               const key = normalizeUrl(tinaUrl);
+               w = WARDROBE_BY_URL.get(key) || null;
+             }
 
-             
-
-
-             // ❌ IMPORTANT: NO URL fuzzy matching fallback (this is what caused mismatches)
-             // If it didn't match strictly, drop it.
-             if (!w) return null;
+             // If still no match, log and drop the item
+             if (!w) {
+               console.warn("🧨 Tina item not matched (dropped):", {
+                 tinaId: tinaId != null ? String(tinaId) : null,
+                 tinaUrl: tinaUrl ? normalizeUrl(tinaUrl) : null,
+                 tinaItem: it
+               });
+               return null;
+             }
 
              return {
                id: w.id,
@@ -1153,8 +1178,7 @@ async function suggestOutfit(options = {}) {
             (look.items || [])
               .map((it, i) => {
                 const tinaUrl = it.image_url || it.image || "";
-                const tinaId  = it.wardrobe_id ?? it.id ?? it.idx ?? it.item_id;
-
+                const tinaId  = it.wardrobe_id ?? it.item_id ?? it.id ?? it.idx;
 
                 let w = null;
                 // 1) ID match
