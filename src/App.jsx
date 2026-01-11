@@ -19,6 +19,37 @@ import TrendsPanel from "./trendPanel";
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
+const [stylistLoading, setStylistLoading] = useState(false);
+
+const uiCopy = {
+  home: {
+    title: "W.O.W.",
+    subtitle: "What. Outfit. When.",
+    primaryCta: "Generate a look from my wardrobe",
+    planCta: "Plan today’s outfit →",
+  },
+  upload: {
+    detectBtn: "Detect clothing items",
+    detectedTitle: "✨ Detected Items",
+    addSelectedBtn: "➕ Add selected to wardrobe",
+  },
+  stylist: {
+    generateBtn: "Create outfits from my wardrobe",
+    loadingText: "Tina is styling your look…",
+    emptyText: "I couldn’t build a complete look yet. Try adding footwear or changing the occasion.",
+    loveBtn: "❤️ Love this look",
+    calendarBtn: "📅 Add to calendar",
+    swapBtn: "🔁 Swap…",
+  },
+  wardrobe: {
+    emptyTitle: "Your wardrobe is empty.",
+    emptySubtitle: "Upload your first item to get started ✨",
+    selectBtn: "Select items",
+    cancelBtn: "✕ Cancel",
+  },
+};
+
+
 // —— Normalizers to compare images/ids reliably ——
 function normalizeUrl(u = "") {
   try {
@@ -88,6 +119,13 @@ function normalizeCategoryFront(category = "", name = "") {
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
 const SHOW_INSPIRATION = false;
 const SHOW_TRENDS = false; 
+function LoadingState({ text = "Loading…" }) {
+  return (
+    <div className="section text-center" style={{ padding: "2rem 1rem" }}>
+      <p style={{ fontSize: "1.05rem", opacity: 0.8 }}>{text}</p>
+    </div>
+  );
+}
 
 
 /* ======================================== */
@@ -909,6 +947,8 @@ export default function App() {
 
        if (!uid) return;
 
+    setStylistLoading(true);
+
        console.log("🟢 Sending to Tina agent:", options);
     console.log("🟣 Payload to Tina:", { uid, city, wardrobe, occasion, vibe, constraints });
 
@@ -1080,7 +1120,10 @@ export default function App() {
        } catch (err) {
          console.error("❌ Tina agent failed:", err);
          alert("Tina agent could not generate looks.");
+       } finally {
+         setStylistLoading(false);
        }
+
      }
 
 
@@ -1452,7 +1495,8 @@ async function suggestOutfit(options = {}) {
 
                         style={{ marginTop: "var(--spacing-md)" }}
                       >
-                        ✨ Auto-Tag & Detect Items
+                        {uiCopy.upload.detectBtn}
+
                       </button>
                     </div>
                   )}
@@ -1463,7 +1507,8 @@ async function suggestOutfit(options = {}) {
             {/* Detected Items Results */}
             {detectedItems.length > 0 && (
               <div className="upload-results">
-                    <h3 className="section-subtitle">✨ Detected Items</h3>
+                <h3 className="section-subtitle">{uiCopy.upload.detectedTitle}</h3>
+
 
                     <div className="detected-items">
                       {detectedItems.map((item, i) => (
@@ -1571,7 +1616,8 @@ async function suggestOutfit(options = {}) {
                       onClick={confirmSelectedItems}
                       style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
                     >
-                      ➕ Add Selected to Wardrobe
+                      {uiCopy.upload.addSelectedBtn}
+
                     </button>
                   </div>
                 )}
@@ -2088,9 +2134,11 @@ async function suggestOutfit(options = {}) {
                 }}
                 style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
               >
-                🪄 Generate Outfit Ideas
+                {uiCopy.stylist.generateBtn}
+
               </button>
 
+              {stylistLoading && <LoadingState text={uiCopy.stylist.loadingText} />}
 
               {outfit && outfit.length > 0 ? (
                 <div className="outfit-suggestions">
@@ -2241,7 +2289,8 @@ async function suggestOutfit(options = {}) {
           ) : (
             outfit !== null && (
               <p style={{ marginTop: "1rem", color: "#888" }}>
-                Tina couldn’t style anything right now. Try again, or check wardrobe 👗
+                {uiCopy.stylist.emptyText}
+
               </p>
             )
           )}
