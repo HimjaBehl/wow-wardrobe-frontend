@@ -693,3 +693,106 @@ a{ color:var(--link); }
     width: 100%;
   }
 }
+
+/* =========================
+   Floating bottom pill nav
+   Mobile-first
+   ========================= */
+
+.wow-has-bottom-nav {
+  /* ensures main content doesn't hide behind floating nav */
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+
+.wow-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  /* safe area for iPhone */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+
+  display: flex;
+  justify-content: center;
+
+  z-index: 1000;
+  pointer-events: none; /* so only pill receives clicks */
+}
+
+.wow-bottom-nav__pill {
+  pointer-events: auto;
+
+  width: min(560px, calc(100% - 24px));
+  margin: 10px 12px 12px;
+
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.14),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  align-items: center;
+
+  padding: 6px;
+  gap: 4px;
+}
+
+.wow-bottom-nav__item {
+  appearance: none;
+  border: 0;
+  background: transparent;
+
+  padding: 10px 8px;
+  border-radius: 999px;
+
+  cursor: pointer;
+  min-width: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 12px; /* smaller font */
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.wow-bottom-nav__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Active = pill highlight + subtle underline vibe */
+.wow-bottom-nav__item.is-active {
+  color: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.wow-bottom-nav__item.is-active::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 6px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+/* Make it feel even more mobile on wide screens */
+@media (min-width: 900px) {
+  .wow-bottom-nav__pill {
+    width: 520px;
+  }
+}

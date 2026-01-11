@@ -1409,7 +1409,8 @@ async function suggestOutfit(options = {}) {
 
 
       {/* Main Content */}
-      <main className="app-main">
+        <main className="app-main wow-has-bottom-nav">
+
         {!user ? (
           <div className="section text-center">
             <h1 className="section-title">Welcome to W.O.W. – Your AI Stylist Assistant</h1>
@@ -2489,44 +2490,32 @@ async function suggestOutfit(options = {}) {
         <PlanViewer open={viewOpen} plan={viewPlan} onClose={closePlanViewer} />
       )}
 
-      <nav
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          width: "100%",
-          backgroundColor: "#fff",
-          borderTop: "1px solid #ddd",
-          display: "flex",
-          justifyContent: "space-around",
-          padding: "0.75rem 0",
-          zIndex: 1000,
-        }}
-      >
-        {[
-          { label: "Home", key: "home" },
-          { label: "Wardrobe", key: "wardrobe" },
-          { label: "Upload", key: "upload" },
-          { label: "Stylist", key: "stylist" },
-          { label: "Planner", key: "planner" },
-          { label: "Profile", key: "profile" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            style={{
-              background: "none",
-              border: "none",
-              fontWeight: tab.key === activeTab ? "bold" : "normal",
-              color: tab.key === activeTab ? "#000" : "#666",
-              fontSize: "1rem",
-              cursor: "pointer",
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <nav className="wow-bottom-nav" aria-label="Primary">
+        <div className="wow-bottom-nav__pill">
+          {[
+            { label: "Home", key: "home" },
+            { label: "Wardrobe", key: "wardrobe" },
+            { label: "Upload", key: "upload" },
+            { label: "Stylist", key: "stylist" },
+            { label: "Planner", key: "planner" },
+            { label: "Profile", key: "profile" },
+          ].map((tab) => {
+            const active = tab.key === activeTab;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`wow-bottom-nav__item ${active ? "is-active" : ""}`}
+                aria-current={active ? "page" : undefined}
+              >
+                <span className="wow-bottom-nav__label">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
+
     </div>
   );
 }
