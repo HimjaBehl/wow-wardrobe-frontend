@@ -29,20 +29,20 @@ const uiCopy = {
   },
   upload: {
     detectBtn: "Detect clothing items",
-    detectedTitle: "✨ Detected Items",
-    addSelectedBtn: "➕ Add selected to wardrobe",
+    detectedTitle: " Detected Items",
+    addSelectedBtn: " Add selected to wardrobe",
   },
   stylist: {
     generateBtn: "Create outfits from my wardrobe",
     loadingText: "Tina is styling your look…",
     emptyText: "I couldn’t build a complete look yet. Try adding footwear or changing the occasion.",
-    loveBtn: "❤️ Love this look",
-    calendarBtn: "📅 Add to calendar",
-    swapBtn: "🔁 Swap…",
+    loveBtn: " Love this look",
+    calendarBtn: " Add to calendar",
+    swapBtn: " Swap…",
   },
   wardrobe: {
     emptyTitle: "Your wardrobe is empty.",
-    emptySubtitle: "Upload your first item to get started ✨",
+    emptySubtitle: "Upload your first item to get started ",
     selectBtn: "Select items",
     cancelBtn: "✕ Cancel",
   },
@@ -1453,7 +1453,7 @@ async function suggestOutfit(options = {}) {
                 className="section-header"
                 onClick={() => setUploadExpanded(!uploadExpanded)}
               >
-                <h3 className="section-subtitle">📸 Upload / Camera</h3>
+                <h3 className="section-subtitle"> Upload / Camera</h3>
                 <span className={`expand-icon ${uploadExpanded ? 'expanded' : ''}`}>▼</span>
               </div>
               
@@ -1473,7 +1473,7 @@ async function suggestOutfit(options = {}) {
                     </div>
                     
                     <div className="upload-zone">
-                      <div className="upload-icon">📸</div>
+                      <div className="upload-icon"></div>
                       <h4>Take Photo</h4>
                       <p>Use your camera</p>
                       <input 
