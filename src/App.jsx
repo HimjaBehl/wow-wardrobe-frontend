@@ -228,7 +228,6 @@ export default function App() {
     color: "",
     tags: "",
   });
-  const [stylistLoading, setStylistLoading] = useState(false);
   const [constraints, setConstraints] = useState("");
   const [outfit, setOutfit] = useState(null);
   const [user, setUser] = useState(null);
@@ -239,6 +238,7 @@ export default function App() {
   const [editedTags, setEditedTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("home");
+  const [stylistLoading, setStylistLoading] = useState(false);
   const [detectedItems, setDetectedItems] = useState([]);
   const [openEditors, setOpenEditors] = useState({}); // idx -> true/false
   
