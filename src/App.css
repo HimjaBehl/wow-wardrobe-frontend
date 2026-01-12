@@ -1314,3 +1314,58 @@ a{ color:var(--link); }
   background: rgba(255,255,255,0.06) !important;
   border: 1px solid rgba(255,255,255,0.10) !important;
 }
+
+/* === Upload accordions: make header text visible on dark UI === */
+.upload-section .section-header {
+  color: rgba(255,255,255,0.92);
+}
+
+.upload-section .section-subtitle,
+.upload-section .section-header h3,
+.upload-section .section-header * {
+  color: rgba(255,255,255,0.92) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.upload-section .expand-icon {
+  color: rgba(255,255,255,0.75) !important;
+}
+/* === Reduce heavy box look === */
+.upload-section {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 14px 0;
+}
+
+.upload-section .section-header {
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.upload-section .section-content {
+  padding: 14px 16px 16px;
+  background: transparent;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.upload-methods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 720px) {
+  .upload-methods { grid-template-columns: 1fr; }
+}
+
+.upload-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
