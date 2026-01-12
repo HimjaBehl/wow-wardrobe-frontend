@@ -5,11 +5,12 @@
 .section{
   max-width: 1100px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 8px 16px 24px;
 }
 
+
 .planner-calendar{
-  margin: 18px auto 22px;
+  margin: 10px auto 14px;
   max-width: 520px;
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.10);
@@ -99,10 +100,17 @@
   text-align: left;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(18,18,18,0.68);
   padding: 12px;
   min-height: 110px;
   transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.week-day-card{
+  background: linear-gradient(
+    180deg,
+    rgba(22,22,22,0.85),
+    rgba(16,16,16,0.85)
+  );
 }
 
 .week-day-card:hover{
@@ -112,8 +120,12 @@
 }
 
 .week-day-card.selected{
-  outline: 2px solid rgba(255,255,255,0.28);
-  background: rgba(18,18,18,0.86);
+  outline: 2px solid rgba(255,255,255,0.35);
+  background: linear-gradient(
+    180deg,
+    rgba(30,30,30,0.95),
+    rgba(20,20,20,0.95)
+  );
 }
 
 .day-header{
@@ -150,9 +162,11 @@
 
 .no-plan{
   margin: 0;
-  opacity: 0.65;
+  opacity: 0.85;
   font-size: 0.9rem;
+  font-style: italic;
 }
+
 
 /* ---------- Planned outfits list ---------- */
 .planned-outfits{
@@ -244,4 +258,17 @@
 .week-day-card,
 .planned-outfit-card{
   backdrop-filter: blur(10px);
+}
+.planner-calendar .btn-primary{
+  width: 100%;
+  border-radius: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 14px 18px;
+  background: linear-gradient(
+    180deg,
+    #ffffff,
+    #eaeaea
+  );
+  color: #000;
 }
