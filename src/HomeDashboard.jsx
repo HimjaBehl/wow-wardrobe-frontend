@@ -39,32 +39,28 @@ export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
         aria-label={firstLook ? "View today's plan" : "Create a look for today"}
       >
         <div className="today-card__header">
-          <div style={{ flex: 1 }}>
-            <h3 className="card-title card-title--visible">Today</h3>
+          <div className="today-left">
+            <div className="today-kicker">Today</div>
 
             {firstLook ? (
-              <p className="card-meta">{firstLook.style_note || "Planned look"}</p>
+              <p className="today-meta">{firstLook.style_note || "Planned look"}</p>
             ) : (
-        <p className="card-meta card-meta--empty">
-          No outfit saved yet
-        </p>
-
+              <p className="today-meta today-meta--empty">No outfit saved yet</p>
             )}
           </div>
 
           <button
+            type="button"
             className="today-cta"
             onClick={(e) => {
               e.stopPropagation();
               handleTodayClick();
             }}
           >
-            Create a look →
+            {firstLook ? "View plan →" : "Create a look →"}
           </button>
-
         </div>
 
-        {firstLook?.items?.length ? (
           <div className="today-items">
             {firstLook.items.slice(0, 6).map((it, i) => (
               <div key={`${it.id || it.name || "it"}_${i}`} className="today-item">

@@ -2517,3 +2517,49 @@ a{ color:var(--link); }
 .today-cta:hover {
   text-decoration: underline;
 }
+/* ===== Home: Today card visibility ===== */
+
+.premium-card--today .today-inner{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.premium-card--today .today-left{
+  flex:1;
+  min-width:0;
+}
+
+.premium-card--today .today-kicker{
+  color: rgba(255,255,255,0.92);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.premium-card--today .today-meta{
+  color: rgba(255,255,255,0.72);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.premium-card--today .today-meta--empty{
+  color: rgba(255,255,255,0.60);
+}
+
+.premium-card--today .today-cta{
+  margin-top: 10px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #c084fc;
+  font-weight: 650;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.premium-card--today .today-cta:hover{
+  text-decoration: underline;
+}
