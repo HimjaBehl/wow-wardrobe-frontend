@@ -1,6 +1,13 @@
 /* =========================
    WOW Planner – Premium UI
    ========================= */
+/* Force readable text inside planner */
+.planner-calendar,
+.week-overview,
+.week-day-card,
+.planned-outfit-card {
+  color: rgba(255,255,255,0.95);
+}
 
 .section{
   max-width: 1100px;
@@ -72,6 +79,20 @@
   color: #fff;
 }
 
+.react-calendar__month-view__days__day,
+.react-calendar__month-view__weekdays__weekday {
+  color: rgba(255,255,255,0.9);
+}
+
+.react-calendar__tile--now {
+  color: #fff;
+}
+
+.react-calendar__tile--active {
+  color: #000; /* active date sits on light pill */
+}
+
+
 /* ---------- Week Overview ---------- */
 .week-overview{
   margin-top: 18px;
@@ -138,15 +159,15 @@
 .day-name{
   margin: 0;
   font-size: 0.9rem;
-  opacity: 0.9;
-  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.85);
 }
 
 .day-date{
   margin: 0;
   font-size: 1.05rem;
-  opacity: 0.9;
+  color: rgba(255,255,255,0.95);
 }
+
 
 .day-content .outfit-title{
   margin: 0 0 6px 0;
@@ -162,11 +183,10 @@
 
 .no-plan{
   margin: 0;
-  opacity: 0.85;
   font-size: 0.9rem;
   font-style: italic;
+  color: rgba(255,255,255,0.7);
 }
-
 
 /* ---------- Planned outfits list ---------- */
 .planned-outfits{
@@ -263,6 +283,7 @@
   width: 100%;
   border-radius: 14px;
   font-weight: 700;
+  color: #000 !important;
   letter-spacing: 0.02em;
   padding: 14px 18px;
   background: linear-gradient(
