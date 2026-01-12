@@ -1652,38 +1652,41 @@ async function suggestOutfit(options = {}) {
 
                     {staples.length === 0 && <p>No staples found. Try again later.</p>}
                     {staples.map((staple, index) => (
-                      <div
-                        key={`${staple.id || staple.name || "staple"}-${index}`}
-                        className="quickadd-card"
+                  <div
+                    key={`${staple.id || staple.name || "staple"}-${index}`}
+                    className="quickadd-card"
+                    onClick={() =>
+                      handleQuickAdd(
+                        { color: staple.color || "Default", image_url: staple.image_url || "" },
+                        staple.name || "Staple",
+                        staple.category || "Staple"
+                      )
+                    }
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleQuickAdd(
+                      { color: staple.color || "Default", image_url: staple.image_url || "" },
+                      staple.name || "Staple",
+                      staple.category || "Staple"
+                    )}
+                  >
+                    <div className="quickadd-image-wrap">
+                      {staple.image_url ? (
+                        <img
+                          src={staple.image_url}
+                          alt={staple.name || "Staple"}
+                          loading="lazy"
+                          onError={(e) => (e.currentTarget.style.display = "none")}
+                        />
+                      ) : null}
+                      <div className="quickadd-overlay">＋ Add</div>
+                    </div>
 
-                        onClick={() =>
-                          handleQuickAdd(
-                            { color: staple.color || "Default", image_url: staple.image_url || "" },
-                            staple.name || "Staple",
-                            staple.category || "Staple"
-                          )
-                        }
-                        style={{ cursor: "pointer" }}
-                      >
-                        {staple.image_url && (
-                          <img
-                            className="card-image"
-                            src={staple.image_url}
-                            alt={`${staple.name || "Staple"} in ${staple.color || "Default"}`}
-                            onError={(e) => (e.target.style.display = "none")}
-                          />
-                        )}
+                    <div className="quickadd-name">
+                      {staple.name || "Staple"}
+                    </div>
+                  </div>
 
-                        <div className="card-content">
-                          <h3 className="card-title">{staple.name || "Staple"}</h3>
-                          <p className="card-subtitle">{staple.category || "Staple"}</p>
-                        </div>
-
-                        <div className="tags" style={{ padding: "0 var(--spacing-md) var(--spacing-sm)" }}>
-                          <span className="tag">{staple.color || "Default"}</span>
-                          <span className="tag">Staple</span>
-                        </div>
-                      </div>
                     ))}
                   </div>
                 </div>
