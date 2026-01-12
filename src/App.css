@@ -2262,3 +2262,228 @@ a{ color:var(--link); }
   );
   border-color: rgba(255, 95, 158, 0.35);
 }
+
+.premium-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+.action-tile {
+  opacity: 0.9;
+}
+
+.action-tile--accent {
+  opacity: 1;
+}
+/* =========================
+   W.O.W Wardrobe – Premium UI
+   Paste at bottom of App.css (or Wardrobe.css)
+   ========================= */
+
+:root{
+  --wow-card: rgba(18,18,18,0.72);
+  --wow-card-2: rgba(18,18,18,0.86);
+  --wow-stroke: rgba(255,255,255,0.10);
+  --wow-stroke-2: rgba(255,255,255,0.16);
+  --wow-text: rgba(255,255,255,0.92);
+  --wow-muted: rgba(255,255,255,0.70);
+  --wow-muted2: rgba(255,255,255,0.55);
+  --wow-shadow: 0 18px 44px rgba(0,0,0,0.45);
+}
+
+/* Page width + breathing */
+.wardrobe-wrap{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px 16px 120px; /* bottom padding so nav doesn’t overlap */
+}
+
+/* subtle helper text */
+.wardrobe-hint{
+  color: var(--wow-muted2);
+  font-size: 0.95rem;
+  margin: 6px 0 14px;
+}
+
+/* --- Control strip (Select Items + filters) --- */
+.wardrobe-controls{
+  display: grid;
+  grid-template-columns: 180px 1fr 240px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 900px){
+  .wardrobe-controls{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* premium button */
+.wow-btn{
+  border: 1px solid var(--wow-stroke);
+  background: rgba(18,18,18,0.60);
+  color: var(--wow-text);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.wow-btn:hover{
+  transform: translateY(-1px);
+  background: rgba(18,18,18,0.78);
+  border-color: var(--wow-stroke-2);
+}
+
+.wow-btn:active{
+  transform: translateY(0px);
+}
+
+/* dropdowns */
+.wow-select{
+  width: 100%;
+  border: 1px solid var(--wow-stroke);
+  background: rgba(18,18,18,0.60);
+  color: var(--wow-text);
+  border-radius: 14px;
+  padding: 12px 14px;
+  outline: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+.wow-select:focus{
+  border-color: rgba(255,255,255,0.24);
+  background: rgba(18,18,18,0.78);
+}
+
+/* --- Grid --- */
+.wardrobe-grid{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1100px){
+  .wardrobe-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 720px){
+  .wardrobe-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* --- Card --- */
+.wow-item{
+  position: relative;
+  border-radius: 18px;
+  border: 1px solid var(--wow-stroke);
+  background: rgba(18,18,18,0.50);
+  overflow: hidden;
+  box-shadow: var(--wow-shadow);
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.wow-item:hover{
+  transform: translateY(-2px);
+  border-color: var(--wow-stroke-2);
+  background: rgba(18,18,18,0.68);
+}
+
+/* image sizing */
+.wow-item img{
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+/* optional name overlay (looks premium + avoids long titles below) */
+.wow-item__meta{
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  padding: 10px 10px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.10);
+  backdrop-filter: blur(10px);
+}
+
+.wow-item__name{
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--wow-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wow-item__sub{
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--wow-muted);
+}
+
+/* --- Selection mode ring + check --- */
+.wow-item.selected{
+  border-color: rgba(214, 123, 255, 0.65);
+  box-shadow: 0 0 0 2px rgba(214, 123, 255, 0.25), var(--wow-shadow);
+}
+
+.wow-check{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.35);
+  display: grid;
+  place-items: center;
+  color: white;
+  font-weight: 900;
+  backdrop-filter: blur(10px);
+}
+
+.wow-item.selected .wow-check{
+  background: rgba(214, 123, 255, 0.35);
+  border-color: rgba(214, 123, 255, 0.55);
+}
+
+/* --- Sticky selection action bar (optional) --- */
+.wardrobe-actionbar{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 86px; /* above your nav */
+  width: min(920px, calc(100% - 24px));
+  border-radius: 18px;
+  border: 1px solid var(--wow-stroke);
+  background: rgba(18,18,18,0.72);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.wardrobe-actionbar .count{
+  color: var(--wow-muted);
+  font-weight: 700;
+}
+
+.wardrobe-actionbar .actions{
+  display: flex;
+  gap: 10px;
+}

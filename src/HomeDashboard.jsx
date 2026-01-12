@@ -19,7 +19,7 @@ export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
       <div className="home-hero">
         <div>
           <h1 className="home-title">Hi, {firstName}</h1>
-          <p className="home-sub">Ready in 10 seconds • Uses your wardrobe</p>
+          <p className="home-sub">Ready in seconds • Styled from your wardrobe</p>
         </div>
 
         <button className="home-cta" onClick={() => handleGo("stylist")}>
