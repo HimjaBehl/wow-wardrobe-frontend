@@ -2,7 +2,12 @@
 import React from "react";
 
 export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
-  const firstLook = todayPlan?.outfit || todayPlan?.look || null;
+  const firstLookRaw = todayPlan?.outfit || todayPlan?.look || null;
+  const firstLook =
+    Array.isArray(firstLookRaw?.items) && firstLookRaw.items.length > 0
+      ? firstLookRaw
+      : null;
+
   const firstName = user?.displayName ? user.displayName.split(" ")[0] : "there";
 
   const handleGo = (key) => {

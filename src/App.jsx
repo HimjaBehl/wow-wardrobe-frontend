@@ -428,18 +428,30 @@ export default function App() {
     try {
       const date = new Date().toISOString().split("T")[0];
       const res = await fetch(`${BASE_URL}/plan-outfit?uid=${uid}&date=${date}`);
+
       if (!res.ok) {
         setTodayPlan(null);
         return;
       }
+
       const data = await res.json();
-      // Accept `{ outfit: {...} }` or the outfit object directly.
-      setTodayPlan(data?.outfit ? data : { outfit: data });
+
+      // Backend might return:
+      // 1) { outfit: {...} }
+      // 2) { look: {...} }
+      // 3) outfit object directly
+      const outfitObj = data?.outfit || data?.look || data || null;
+
+      // ✅ Only treat it as a "real plan" if it has items
+      const hasItems = Array.isArray(outfitObj?.items) && outfitObj.items.length > 0;
+
+      setTodayPlan(hasItems ? { outfit: outfitObj } : null);
     } catch (e) {
-      console.error(" Error fetching today plan:", e);
+      console.error("Error fetching today plan:", e);
       setTodayPlan(null);
     }
   };
+
 
   const fetchItems = async (uid) => {
     try {

@@ -2563,3 +2563,29 @@ a{ color:var(--link); }
 .premium-card--today .today-cta:hover{
   text-decoration: underline;
 }
+.card-title,
+.card-title--visible{
+  color: #fff !important;
+  opacity: 1 !important;
+}
+
+.card-meta{
+  color: rgba(255,255,255,0.7);
+}
+
+.card-meta--empty{
+  color: rgba(255,255,255,0.55);
+}
+
+.today-cta{
+  background: transparent !important;
+  border: 0 !important;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: var(--accent-pink, #d96ad6) !important;
+  font-weight: 600;
+  cursor: pointer;
+}
+.today-cta:hover{
+  text-decoration: underline;
+}
