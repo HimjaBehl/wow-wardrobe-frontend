@@ -105,11 +105,12 @@ export default function WeeklyPlanner({ uid, onOpenPlan = () => {} }) {
         <button
           type="button"
           onClick={handleAddOutfit}
-          className="btn btn-primary"
+          className="btn-premium btn-premium--primary btn-premium--block btn-premium--lg"
           style={{ marginTop: "var(--spacing-lg)" }}
         >
-          ✨ Plan New Outfit
+          Plan new outfit
         </button>
+
       </div>
 
       <div className="week-overview">

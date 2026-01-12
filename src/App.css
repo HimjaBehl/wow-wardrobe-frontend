@@ -1869,3 +1869,220 @@ a{ color:var(--link); }
   border-radius: 14px;
   background: rgba(255,255,255,0.04);
   border:
+    /* =========================
+       Home – Premium polish
+       Add to bottom of CSS
+       ========================= */
+
+    .home-title{
+      letter-spacing: -0.02em;
+    }
+
+    .home-cta{
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-weight: 800;
+    }
+
+    /* Premium Today card */
+    .today-card{
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(18,18,18,0.74);
+      box-shadow: 0 18px 46px rgba(0,0,0,0.40);
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+
+    .today-card:hover{
+      transform: translateY(-1px);
+      background: rgba(18,18,18,0.84);
+      border-color: rgba(255,255,255,0.16);
+    }
+
+    .today-top{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .today-left{
+      min-width: 0;
+    }
+
+    .today-kicker{
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.68;
+      margin-bottom: 6px;
+    }
+
+    .today-title{
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+      color: rgba(255,255,255,0.94);
+    }
+
+    .today-meta{
+      font-size: 0.92rem;
+      opacity: 0.76;
+      line-height: 1.25rem;
+    }
+
+    .today-action{
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.92);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      white-space: nowrap;
+    }
+
+    .today-action:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.18);
+    }
+
+    /* mini strip inside Today */
+    .today-strip{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 12px;
+    }
+
+    .today-chip{
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.25);
+      flex: 0 0 auto;
+    }
+
+    .today-chip img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .today-strip-hint{
+      font-size: 0.9rem;
+      opacity: 0.7;
+      padding-left: 2px;
+    }
+
+    /* Quick actions row */
+    .home-actions{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 14px 0 0;
+    }
+
+    .action-btn{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(18,18,18,0.72);
+      color: rgba(255,255,255,0.92);
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+
+    .action-btn:hover{
+      transform: translateY(-1px);
+      background: rgba(18,18,18,0.84);
+      border-color: rgba(255,255,255,0.16);
+    }
+
+    .action-btn--primary{
+      border-color: rgba(255,105,180,0.35);
+      background: rgba(255,105,180,0.12);
+    }
+
+    .action-title{
+      font-weight: 900;
+      font-size: 0.98rem;
+    }
+
+    .action-meta{
+      opacity: 0.75;
+      font-size: 0.9rem;
+    }
+
+    /* Header alignment for Recently added */
+    .home-card-head{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    @media (max-width: 700px){
+      .home-actions{ grid-template-columns: 1fr; }
+      .today-top{ flex-direction: column; align-items: stretch; }
+      .today-action{ width: 100%; }
+    }
+  /* =========================
+     WOW – Premium CTA System
+     ========================= */
+
+  .btn-premium{
+    appearance: none;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.92);
+    border-radius: 999px;
+    padding: 12px 16px;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  }
+
+  .btn-premium:hover{
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.10);
+    border-color: rgba(255,255,255,0.20);
+  }
+
+  .btn-premium:active{
+    transform: translateY(0px);
+  }
+
+  .btn-premium--primary{
+    border-color: rgba(255,105,180,0.40);
+    background: rgba(255,105,180,0.16);
+  }
+
+  .btn-premium--primary:hover{
+    background: rgba(255,105,180,0.22);
+    border-color: rgba(255,105,180,0.55);
+  }
+
+  .btn-premium--block{
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-premium--lg{
+    padding: 14px 18px;
+    font-size: 1rem;
+  }
