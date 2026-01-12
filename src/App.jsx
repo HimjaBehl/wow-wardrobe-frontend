@@ -1913,7 +1913,8 @@ async function suggestOutfit(options = {}) {
                 </div>
 
                 {/* Multi-select Toolbar (kept) */}
-                <div className="flex gap-md" style={{ marginBottom: "16px" }}>
+                  <div className="wardrobeTopRow">
+                    <div className="flex gap-md">
                   <button
                     className={`btn ${isMultiSelectMode ? "btn-secondary" : "btn-primary"}`}
                     onClick={() => {
@@ -1951,6 +1952,9 @@ async function suggestOutfit(options = {}) {
                       ))}
                     </select>
                   </div>
+
+                </div>
+                    
 
                   <div className="form-group">
                     <select

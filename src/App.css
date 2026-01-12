@@ -892,3 +892,57 @@ a{ color:var(--link); }
   max-width: 1100px;
   margin: 0 auto;
 }
+/* Wardrobe page width + centering */
+.wardrobe-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 16px 110px;
+}
+/* Make wardrobe tiles smaller + denser */
+.wardrobe-grid {
+  gap: 12px !important;
+}
+
+@media (min-width: 900px) {
+  .wardrobe-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important; /* 4 columns on desktop */
+  }
+}
+/* Give images a softer app feel */
+.wardrobe-grid .card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+/* add a subtle background behind images */
+.wardrobe-grid .card-image {
+  background: rgba(255,255,255,0.04) !important;
+}
+/* Compact filter bar */
+.filter-bar {
+  margin: 10px 0 14px !important;
+  padding: 10px 12px !important;
+  border-radius: 14px !important;
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+}
+
+/* Make selects smaller */
+.filter-bar .form-select {
+  height: 40px !important;
+  border-radius: 12px !important;
+}
+/* Top row layout */
+.wardrobeTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wardrobeTopRow .filter-bar {
+  flex: 1;
+  min-width: 320px;
+}
