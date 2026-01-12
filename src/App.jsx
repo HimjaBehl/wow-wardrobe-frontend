@@ -1633,48 +1633,11 @@ async function suggestOutfit(options = {}) {
                 )}
 
               
-              {quickAddExpanded && (
-                <div className="section-content">
-                  <div className="grid">
-                    {staples.map((staple, index) => (
-                      <div 
-                        key={`${staple.id || staple.name || "staple"}-${index}`}
-                      className="card"
-                      onClick={() =>
-                        handleQuickAdd(
-                          { color: staple.color || "Default", image_url: staple.image_url || "" },
-                          staple.name || "Staple",
-                          staple.category || "Staple"
-                        )
-                      }
-                      style={{ cursor: "pointer" }}
-                    >
-                      {staple.image_url && (
-                        <img
-                          className="card-image"
-                          src={staple.image_url}
-                          alt={`${staple.name || "Staple"} in ${staple.color || "Default"}`}
-                          onError={(e) => (e.target.style.display = "none")}
-                        />
-                      )}
-
-                      <div className="card-content">
-                        <h3 className="card-title">{staple.name || "Staple"}</h3>
-                        <p className="card-subtitle">{staple.category || "Staple"}</p>
-                      </div>
-
-                      <div className="tags" style={{ padding: "0 var(--spacing-md) var(--spacing-sm)" }}>
-                        <span className="tag">{staple.color || "Default"}</span>
-                        <span className="tag">Staple</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                
 
             {/* 2. Quick Add Staples Section */}
-            <div className="upload-section">
+              <div className="upload-section quickadd-section">
+
               <div
                 className="section-header"
                 onClick={() => setQuickAddExpanded(!quickAddExpanded)}
@@ -1685,12 +1648,14 @@ async function suggestOutfit(options = {}) {
 
               {quickAddExpanded && (
                 <div className="section-content">
-                  <div className="grid">
+                  <div className="quickadd-grid">
+
                     {staples.length === 0 && <p>No staples found. Try again later.</p>}
                     {staples.map((staple, index) => (
                       <div
                         key={`${staple.id || staple.name || "staple"}-${index}`}
-                        className="card"
+                        className="quickadd-card"
+
                         onClick={() =>
                           handleQuickAdd(
                             { color: staple.color || "Default", image_url: staple.image_url || "" },
