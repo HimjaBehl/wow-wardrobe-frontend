@@ -946,3 +946,104 @@ a{ color:var(--link); }
   flex: 1;
   min-width: 320px;
 }
+/* ------------------------------
+   Wardrobe card controls – hover only
+-------------------------------- */
+
+/* Make sure the card is the positioning container */
+.wardrobe-grid .card {
+  position: relative !important;
+}
+
+/* Hide controls by default */
+.wardrobe-grid .card-controls {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  display: flex !important;
+  gap: 8px !important;
+  z-index: 30 !important;
+
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(6px) !important;
+  transition: opacity 0.18s ease, transform 0.18s ease !important;
+}
+
+/* Show on hover (desktop) */
+.wardrobe-grid .card:hover .card-controls {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateY(0) !important;
+}
+
+/* Make the icon buttons look clean */
+.wardrobe-grid .card-controls span {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: rgba(0, 0, 0, 0.55) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+/* ✅ Mobile: show controls when card is focused (tap gives focus) */
+.wardrobe-grid .card:focus-within .card-controls {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateY(0) !important;
+}
+/* -----------------------------------------
+   Hide Edit/Delete until hover (and tap)
+------------------------------------------ */
+
+/* Ensure wardrobe item is a positioning context */
+.wardrobe-grid .wardrobe-item {
+  position: relative;
+  outline: none; /* prevents ugly focus outline */
+}
+
+/* Hide actions by default */
+.wardrobe-grid .wardrobe-item .item-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+/* Desktop hover shows */
+.wardrobe-grid .wardrobe-item:hover .item-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Mobile tap shows (focus-within) */
+.wardrobe-grid .wardrobe-item:focus-within .item-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Optional: make icon buttons look more premium */
+.wardrobe-grid .wardrobe-item .icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}

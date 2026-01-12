@@ -1975,16 +1975,18 @@ async function suggestOutfit(options = {}) {
                 {/* ✅ Grid now uses wardrobe.css card system */}
                 <div className="wardrobe-grid">
                   {filteredItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="wardrobe-item"
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Open details for ${item.displayName || item.name}`}
-                      onClick={() => openModal(item)}
-                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openModal(item)}
-                      style={{ cursor: "pointer" }}
-                    >
+                <div
+                  key={item.id}
+                  className="wardrobe-item"
+                  role="button"
+                  tabIndex={0}
+                  onMouseDown={(e) => e.currentTarget.focus()}
+                  aria-label={`Open details for ${item.displayName || item.name}`}
+                  onClick={() => openModal(item)}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openModal(item)}
+                  style={{ cursor: "pointer" }}
+                >
+
                       {/* Multi-select checkbox */}
                       {isMultiSelectMode && (
                         <input
