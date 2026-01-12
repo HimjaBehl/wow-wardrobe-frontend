@@ -796,3 +796,99 @@ a{ color:var(--link); }
     width: 520px;
   }
 }
+
+/* ================================
+   WOW MVP: Wardrobe Grid Override
+   (forces wardrobe cards into tiles)
+=================================== */
+
+.wardrobe-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .wardrobe-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+/* force the "card" to stop being a wide row */
+.wardrobe-grid .card {
+  display: block !important;
+  width: 100% !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: none !important;
+}
+
+/* square images for fashion feel */
+.wardrobe-grid .card-image {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* tighten text */
+.wardrobe-grid .card-content {
+  padding: 12px 12px 14px !important;
+}
+
+.wardrobe-grid .card-title {
+  font-size: 14px !important;
+  font-weight: 750 !important;
+  margin: 0 !important;
+}
+
+.wardrobe-grid .card-subtitle {
+  margin: 6px 0 0 !important;
+  font-size: 12px !important;
+  opacity: 0.7 !important;
+}
+
+/* MVP: hide tags on wardrobe cards (cleaner) */
+.wardrobe-grid .tags {
+  display: none !important;
+}
+
+/* controls: top-right, hidden until hover */
+.wardrobe-grid .card-controls {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  display: flex !important;
+  gap: 8px !important;
+  opacity: 0 !important;
+  transform: translateY(-2px) !important;
+  transition: opacity 0.15s ease, transform 0.15s ease !important;
+  z-index: 20 !important;
+}
+
+.wardrobe-grid .card:hover .card-controls {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+/* make emoji buttons look like icons */
+.wardrobe-grid .card-controls span {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: rgba(0, 0, 0, 0.55) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+/* make wardrobe section wider + centered */
+.section:has(.wardrobe-grid) {
+  max-width: 1100px;
+  margin: 0 auto;
+}
