@@ -444,9 +444,9 @@ a{ color:var(--link); }
   border-color: rgba(255,255,255,0.16);
 }
 
-/* image */
-.wardrobe-grid .card-image { height: 180px; }
-           /* always neat crops */
+/* image - always neat crops */
+.wardrobe-grid .card-image {
+  height: 180px;
   background: #0f0f10;
   display: block;
 }
@@ -1868,24 +1868,25 @@ a{ color:var(--link); }
   min-width: 98px;
   border-radius: 14px;
   background: rgba(255,255,255,0.04);
-  border:
-    /* =========================
-       Home – Premium polish
-       Add to bottom of CSS
-       ========================= */
+  border: 1px solid rgba(255,255,255,0.08);
+}
 
-    .home-title{
-      letter-spacing: -0.02em;
-    }
+/* =========================
+   Home – Premium polish
+   ========================= */
 
-    .home-cta{
-      border-radius: 999px;
-      padding: 12px 16px;
-      font-weight: 800;
-    }
+.home-title{
+  letter-spacing: -0.02em;
+}
 
-    /* Premium Today card */
-    .today-card{
+.home-cta{
+  border-radius: 999px;
+  padding: 12px 16px;
+  font-weight: 800;
+}
+
+/* Premium Today card */
+.today-card{
       margin-top: 14px;
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,0.10);

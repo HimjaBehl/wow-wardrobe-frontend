@@ -2260,8 +2260,8 @@ async function suggestOutfit(options = {}) {
               </p>
             )
           )}
+                </div>
               </div>
-            </div>
             </section>
           )}
 

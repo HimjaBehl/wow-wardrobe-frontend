@@ -1,0 +1,116 @@
+/* ======================
+   HOME – PREMIUM DASHBOARD
+   ====================== */
+
+.home-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Hero */
+.home-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.home-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.home-sub {
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+/* Primary CTA */
+.home-cta {
+  background: linear-gradient(135deg, #ff5c8a, #ff7eb3);
+  color: #000;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Premium card */
+.premium-card {
+  background: rgba(255,255,255,0.96);
+  color: #000;
+  border-radius: 18px;
+  padding: 16px;
+  margin-top: 14px;
+  cursor: pointer;
+}
+
+.premium-card__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.card-meta {
+  margin-top: 6px;
+  opacity: 0.7;
+}
+
+.card-action {
+  background: none;
+  border: none;
+  color: #6b4eff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Tiles */
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.tile {
+  background: rgba(18,18,18,0.8);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Recent strip */
+.recent-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.recent-item {
+  min-width: 80px;
+  text-align: center;
+}
+
+.recent-item img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.recent-item p {
+  font-size: 12px;
+  margin-top: 6px;
+  opacity: 0.8;
+}
