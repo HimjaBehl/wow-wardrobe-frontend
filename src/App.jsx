@@ -2260,20 +2260,20 @@ async function suggestOutfit(options = {}) {
               </p>
             )
           )}
-                </div>
               </div>
+            </div>
             </section>
           )}
 
           {/* Weekly Planner */}
             {activeTab === "planner" && (
-              <section style={{ marginTop: "2rem" }}>
-                <h2>🗓️ Weekly Outfit Planner</h2>
+              <section className="planner-page">
                 <WeeklyPlanner
                   uid={user?.uid}
-                  onOpenPlan={openPlanViewer}   // 👈 pass viewer callback
+                  onOpenPlan={openPlanViewer}
                 />
               </section>
+
             )}
 
 

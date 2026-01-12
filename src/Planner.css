@@ -1,357 +1,230 @@
-/* ─── Weekly Planner — polished & theme-aware ────────────────────────── */
+/* =========================
+   WOW Planner – Premium UI
+   ========================= */
 
-/* ========== Calendar block ========== */
-.planner-calendar {
-  text-align: center;
-  margin-bottom: var(--spacing-2xl);
-  max-width: 480px;
-  margin-left: auto;
-  margin-right: auto;
-  background: var(--primary-white);
-  border: 1px solid var(--neutral-200);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  padding: var(--spacing-lg);
+.section{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
 }
 
-.calendar-container {
-  margin: var(--spacing-md) 0 0;
+.planner-calendar{
+  margin: 18px auto 22px;
+  max-width: 520px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(18,18,18,0.78);
+  box-shadow: 0 18px 46px rgba(0,0,0,0.38);
+  padding: 16px;
 }
 
-/* React Calendar Customization */
-.react-calendar {
+.calendar-container{
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.25);
+  padding: 10px;
+}
+
+/* ---------- React Calendar Theme (dark) ---------- */
+.react-calendar{
   width: 100%;
-  background: transparent;
   border: none;
-  font-family: var(--font-family);
-  line-height: 1.4;
-}
-
-.react-calendar__navigation {
-  margin-bottom: var(--spacing-sm);
-}
-
-.react-calendar__navigation button {
-  color: var(--neutral-700);
   background: transparent;
-  border: none;
-  padding: var(--spacing-sm);
-  font-weight: var(--font-weight-medium);
-  font-size: 1rem;
-  border-radius: var(--radius-md);
-  transition: var(--transition-normal);
+  color: rgba(255,255,255,0.92);
+  font-family: inherit;
 }
 
-.react-calendar__navigation button:hover,
-.react-calendar__navigation button:enabled:focus {
-  background: var(--neutral-100);
-  color: var(--accent-pink);
+.react-calendar__navigation button{
+  color: rgba(255,255,255,0.92);
+  min-width: 44px;
+  border-radius: 10px;
 }
 
-.react-calendar__month-view__weekdays {
-  text-align: center;
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus{
+  background: rgba(255,255,255,0.08);
+}
+
+.react-calendar__month-view__weekdays{
   text-transform: uppercase;
-  font-weight: var(--font-weight-medium);
   font-size: 0.75rem;
-  color: var(--neutral-500);
-  letter-spacing: 0.5px;
+  opacity: 0.7;
 }
 
-.react-calendar__month-view__weekdays__weekday {
-  padding: var(--spacing-xs);
+.react-calendar__tile{
+  border-radius: 12px;
+  padding: 10px 0;
 }
 
-.react-calendar__tile {
-  border-radius: var(--radius-md);
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus{
+  background: rgba(255,255,255,0.08);
 }
 
-.react-calendar__month-view__days__day {
-  color: var(--neutral-700);
-  background: transparent;
-  border: none;
-  padding: var(--spacing-sm);
-  margin: 2px;
-  border-radius: var(--radius-md);
-  transition: var(--transition-normal);
-  font-weight: var(--font-weight-normal);
+.react-calendar__tile--now{
+  background: rgba(255,255,255,0.10);
 }
 
-.react-calendar__month-view__days__day:hover {
-  background: var(--neutral-100);
-  color: var(--accent-pink);
+.react-calendar__tile--active{
+  background: rgba(255,255,255,0.18);
+  color: #fff;
 }
 
-.react-calendar__month-view__days__day--active {
-  background: var(--accent-pink) !important;
-  color: var(--primary-white) !important;
+/* ---------- Week Overview ---------- */
+.week-overview{
+  margin-top: 18px;
 }
 
-.react-calendar__month-view__days__day--neighboringMonth {
-  color: var(--neutral-400);
-}
-
-.react-calendar__tile--now {
-  background: var(--neutral-100);
-  color: var(--neutral-900);
-  font-weight: var(--font-weight-medium);
-}
-
-/* ========== Week overview ========== */
-.week-overview {
-  margin-bottom: var(--spacing-2xl);
-}
-
-/* 7 columns on desktop; collapses below */
-.week-grid {
+.week-grid{
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 10px;
+  width: 100%;
+  align-items: stretch;
 }
 
-/* Day cards are buttons in JSX – make them look like cards */
-.week-day-card {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid var(--neutral-200);
-  background: var(--primary-white);
-  border-radius: var(--radius-lg);
-  padding: 0;
-  min-height: 132px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  cursor: pointer;
-  transition: var(--transition-normal);
-  box-shadow: var(--shadow-sm);
+.week-day-card{
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(18,18,18,0.68);
+  padding: 12px;
+  min-height: 110px;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
 }
 
-.week-day-card:hover {
+.week-day-card:hover{
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--accent-pink);
+  background: rgba(18,18,18,0.80);
+  border-color: rgba(255,255,255,0.16);
 }
 
-.week-day-card:focus-visible {
-  outline: 2px solid var(--accent-pink);
-  outline-offset: 2px;
+.week-day-card.selected{
+  outline: 2px solid rgba(255,255,255,0.28);
+  background: rgba(18,18,18,0.86);
 }
 
-.week-day-card.selected {
-  border-color: var(--accent-pink);
-  box-shadow: var(--shadow-md);
-  background: linear-gradient(145deg, var(--primary-white), var(--neutral-50));
-}
-
-.day-header {
-  text-align: center;
-  padding: var(--spacing-sm);
-  border-bottom: 1px solid var(--neutral-200);
-  margin-bottom: var(--spacing-sm);
-}
-
-.day-name {
-  font-size: 0.78rem;
-  font-weight: var(--font-weight-semibold);
-  color: var(--neutral-600);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 var(--spacing-2xs) 0;
-}
-
-.day-date {
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--neutral-900);
-  margin: 0;
-}
-
-.day-content {
-  flex: 1;
-  padding: 0 var(--spacing-sm) var(--spacing-sm);
+.day-header{
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2xs);
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
-.outfit-title {
-  font-weight: var(--font-weight-semibold);
-  color: var(--neutral-800);
-  font-size: 0.92rem;
+.day-name{
   margin: 0;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  letter-spacing: 0.02em;
 }
 
-.outfit-note {
-  color: var(--neutral-600);
-  font-size: 0.8rem;
+.day-date{
   margin: 0;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 1.05rem;
+  opacity: 0.9;
 }
 
-.no-plan {
-  color: var(--neutral-400);
-  font-size: 0.8rem;
-  font-style: italic;
+.day-content .outfit-title{
+  margin: 0 0 6px 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.day-content .outfit-note{
+  margin: 0 0 10px 0;
+  opacity: 0.75;
+  font-size: 0.85rem;
+}
+
+.no-plan{
   margin: 0;
-  text-align: center;
+  opacity: 0.65;
+  font-size: 0.9rem;
 }
 
-/* Tag pills (used inside cards) */
-.tag {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: var(--font-weight-semibold);
-  background: var(--neutral-100);
-  color: var(--neutral-800);
-  width: fit-content;
+/* ---------- Planned outfits list ---------- */
+.planned-outfits{
+  margin-top: 22px;
 }
 
-.tag-accent {
-  background: var(--accent-pink);
-  color: var(--primary-white);
-}
-
-/* ========== Planned outfits list ========== */
-.planned-outfits {
-  margin-top: var(--spacing-2xl);
-}
-
-.planned-grid {
+.planned-grid{
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-lg);
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 12px;
 }
 
-.planned-outfit-card {
+.planned-outfit-card{
   display: flex;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  border: 1px solid var(--neutral-200);
-  background: var(--primary-white);
-  border-radius: var(--radius-xl);
-  transition: var(--transition-normal);
-  box-shadow: var(--shadow-sm);
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(18,18,18,0.68);
+  padding: 12px;
 }
 
-.planned-outfit-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--accent-pink);
-}
-
-.planned-date {
+.planned-date{
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 64px;
-  background: var(--accent-pink);
-  color: var(--primary-white);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-sm);
-  flex-shrink: 0;
 }
 
-.date-day {
-  font-size: 1.4rem;
-  font-weight: var(--font-weight-bold);
+.date-day{
+  font-size: 1.15rem;
+  font-weight: 800;
   line-height: 1;
 }
 
-.date-month {
-  font-size: 0.78rem;
-  font-weight: var(--font-weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.date-month{
+  font-size: 0.75rem;
+  opacity: 0.75;
+  margin-top: 4px;
 }
 
-.planned-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2xs);
+.planned-title{
+  margin: 0 0 6px 0;
+  font-size: 1rem;
+  font-weight: 800;
 }
 
-.planned-title {
-  font-size: 1.05rem;
-  font-weight: var(--font-weight-semibold);
-  color: var(--neutral-900);
+.planned-note{
   margin: 0;
-  line-height: 1.3;
-}
-
-.planned-note {
-  color: var(--neutral-600);
+  opacity: 0.75;
   font-size: 0.9rem;
-  margin: 0;
-  line-height: 1.4;
 }
 
-/* ========== Dark mode (automatic if app uses dark bg) ========== */
-@media (prefers-color-scheme: dark) {
-  .planner-calendar {
-    background: #151821;
-    border-color: #2a2f3c;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+/* ---------- Responsive ---------- */
+@media (max-width: 980px){
+  .week-grid{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
 
-  .react-calendar__navigation button { color: #e6e9f2; }
-  .react-calendar__navigation button:hover { background: #1f2432; color: #caa4ff; }
-  .react-calendar__month-view__weekdays { color: #a7aec0; }
-  .react-calendar__month-view__days__day { color: #e6e9f2; }
-  .react-calendar__month-view__days__day--neighboringMonth { color: #6e768a; }
-  .react-calendar__tile--now { background: #1f2432; color: #ffffff; }
-
-  .week-day-card {
-    background: #1b2030;
-    border-color: #2a2f3c;
-    box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+@media (max-width: 560px){
+  .planner-calendar{
+    max-width: 100%;
   }
-  .week-day-card.selected { background: linear-gradient(145deg, #1b2030, #151928); }
-
-  .day-name { color: #a7aec0; }
-  .day-date { color: #f5f6fa; }
-  .outfit-title { color: #f5f6fa; }
-  .outfit-note { color: #a7aec0; }
-  .no-plan { color: #7d86a0; }
-
-  .tag { background: #2a3145; color: #d8dff7; }
-
-  .planned-outfit-card {
-    background: #171b26;
-    border-color: #2a2f3c;
-    box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+  .week-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .planned-title { color: #f5f6fa; }
-  .planned-note { color: #a7aec0; }
+  .planned-grid{
+    grid-template-columns: 1fr;
+  }
 }
 
-/* ========== Responsive ========== */
-@media (max-width: 900px) {
-  .week-grid { grid-template-columns: repeat(5, 1fr); }
+.section-title{
+  text-align: center;
+  margin-top: 10px;
 }
-
-@media (max-width: 768px) {
-  .week-grid { grid-template-columns: repeat(3, 1fr); gap: var(--spacing-sm); }
-  .week-day-card { min-height: 110px; }
-  .day-name { font-size: 0.7rem; }
-  .day-date { font-size: 1.1rem; }
-  .planned-grid { grid-template-columns: 1fr; gap: var(--spacing-md); }
-  .planned-outfit-card { padding: var(--spacing-md); }
-  .planner-calendar { padding: var(--spacing-md); }
-}
-
-@media (max-width: 480px) {
-  .week-grid { grid-template-columns: repeat(2, 1fr); }
-  .planner-calendar { max-width: 100%; }
+.section-subtitle{
+  text-align: center;
+  opacity: 0.9;
 }
