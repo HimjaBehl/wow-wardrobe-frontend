@@ -2487,3 +2487,33 @@ a{ color:var(--link); }
   display: flex;
   gap: 10px;
 }
+
+/* ===== TODAY CARD VISIBILITY FIX ===== */
+
+.card-title--visible {
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.card-meta--empty {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.95rem;
+  margin-top: 6px;
+}
+
+.today-cta {
+  margin-top: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #c084fc; /* premium violet */
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.today-cta:hover {
+  text-decoration: underline;
+}

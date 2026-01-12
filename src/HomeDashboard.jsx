@@ -40,24 +40,28 @@ export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
       >
         <div className="today-card__header">
           <div style={{ flex: 1 }}>
-            <h3 className="card-title">Today</h3>
+            <h3 className="card-title card-title--visible">Today</h3>
+
             {firstLook ? (
               <p className="card-meta">{firstLook.style_note || "Planned look"}</p>
             ) : (
-              <p className="card-meta">No outfit saved yet. Tap to create a look.</p>
+        <p className="card-meta card-meta--empty">
+          No outfit saved yet
+        </p>
+
             )}
           </div>
 
           <button
-            type="button"
-            className="card-action"
+            className="today-cta"
             onClick={(e) => {
               e.stopPropagation();
               handleTodayClick();
             }}
           >
-            {firstLook ? "View plan →" : "Create a look →"}
+            Create a look →
           </button>
+
         </div>
 
         {firstLook?.items?.length ? (
