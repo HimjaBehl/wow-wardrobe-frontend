@@ -2266,15 +2266,14 @@ async function suggestOutfit(options = {}) {
           )}
 
           {/* Weekly Planner */}
-            {activeTab === "planner" && (
-              <section className="planner-page">
-                <WeeklyPlanner
-                  uid={user?.uid}
-                  onOpenPlan={openPlanViewer}
-                />
-              </section>
-
-            )}
+          {activeTab === "planner" && (
+            <section style={{ marginTop: "2rem" }}>
+              <WeeklyPlanner
+                uid={user?.uid}
+                onOpenPlan={openPlanViewer}
+              />
+            </section>
+          )}
 
 
             {/* Profile Section */}

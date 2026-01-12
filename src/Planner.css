@@ -78,11 +78,22 @@
 
 .week-grid{
   display: grid;
-  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  grid-template-columns: repeat(7, 1fr);
   gap: 10px;
   width: 100%;
   align-items: stretch;
+  overflow-x: auto;
+  padding-bottom: 6px;
 }
+
+.week-grid::-webkit-scrollbar{
+  height: 8px;
+}
+.week-grid::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.14);
+  border-radius: 999px;
+}
+
 
 .week-day-card{
   text-align: left;
@@ -227,4 +238,10 @@
 .section-subtitle{
   text-align: center;
   opacity: 0.9;
+}
+
+.planner-calendar,
+.week-day-card,
+.planned-outfit-card{
+  backdrop-filter: blur(10px);
 }
