@@ -1455,7 +1455,8 @@ async function suggestOutfit(options = {}) {
                 className="section-header"
                 onClick={() => setUploadExpanded(!uploadExpanded)}
               >
-                <h3 className="section-subtitle"> Upload / Camera</h3>
+                <h3 className="section-subtitle">Upload / Camera</h3>
+
                 <span className={`expand-icon ${uploadExpanded ? 'expanded' : ''}`}>▼</span>
               </div>
               

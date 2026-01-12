@@ -1247,3 +1247,70 @@ a{ color:var(--link); }
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.10);
 }
+/* Fix: accordion header titles invisible */
+.upload-section .section-header .section-subtitle{
+  color: rgba(255,255,255,0.92) !important;
+  opacity: 1 !important;
+  display: block !important;
+  visibility: visible !important;
+}
+/* Make upload accordions feel premium (no heavy outlines) */
+.upload-section{
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* Header becomes a clean row, not a big pill */
+.upload-section .section-header{
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 14px 4px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Thin divider line instead of rounded box */
+.upload-section .section-header{
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+/* Content area should NOT be another big rounded container */
+.upload-section .section-content{
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 16px 0 !important;
+}
+
+/* Cards should feel like tiles, not nested boxes */
+.upload-methods{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 720px){
+  .upload-methods{ grid-template-columns: 1fr; }
+}
+
+.upload-card{
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: none !important;
+  border-radius: 16px;
+  padding: 18px;
+  min-height: 140px;
+}
+
+.upload-card:hover{
+  border-color: rgba(255,255,255,0.16) !important;
+  background: rgba(255,255,255,0.06) !important;
+  transform: none !important;
+}
+
+.upload-card__cta{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+}
