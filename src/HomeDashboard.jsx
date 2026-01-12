@@ -2,8 +2,6 @@
 import React from "react";
 
 export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
-  const recent = items.slice(0, 10);
-
   const firstLook = todayPlan?.outfit || todayPlan?.look || null;
   const firstName = user?.displayName ? user.displayName.split(" ")[0] : "there";
 
@@ -12,32 +10,33 @@ export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
   };
 
   const handleTodayClick = () => {
+    // If there's a saved plan for today, go to planner to view it.
+    // Otherwise, send user to stylist to create one.
     handleGo(firstLook ? "planner" : "stylist");
   };
-
-  const lookItems = Array.isArray(firstLook?.items) ? firstLook.items : [];
 
   return (
     <section className="home-wrap">
       {/* Hero */}
       <div className="home-hero">
-        <div>
+        <div className="home-hero__left">
           <h1 className="home-title">Hi, {firstName}</h1>
           <p className="home-sub">Ready in 10 seconds • Uses your wardrobe</p>
         </div>
 
         <button
-          className="btn-premium btn-premium--primary btn-premium--lg"
+          type="button"
+          className="home-cta"
           onClick={() => handleGo("stylist")}
+          aria-label="Style me for today"
         >
           Style me for today
         </button>
-
       </div>
 
-      {/* Today (premium card) */}
+      {/* Today (Premium card) */}
       <div
-        className="today-card"
+        className="premium-card today-card"
         role="button"
         tabIndex={0}
         onClick={handleTodayClick}
@@ -46,97 +45,74 @@ export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
         }}
         aria-label={firstLook ? "View today's plan" : "Create a look for today"}
       >
-        <div className="today-top">
-          <div className="today-left">
-            <div className="today-kicker">Today</div>
-
+        <div className="premium-card__inner today-card__header">
+          <div className="today-card__copy">
+            <h3 className="card-title">Today</h3>
             {firstLook ? (
-              <>
-                <div className="today-title">
-                  {firstLook.title || "Your planned look"}
-                </div>
-                <div className="today-meta">
-                  {firstLook.style_note || "Tap to view your plan"}
-                </div>
-              </>
+              <p className="card-meta">{firstLook.style_note || "Planned look"}</p>
             ) : (
-              <>
-                <div className="today-title">No outfit saved yet</div>
-                <div className="today-meta">Tap to create a look for today</div>
-              </>
+              <p className="card-meta">No outfit saved yet. Tap to create a look.</p>
             )}
           </div>
 
           <button
             type="button"
-            className="today-action"
+            className="card-action"
             onClick={(e) => {
               e.stopPropagation();
               handleTodayClick();
             }}
+            aria-label={firstLook ? "View plan" : "Create a look"}
           >
-            {firstLook ? "View plan" : "Create look"}
+            {firstLook ? "View plan →" : "Create a look →"}
           </button>
         </div>
 
-        {/* mini item strip (only when look has items) */}
-        {lookItems.length > 0 && (
-          <div className="today-strip">
-            {lookItems.slice(0, 5).map((it, i) => (
-              <div key={`${it.id || it.name || "it"}_${i}`} className="today-chip">
+        {/* If look exists: show up to 4 items */}
+        {firstLook?.items?.length ? (
+          <div className="today-items">
+            {firstLook.items.slice(0, 4).map((it, i) => (
+              <div key={`${it.id || it.name || "it"}_${i}`} className="today-item">
                 <img
                   src={it.image_url || it.image}
-                  alt={it.name || it.category || `Item ${i + 1}`}
+                  alt={it.name || `Item ${i + 1}`}
+                  loading="lazy"
                 />
+                <p className="caption">{it.name || it.category || "Item"}</p>
               </div>
             ))}
-            <div className="today-strip-hint">
-              {lookItems.length > 5 ? `+${lookItems.length - 5}` : " "}
-            </div>
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* Quick actions (premium row) */}
+      {/* Quick actions (two tiles) */}
       <div className="home-actions">
-        <button className="action-btn" onClick={() => handleGo("wardrobe")}>
-          <span className="action-title">Wardrobe</span>
-          <span className="action-meta">{items.length} items</span>
+        <button
+          type="button"
+          className="action-tile"
+          onClick={() => handleGo("wardrobe")}
+          aria-label="Open wardrobe"
+        >
+          <div className="action-tile__left">
+            <div className="action-title">Wardrobe</div>
+            <div className="action-sub">{items.length} items</div>
+          </div>
+          <div className="action-tile__right">Open</div>
         </button>
 
-        <button className="action-btn action-btn--primary" onClick={() => handleGo("upload")}>
-          <span className="action-title">Add item</span>
-          <span className="action-meta">Upload photo</span>
+        <button
+          type="button"
+          className="action-tile action-tile--accent"
+          onClick={() => handleGo("upload")}
+          aria-label="Add an item"
+        >
+          <div className="action-tile__left">
+            <div className="action-title">Add item</div>
+            <div className="action-sub">Upload photo</div>
+          </div>
+          <div className="action-tile__right">Add</div>
         </button>
       </div>
-
-      {/* Recently added */}
-      {recent.length > 0 && (
-        <div className="premium-card" style={{ marginTop: 12 }}>
-          <div className="premium-card__inner home-card-head">
-            <h3 className="card-title">Recently added</h3>
-            <button type="button" className="card-action" onClick={() => handleGo("wardrobe")}>
-              See all
-            </button>
-          </div>
-
-          <div className="recent-strip">
-            {recent.map((it) => (
-              <div
-                key={it.id || it.image_url || it.name}
-                className="recent-item"
-                role="button"
-                tabIndex={0}
-                onClick={() => handleGo("wardrobe")}
-                aria-label={`Open wardrobe item ${it.displayName || it.name || "Item"}`}
-              >
-                <img src={it.image_url} alt={it.displayName || it.name || "Item"} />
-                <p>{it.displayName || it.name || "Item"}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 }
