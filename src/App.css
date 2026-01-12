@@ -1047,3 +1047,73 @@ a{ color:var(--link); }
   justify-content: center;
   cursor: pointer;
 }
+
+/* ===== Upload cards (premium) ===== */
+.upload-methods{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+@media (max-width: 720px){
+  .upload-methods{ grid-template-columns: 1fr; }
+}
+
+.upload-input{
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-card{
+  position: relative;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  padding: 18px 16px;
+  cursor: pointer;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  text-align: left;
+}
+
+.upload-card:hover{
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
+}
+
+.upload-card__icon{
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.upload-card__title{
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.92);
+  margin-bottom: 4px;
+}
+
+.upload-card__sub{
+  font-size: 13px;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 12px;
+}
+
+.upload-card__cta{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.88);
+  font-size: 13px;
+  font-weight: 600;
+  width: fit-content;
+  background: rgba(0,0,0,0.18);
+}

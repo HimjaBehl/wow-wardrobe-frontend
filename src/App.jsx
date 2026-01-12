@@ -1462,31 +1462,36 @@ async function suggestOutfit(options = {}) {
               {uploadExpanded && (
                 <div className="section-content">
                   <div className="upload-methods">
-                    <div className="upload-zone">
-                      <div className="upload-icon">📷</div>
-                      <h4>Choose Photo</h4>
-                      <p>Upload from gallery</p>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={(e) => setFile(e.target.files[0])}
-                        className="file-input"
+                    {/* Gallery */}
+                    <label className="upload-card">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        className="upload-input"
                       />
-                    </div>
-                    
-                    <div className="upload-zone">
-                      <div className="upload-icon"></div>
-                      <h4>Take Photo</h4>
-                      <p>Use your camera</p>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
+                      <div className="upload-card__icon">📷</div>
+                      <div className="upload-card__title">Choose photo</div>
+                      <div className="upload-card__sub">Upload from gallery</div>
+                      <div className="upload-card__cta">Browse files</div>
+                    </label>
+
+                    {/* Camera */}
+                    <label className="upload-card">
+                      <input
+                        type="file"
+                        accept="image/*"
                         capture="environment"
-                        onChange={(e) => setFile(e.target.files[0])}
-                        className="file-input"
+                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        className="upload-input"
                       />
-                    </div>
+                      <div className="upload-card__icon">📸</div>
+                      <div className="upload-card__title">Take photo</div>
+                      <div className="upload-card__sub">Use your camera</div>
+                      <div className="upload-card__cta">Open camera</div>
+                    </label>
                   </div>
+
                   
                   {file && (
                     <div className="upload-preview">
