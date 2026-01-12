@@ -1651,3 +1651,71 @@ a{ color:var(--link); }
   height: 36px;
   cursor: pointer;
 }
+/* === STYLE TAB (AI Stylist) polish === */
+.stylist-shell{
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.stylist-card{
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(20,20,20,0.78);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+  padding: 18px;
+}
+
+.stylist-card__head{
+  margin-bottom: 12px;
+}
+
+.stylist-title{
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.stylist-subtitle{
+  margin: 6px 0 0;
+  opacity: 0.75;
+  font-size: 0.95rem;
+}
+
+/* make the controls grid tighter */
+.style-controls{
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* DARK inputs */
+.style-controls .form-input,
+.style-controls .form-select{
+  background: #0f0f0f !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  height: 46px;
+  box-shadow: none !important;
+}
+
+.style-controls .form-label{
+  font-size: 0.85rem;
+  opacity: 0.75;
+  margin-bottom: 6px;
+}
+
+/* CTA footer */
+.stylist-card__footer{
+  margin-top: 14px;
+}
+
+.stylist-generate{
+  width: 100% !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  font-weight: 700;
+}

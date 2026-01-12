@@ -2023,8 +2023,16 @@ async function suggestOutfit(options = {}) {
                 Let our AI stylist create personalized looks from your wardrobe 
               </p>
 
-              {/* Modern Style Controls */}
-              <div className="style-controls">
+              <div className="stylist-shell">
+                <div className="stylist-card">
+                  <div className="stylist-card__head">
+                    <h2 className="stylist-title">AI Style Assistant</h2>
+                    <p className="stylist-subtitle">Create personalized looks from your wardrobe</p>
+                  </div>
+
+                  {/* Controls */}
+                  <div className="style-controls">
+
                 <div className="form-group">
                   <label className="form-label">Occasion</label>
                   <select
@@ -2078,23 +2086,24 @@ async function suggestOutfit(options = {}) {
                 </div>
               </div>
 
-              <button
-                className="btn btn-primary"
-                onClick={async () => {
-                  console.log(" Generate clicked (Tina Agent)");
-                  await suggestOutfitAgent({
-                    uid: user.uid,
-                    city,
-                    wardrobe: items,
-                    occasion,
-                    vibe,
-                  });
-                }}
-                style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
-              >
-                {uiCopy.stylist.generateBtn}
+                  <div className="stylist-card__footer">
+                    <button
+                      className="btn btn-primary stylist-generate"
+                      onClick={async () => {
+                        console.log(" Generate clicked (Tina Agent)");
+                        await suggestOutfitAgent({
+                          uid: user.uid,
+                          city,
+                          wardrobe: items,
+                          occasion,
+                          vibe,
+                        });
+                      }}
+                    >
+                      {uiCopy.stylist.generateBtn}
+                    </button>
+                  </div>
 
-              </button>
 
               {stylistLoading && <LoadingState text={uiCopy.stylist.loadingText} />}
 
@@ -2248,10 +2257,11 @@ async function suggestOutfit(options = {}) {
             outfit !== null && (
               <p style={{ marginTop: "1rem", color: "#888" }}>
                 {uiCopy.stylist.emptyText}
-
               </p>
             )
           )}
+                </div>
+              </div>
             </section>
           )}
 
