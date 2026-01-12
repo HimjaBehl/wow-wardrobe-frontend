@@ -1705,50 +1705,52 @@ async function suggestOutfit(options = {}) {
               
               {searchExpanded && (
                 <div className="section-content">
-                  <div className="search-bar">
+                  <div className="search-pill">
                     <input
                       type="text"
-                      className="form-input"
-                      placeholder="Search for product..."
+                      placeholder="Search products (e.g. white sneakers)"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleProductSearch()}
+                      onKeyDown={(e) => e.key === "Enter" && handleProductSearch()}
                     />
-                    <button 
-                      className="btn btn-primary"
-                      onClick={handleProductSearch}
-                      style={{ marginTop: "var(--spacing-md)" }}
-                    >
-                      🔍 Search Products
-                    </button>
+                    <button onClick={handleProductSearch}>🔍</button>
                   </div>
+
                   
                   {searchResults.length > 0 && (
                     <div className="search-results">
                       <h4 className="results-title">Found {searchResults.length} products</h4>
-                      <div className="results-grid">
+                      <div className="quickadd-grid">
                         {searchResults.map((product, i) => (
-                          <div key={i} className="product-card card" onClick={() => handleProductSelect({
-                            image_url: product.image_url || product.url,
-                            name: product.name || product.title || "Unnamed",
-                            category: "Search",
-                            color: "Unknown",
-                            tags: []
-                          })}>
-                            <img 
-                              src={product.image_url || product.thumbnail} 
-                              alt={product.name} 
-                              className="product-image" 
-                            />
-                            <div className="product-info">
-                              <p className="product-name">{product.name || "Unnamed"}</p>
-                              <p className="product-price">{product.price}</p>
+                          <div
+                            key={i}
+                            className="quickadd-card"
+                            onClick={() =>
+                              handleProductSelect({
+                                image_url: product.image_url || product.thumbnail || product.url,
+                                name: product.name || product.title || "Unnamed",
+                                category: "Search",
+                                color: product.color || "Unknown",
+                                tags: []
+                              })
+                            }
+                          >
+                            <div className="quickadd-image-wrap">
+                              <img
+                                src={product.image_url || product.thumbnail}
+                                alt={product.name || "Product"}
+                                loading="lazy"
+                              />
+                              <div className="quickadd-overlay">＋ Add</div>
+                            </div>
+
+                            <div className="quickadd-name">
+                              {product.name || product.title || "Unnamed"}
                             </div>
                           </div>
                         ))}
-
-
                       </div>
+
                     </div>
                   )}
                 </div>

@@ -1619,3 +1619,35 @@ a{ color:var(--link); }
 .upload-section.quickadd-section .quickadd-grid {
   width: 100%;
 }
+/* === SEARCH & LINK CLEAN UI === */
+
+.search-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0f0f0f;
+  border-radius: 999px;
+  padding: 10px 14px;
+}
+
+.search-pill input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 0.95rem;
+}
+
+.search-pill input::placeholder {
+  color: #888;
+}
+
+.search-pill button {
+  background: #1f1f1f;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
