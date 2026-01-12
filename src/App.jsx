@@ -1462,7 +1462,6 @@ async function suggestOutfit(options = {}) {
               {uploadExpanded && (
                 <div className="section-content">
                   <div className="upload-methods">
-                    {/* Gallery */}
                     <label className="upload-card">
                       <input
                         type="file"
@@ -1470,13 +1469,13 @@ async function suggestOutfit(options = {}) {
                         onChange={(e) => setFile(e.target.files?.[0] || null)}
                         className="upload-input"
                       />
-                      <div className="upload-card__icon">📷</div>
-                      <div className="upload-card__title">Choose photo</div>
-                      <div className="upload-card__sub">Upload from gallery</div>
-                      <div className="upload-card__cta">Browse files</div>
+                      <div className="upload-card__top">
+                        <div className="upload-card__title">Browse</div>
+                        <div className="upload-card__sub">Choose from your device</div>
+                      </div>
+                      <div className="upload-card__cta">Select photo</div>
                     </label>
 
-                    {/* Camera */}
                     <label className="upload-card">
                       <input
                         type="file"
@@ -1485,12 +1484,14 @@ async function suggestOutfit(options = {}) {
                         onChange={(e) => setFile(e.target.files?.[0] || null)}
                         className="upload-input"
                       />
-                      <div className="upload-card__icon">📸</div>
-                      <div className="upload-card__title">Take photo</div>
-                      <div className="upload-card__sub">Use your camera</div>
+                      <div className="upload-card__top">
+                        <div className="upload-card__title">Camera</div>
+                        <div className="upload-card__sub">Take a new photo</div>
+                      </div>
                       <div className="upload-card__cta">Open camera</div>
                     </label>
                   </div>
+
 
                   
                   {file && (
@@ -1676,7 +1677,7 @@ async function suggestOutfit(options = {}) {
                 className="section-header"
                 onClick={() => setQuickAddExpanded(!quickAddExpanded)}
               >
-                <h3 className="section-subtitle">🧺 Quick Add Staples</h3>
+                <h3 className="section-subtitle"> Quick Add Staples</h3>
                 <span className={`expand-icon ${quickAddExpanded ? 'expanded' : ''}`}>▼</span>
               </div>
 
@@ -1728,7 +1729,7 @@ async function suggestOutfit(options = {}) {
                 className="section-header"
                 onClick={() => setSearchExpanded(!searchExpanded)}
               >
-                <h3 className="section-subtitle">🔍 Search & Link</h3>
+                <h3 className="section-subtitle"> Search & Link</h3>
                 <span className={`expand-icon ${searchExpanded ? 'expanded' : ''}`}>▼</span>
               </div>
               
