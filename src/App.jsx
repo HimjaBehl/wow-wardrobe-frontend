@@ -1444,8 +1444,9 @@ async function suggestOutfit(options = {}) {
             )}
 
 
-          {activeTab === "upload" && (
-          <section className="section">
+            {activeTab === "upload" && (
+            <section className="section upload-page">
+
             <h2 className="section-title">Add to Wardrobe</h2>
             <p className="section-description">Upload photos, add staples, or search for items</p>
             
