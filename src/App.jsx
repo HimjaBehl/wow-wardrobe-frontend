@@ -2,6 +2,7 @@ import { doc, getDoc, deleteDoc, addDoc, collection, serverTimestamp, writeBatch
 import Profile from "./Profile";
 import { useState, useEffect, useMemo } from "react";
 import "./App.css";
+import "./Wardrobe.css";
 import Onboarding from "./Onboarding";
 import { storage, auth, provider, signInWithPopup, signOut, db } from "./firebase";
 import { query, where } from "firebase/firestore";
@@ -435,7 +436,7 @@ export default function App() {
       // Accept `{ outfit: {...} }` or the outfit object directly.
       setTodayPlan(data?.outfit ? data : { outfit: data });
     } catch (e) {
-      console.error("❌ Error fetching today plan:", e);
+      console.error(" Error fetching today plan:", e);
       setTodayPlan(null);
     }
   };
@@ -482,7 +483,7 @@ export default function App() {
 
       setItems(withUrls);
     } catch (e) {
-      console.error("❌ Error fetching wardrobe:", e.message);
+      console.error(" Error fetching wardrobe:", e.message);
       setItems([]);
     }
   };
@@ -620,11 +621,11 @@ export default function App() {
 
       
 
-      alert("✅ Selected items added to wardrobe!");
+      alert(" Selected items added to wardrobe!");
       setDetectedItems([]);
       fetchItems(user.uid); // refresh wardrobe
     } catch (err) {
-      console.error("❌ Error saving selected items:", err);
+      console.error(" Error saving selected items:", err);
       alert("Something went wrong while saving wardrobe items.");
     }
   };
@@ -701,7 +702,7 @@ export default function App() {
       fetchItems(user.uid); // refresh wardrobe
     } catch (err) {
       console.error("Quick add failed:", err);
-      showToast(`❌ Failed to add ${stapleName}`);
+      showToast(` Failed to add ${stapleName}`);
     }
   };
 
@@ -753,7 +754,7 @@ export default function App() {
           fetchItems(user.uid); // refresh wardrobe
         } catch (err) {
           console.error("Product save failed:", err);
-          showToast("❌ Failed to save product");
+          showToast(" Failed to save product");
         }
       };
 
@@ -1409,7 +1410,7 @@ async function suggestOutfit(options = {}) {
 
 
       {/* Main Content */}
-        <main className="app-main wow-has-bottom-nav">
+      <main className="app-main wow-has-bottom-nav">
 
         {!user ? (
           <div className="section text-center">
@@ -1904,157 +1905,129 @@ async function suggestOutfit(options = {}) {
           )}
 
           {/* Modern Wardrobe Section */}
-          {activeTab === "wardrobe" && (
-          <section className="section">
-            <h2 className="section-title">Your Wardrobe</h2>
+            {activeTab === "wardrobe" && (
+              <section className="wardrobe-page">
+                <div className="wardrobe-header">
+                  <h1>Your Wardrobe</h1>
+                  <p className="subtitle">Tap an item to view details. Add more pieces to unlock better looks.</p>
+                </div>
 
-            {/* Modern Multi-select Toolbar */}
-            <div className="flex gap-md" style={{ marginBottom: "var(--spacing-lg)" }}>
-              <button
-                className={`btn ${isMultiSelectMode ? 'btn-secondary' : 'btn-primary'}`}
-                onClick={() => {
-                  setIsMultiSelectMode(!isMultiSelectMode);
-                  if (isMultiSelectMode) setSelectedItems([]);     // leaving the mode resets
-                }}
-              >
-                {isMultiSelectMode ? "✕ Cancel" : "Select Items"}
-              </button>
+                {/* Multi-select Toolbar (kept) */}
+                <div className="flex gap-md" style={{ marginBottom: "16px" }}>
+                  <button
+                    className={`btn ${isMultiSelectMode ? "btn-secondary" : "btn-primary"}`}
+                    onClick={() => {
+                      setIsMultiSelectMode(!isMultiSelectMode);
+                      if (isMultiSelectMode) setSelectedItems([]);
+                    }}
+                  >
+                    {isMultiSelectMode ? "✕ Cancel" : "Select Items"}
+                  </button>
 
-              {isMultiSelectMode && selectedItems.length > 0 && (
-                <button
-                  className="btn"
-                  onClick={handleDeleteSelected}
-                  style={{
-                    background: "var(--accent-pink)",
-                    color: "var(--primary-white)"
-                  }}
-                >
-                  🗑️ Delete {selectedItems.length}
-                </button>
-              )}
-            </div>
-            {/* ───────────────────────────────────────────── */}
-
-
-            {/* Modern Filters */}
-            <div className="filter-bar">
-              <div className="form-group">
-                <select 
-                  className="form-select" 
-                  value={filterCategory} 
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                >
-                  <option value="">All Categories</option>
-                  {uniqueCategories.map((cat) => (
-                    <option key={cat} value={cat}>{formatLabel(cat)}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <select 
-                  className="form-select" 
-                  value={filterColor} 
-                  onChange={(e) => setFilterColor(e.target.value)}
-                >
-                  <option value="">All Colors</option>
-                  {uniqueColors.map((col) => (
-                    <option key={col} value={col}>{formatLabel(col)}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Modern Wardrobe Grid */}
-            <div className="wardrobe-grid">
-              {filteredItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="card"
-                  onClick={() => openModal(item)} 
-                  aria-label={`Open details for ${item.name}`}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openModal(item)}
-                  style={{ cursor: "pointer", position: "relative" }}
-                >
-                  {isMultiSelectMode && (
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.includes(item.id)}
-                      onChange={(e) => {
-                        const ids = e.target.checked
-                          ? [...selectedItems, item.id]
-                          : selectedItems.filter((sid) => sid !== item.id);
-                        setSelectedItems(ids);
-                      }}
-                      style={{
-                        position: "absolute",
-                        top: 8,
-                        left: 8,
-                        width: 18,
-                        height: 18,
-                        cursor: "pointer",
-                        zIndex: 12
-                      }}
-                      onClick={(e) => e.stopPropagation()}  // don’t open modal
-                    />
+                  {isMultiSelectMode && selectedItems.length > 0 && (
+                    <button
+                      className="btn"
+                      onClick={handleDeleteSelected}
+                      style={{ background: "var(--accent-pink)", color: "var(--primary-white)" }}
+                    >
+                      🗑️ Delete {selectedItems.length}
+                    </button>
                   )}
+                </div>
 
-                  {item.image_url && (
-                     <img
-                       className="card-image"
-                       src={item.image_url}
-                      alt={item.name}
-                     />
-                   )}
-                  <div className="card-content">
-                    <h3 className="card-title">{item.displayName}</h3>
-
-                    <p className="card-subtitle">
-                      {formatLabel(item.category)}
-                    </p>
-                  </div>
-                  {item.tags && item.tags.length > 0 && (
-                    <div className="tags" style={{ padding: "0 var(--spacing-md) var(--spacing-sm)" }}>
-                      {[...new Set(item.tags || [])].slice(0, 3).map((tag, i) => (
-                        <span key={i} className="tag">
-                          {formatLabel(tag)}
-                        </span>
+                {/* Filters (kept as-is for now) */}
+                <div className="filter-bar">
+                  <div className="form-group">
+                    <select
+                      className="form-select"
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value)}
+                    >
+                      <option value="">All Categories</option>
+                      {uniqueCategories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {formatLabel(cat)}
+                        </option>
                       ))}
-                      {item.tags.length > 3 && (
-                        <span className="tag tag-accent">+{item.tags.length - 3}</span>
-                      )}
-                    </div>
-                  )}
-                  {/* ————————— CARD CONTROLS ————————— */}
-                  <div className="card-controls">
+                    </select>
+                  </div>
 
-
-                    {/* existing edit / delete */}
-                    <span
-                      aria-label="Edit item"
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
-                      onKeyDown={(e) => (["Enter"," "].includes(e.key)) && openEditModal(item)}
+                  <div className="form-group">
+                    <select
+                      className="form-select"
+                      value={filterColor}
+                      onChange={(e) => setFilterColor(e.target.value)}
                     >
-                      ✏️
-                    </span>
-                    <span
-                      aria-label="Delete item"
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                      onKeyDown={(e) => (["Enter"," "].includes(e.key)) && handleDelete(item.id)}
-                    >
-                      🗑️
-                    </span>
+                      <option value="">All Colors</option>
+                      {uniqueColors.map((col) => (
+                        <option key={col} value={col}>
+                          {formatLabel(col)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-          )}
+
+                {/* ✅ Grid now uses wardrobe.css card system */}
+                <div className="wardrobe-grid">
+                  {filteredItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="wardrobe-item"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Open details for ${item.displayName || item.name}`}
+                      onClick={() => openModal(item)}
+                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openModal(item)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {/* Multi-select checkbox */}
+                      {isMultiSelectMode && (
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.includes(item.id)}
+                          onChange={(e) => {
+                            const ids = e.target.checked
+                              ? [...selectedItems, item.id]
+                              : selectedItems.filter((sid) => sid !== item.id);
+                            setSelectedItems(ids);
+                          }}
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            left: 10,
+                            width: 18,
+                            height: 18,
+                            cursor: "pointer",
+                            zIndex: 12,
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      )}
+
+                      {/* Image */}
+                      {item.image_url && (
+                        <img className="item-img" src={item.image_url} alt={item.displayName || item.name || "Item"} />
+                      )}
+
+                      {/* Hover actions (edit/delete) */}
+                      <div className="item-actions" onClick={(e) => e.stopPropagation()}>
+                        <button className="icon-btn" aria-label="Edit item" onClick={() => openEditModal(item)}>
+                          ✏️
+                        </button>
+                        <button className="icon-btn" aria-label="Delete item" onClick={() => handleDelete(item.id)}>
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Keep your FAB if you want (optional) */}
+                {/* <button className="fab" onClick={() => setActiveTab("upload")}>+</button> */}
+              </section>
+            )}
+
 
 
           {/* AI Stylist Section */}
@@ -2063,7 +2036,7 @@ async function suggestOutfit(options = {}) {
 
               <h2 className="section-title">AI Style Assistant</h2>
               <p className="section-description">
-                Let our AI stylist create personalized looks from your wardrobe ✨
+                Let our AI stylist create personalized looks from your wardrobe 
               </p>
 
               {/* Modern Style Controls */}
@@ -2124,7 +2097,7 @@ async function suggestOutfit(options = {}) {
               <button
                 className="btn btn-primary"
                 onClick={async () => {
-                  console.log("🖱️ Generate clicked (Tina Agent)");
+                  console.log(" Generate clicked (Tina Agent)");
                   await suggestOutfitAgent({
                     uid: user.uid,
                     city,
@@ -2493,13 +2466,14 @@ async function suggestOutfit(options = {}) {
       <nav className="wow-bottom-nav" aria-label="Primary">
         <div className="wow-bottom-nav__pill">
           {[
-            { label: "Home", key: "home" },
-            { label: "Wardrobe", key: "wardrobe" },
-            { label: "Upload", key: "upload" },
-            { label: "Stylist", key: "stylist" },
-            { label: "Planner", key: "planner" },
-            { label: "Profile", key: "profile" },
-          ].map((tab) => {
+              { label: "Home", key: "home" },
+              { label: "Wardrobe", key: "wardrobe" }, // keeping Wardrobe 
+              { label: "Add", key: "upload" },
+              { label: "Style", key: "stylist" },
+              { label: "Plan", key: "planner" },
+              { label: "Me", key: "profile" },
+            ]
+.map((tab) => {
             const active = tab.key === activeTab;
             return (
               <button
