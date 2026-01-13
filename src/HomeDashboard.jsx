@@ -66,6 +66,7 @@ export default function HomeDashboard({ user, items = [], todayPlan, onGo }) {
           </button>
         </div>
 
+        {firstLook?.items?.length > 0 ? (
           <div className="today-items">
             {firstLook.items.slice(0, 6).map((it, i) => (
               <div key={`${it.id || it.name || "it"}_${i}`} className="today-item">
