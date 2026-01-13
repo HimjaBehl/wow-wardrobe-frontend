@@ -141,17 +141,22 @@ export default function App() {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
-  const [todayPlan, setTodayPlan] = useState(null);
+  const [todayPlan, setTodayPlan] = useState({ outfit: { items: [] } });
+
 
   // 🔎 Viewer for a saved plan/outfit
   const [viewOpen, setViewOpen] = useState(false);
   const [viewPlan, setViewPlan] = useState(null);
 
   const openPlanViewer = (plan) => {
-    // plan expected shape: { id, date: 'YYYY-MM-DD', outfit: { title, note, items: [...] } }
-    setViewPlan(plan);
+    const safe = plan || { outfit: { items: [] } };
+    // also guard missing outfit/items
+    if (!safe.outfit) safe.outfit = { items: [] };
+    if (!Array.isArray(safe.outfit.items)) safe.outfit.items = [];
+    setViewPlan(safe);
     setViewOpen(true);
   };
+
 
   const closePlanViewer = () => {
     setViewOpen(false);
@@ -440,12 +445,14 @@ export default function App() {
       // 1) { outfit: {...} }
       // 2) { look: {...} }
       // 3) outfit object directly
-      const outfitObj = data?.outfit || data?.look || data || null;
+      const outfitObj = data?.outfit || data?.look || data || {};
+
 
       // ✅ Only treat it as a "real plan" if it has items
       const hasItems = Array.isArray(outfitObj?.items) && outfitObj.items.length > 0;
 
-      setTodayPlan(hasItems ? { outfit: outfitObj } : null);
+      setTodayPlan(hasItems ? { outfit: outfitObj } : { outfit: { items: [] } });
+
     } catch (e) {
       console.error("Error fetching today plan:", e);
       setTodayPlan(null);
@@ -1442,9 +1449,10 @@ async function suggestOutfit(options = {}) {
                 <HomeDashboard
                   user={user}
                   items={items}
-                  todayPlan={todayPlan}
+                  todayPlan={todayPlan?.outfit?.items ? todayPlan : { outfit: { items: [] } }}
                   onGo={(tab) => setActiveTab(tab)}
                 />
+
                 {/* 🔥 Trends below the dashboard */}
                 {SHOW_TRENDS && (
                   <section className="section" style={{ marginTop: "1rem" }}>
