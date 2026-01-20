@@ -1733,26 +1733,41 @@ a{ color:var(--link); }
   width: 100%;
 }
 
-.week-day, .week-card, .planner-day-card{
+.week-day,
+.week-card,
+.planner-day-card{
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(20,20,20,0.65);
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(24,24,24,0.85);
   padding: 12px;
   min-height: 92px;
+  color: rgba(255,255,255,0.95);   /* ✅ FORCE readable text */
 }
 
-.week-day .muted, .planner-day-card .muted{
-  opacity: 0.7;
+
+.week-day .muted,
+.planner-day-card .muted{
+  color: rgba(255,255,255,0.75);
+  opacity: 1;
   font-size: 0.9rem;
 }
+
 /* Calendar card feel */
-.planner-calendar, .calendar-card, .planner-calendar-card{
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(20,20,20,0.78);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.35);
-  padding: 16px;
+.planner-calendar,
+.calendar-card,
+.planner-calendar-card{
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(
+    180deg,
+    rgba(28,28,28,0.92),
+    rgba(18,18,18,0.92)
+  );
+  box-shadow: 0 18px 44px rgba(0,0,0,0.45);
+  padding: 18px;
+  color: rgba(255,255,255,0.95);
 }
+
 /* ===== Premium Home ===== */
 .home-wrap{
   max-width: 980px;
@@ -2588,4 +2603,23 @@ a{ color:var(--link); }
 }
 .today-cta:hover{
   text-decoration: underline;
+}
+
+.is-selected
+
+/* === Planner selected day === */
+.planner-day-card.is-selected,
+.week-day.is-selected{
+  background: linear-gradient(
+    135deg,
+    rgba(255,105,180,0.22),
+    rgba(167,120,255,0.22)
+  );
+  border-color: rgba(255,105,180,0.45);
+  color: #fff;
+}
+
+.planner-day-card.is-selected .muted,
+.week-day.is-selected .muted{
+  color: rgba(255,255,255,0.9);
 }
