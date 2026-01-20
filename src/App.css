@@ -313,9 +313,11 @@ a{ color:var(--link); }
   margin-bottom: 0.25rem;
 }
 .muted {
-  color: var(--neutral-500);
+  /* default muted on dark pages */
+  color: rgba(255,255,255,0.65);
   font-size: 0.85rem;
 }
+
 
 .look-actions {
   display: flex;
@@ -325,13 +327,14 @@ a{ color:var(--link); }
   margin-top: 1rem;
 }
 
-/* Safety override: keep text dark inside cards EXCEPT in wardrobe section */
-.section:not(.section-wardrobe) .card,
-.section:not(.section-wardrobe) .look-item,
-.section:not(.section-wardrobe) .look-item-info,
-.section:not(.section-wardrobe) .outfit-look {
+/* Safety override: keep text dark inside cards EXCEPT in wardrobe + planner */
+.section:not(.section-wardrobe):not(.planner-page) .card,
+.section:not(.section-wardrobe):not(.planner-page) .look-item,
+.section:not(.section-wardrobe):not(.planner-page) .look-item-info,
+.section:not(.section-wardrobe):not(.planner-page) .outfit-look {
   color: #111 !important;
 }
+
 
 
 /* --- Fix: outline pills showing only icons --- */
@@ -2605,7 +2608,6 @@ a{ color:var(--link); }
   text-decoration: underline;
 }
 
-.is-selected
 
 /* === Planner selected day === */
 .planner-day-card.is-selected,
@@ -2622,4 +2624,47 @@ a{ color:var(--link); }
 .planner-day-card.is-selected .muted,
 .week-day.is-selected .muted{
   color: rgba(255,255,255,0.9);
+}
+
+/* =========================
+   PLANNER – FINAL OVERRIDES
+   (must be at bottom)
+   ========================= */
+
+.planner-page,
+.planner-page *{
+  color: rgba(255,255,255,0.92);
+}
+
+.planner-page .muted,
+.planner-page .caption{
+  color: rgba(255,255,255,0.65) !important;
+  opacity: 1 !important;
+}
+
+/* Week cards */
+.planner-page .week-day,
+.planner-page .week-card,
+.planner-page .planner-day-card{
+  background: rgba(18,18,18,0.78) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+
+/* Calendar container */
+.planner-page .planner-calendar,
+.planner-page .calendar-card,
+.planner-page .planner-calendar-card{
+  background: rgba(18,18,18,0.70) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+
+/* Selected day */
+.planner-page .is-selected,
+.planner-page .week-day.is-selected,
+.planner-page .planner-day-card.is-selected{
+  background: linear-gradient(135deg, rgba(255,105,180,0.22), rgba(167,120,255,0.22)) !important;
+  border-color: rgba(255,105,180,0.45) !important;
+  color: #fff !important;
 }
