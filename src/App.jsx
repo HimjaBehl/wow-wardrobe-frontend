@@ -326,6 +326,12 @@ export default function App() {
     return m;
   }, [items]);
 
+  const WARDROBE_BY_PATH = useMemo(() => {
+    const m = new Map();
+    for (const w of items) if (w.image_path) m.set(String(w.image_path), w);
+    return m;
+  }, [items]);
+
   const formatLabel = (str = "") => {
     return str
       .split("/")                // drop parent paths (“Clothing/Tops” → “Tops”)
@@ -624,7 +630,7 @@ export default function App() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             uid: user.uid,
-            image_path: item.imagePath,
+            image_path: item.imagePath || item.image_path || "",
             image_url : item.image_url,   // ➕ keep the public link
             name     : item.name,
             category : item.category,
@@ -1046,6 +1052,7 @@ export default function App() {
            .map((it, i) => {
              const tinaId = it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.doc_id ?? it.id;
              const tinaIdx = it.idx ?? it.index ?? it.wardrobe_idx;
+             const tinaPath = it.image_path ?? it.imagePath ?? "";
              const tinaUrl = it.image_url ?? it.image_uri ?? it.image ?? it.url ?? "";
 
              let w = null;
@@ -1060,7 +1067,12 @@ export default function App() {
                w = WARDROBE_BY_ID.get(`idx:${String(tinaIdx)}`) || null;
              }
 
-             // 3) If strict id match fails, try exact normalized URL match (NOT fuzzy).
+             // 3) image_path match
+             if (!w && tinaPath) {
+               w = WARDROBE_BY_PATH.get(String(tinaPath)) || null;
+             }
+
+             // 4) If strict id match fails, try exact normalized URL match (NOT fuzzy).
              if (!w && tinaUrl) {
                const key = normalizeUrl(tinaUrl);
                w = WARDROBE_BY_URL.get(key) || null;
@@ -1242,11 +1254,14 @@ async function suggestOutfit(options = {}) {
               .map((it, i) => {
                 const tinaUrl = it.image_url || it.image || "";
                 const tinaId  = it.wardrobe_id ?? it.item_id ?? it.id ?? it.idx;
+                const tinaPath = it.image_path ?? it.imagePath ?? "";
 
                 let w = null;
                 // 1) ID match
                 if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId));
-                // 2) URL match (normalized)
+                // 2) image_path match
+                if (!w && tinaPath) w = WARDROBE_BY_PATH.get(String(tinaPath));
+                // 3) URL match (normalized)
                 if (!w && tinaUrl) {
                   const key = normalizeUrl(tinaUrl);
                   w = WARDROBE_BY_URL.get(key) || items.find((wi) => wi.image_url && sameImage(wi.image_url, tinaUrl));
