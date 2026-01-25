@@ -988,7 +988,7 @@ export default function App() {
            body: JSON.stringify({ 
              uid,
              city,
-             wardrobe: items.map((w) => ({
+               wardrobe: (wardrobe || items).map((w) => ({
                wardrobe_id: String(w.id),                 // ✅ Firestore doc id
                id: String(w.id),                          // backward compat
                idx: w.idx != null ? String(w.idx) : undefined,
@@ -2130,7 +2130,7 @@ async function suggestOutfit(options = {}) {
                           uid: user.uid,
                           city,
                           wardrobe: items,
-                          occasion,
+                           occasion: String(occasion || "").toLowerCase(),
                           vibe,
                         });
                       }}
