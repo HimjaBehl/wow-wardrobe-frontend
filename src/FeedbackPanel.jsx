@@ -1,20 +1,30 @@
+// src/FeedbackPanel.jsx
 import { useEffect, useState } from "react";
 import { collection, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "./firebase";
 
 export default function FeedbackPanel({ uid }) {
   const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid) {
+      setRows([]);
+      setLoading(false);
+      setErr("No uid yet (login required).");
+      return;
+    }
 
+    setLoading(true);
     setErr("");
+
+    // ✅ shows latest first
     const q = query(
       collection(db, "outfitFeedback"),
       where("uid", "==", uid),
       orderBy("created_at", "desc"),
-      limit(20)
+      limit(50)
     );
 
     const unsub = onSnapshot(
@@ -22,72 +32,74 @@ export default function FeedbackPanel({ uid }) {
       (snap) => {
         const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setRows(data);
+        setLoading(false);
       },
       (e) => {
-        console.error("FeedbackPanel snapshot error:", e);
-        setErr(String(e?.message || e));
+        console.error("FeedbackPanel error:", e);
+        setErr(e?.message || "Failed to load feedback.");
+        setLoading(false);
       }
     );
 
     return () => unsub();
   }, [uid]);
 
+  // ✅ Dark theme safe rendering
   return (
-    <div style={{ marginTop: 16 }}>
-      <h3 style={{ margin: "0 0 10px" }}>My Outfit Feedback (last 20)</h3>
+    <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 14 }}>
+      {loading && <p style={{ color: "#fff", opacity: 0.8, margin: 0 }}>Loading feedback…</p>}
 
-      {err && (
-        <div style={{ padding: 12, background: "#ffecec", borderRadius: 10 }}>
-          <b>Couldn’t load feedback:</b> {err}
-          <div style={{ marginTop: 6, opacity: 0.8 }}>
-            If it mentions an index, open Firestore → Indexes → create the suggested composite index.
-          </div>
-        </div>
+      {!loading && err && (
+        <p style={{ color: "#fff", opacity: 0.85, margin: 0 }}>
+          ⚠️ {err}
+          <br />
+          <span style={{ opacity: 0.7 }}>
+            If this mentions an index, open the Firebase console link in the error and create it.
+          </span>
+        </p>
       )}
 
-      {!err && rows.length === 0 && (
-        <div style={{ padding: 12, background: "#f6f6f6", borderRadius: 10 }}>
-          No feedback yet. Love/Dislike/Swap/Plan a look to see it here.
-        </div>
+      {!loading && !err && rows.length === 0 && (
+        <p style={{ color: "#fff", opacity: 0.75, margin: 0 }}>
+          No feedback yet. Tap ❤️ Love / 💔 Dislike / 🔁 Swap and it’ll appear here.
+        </p>
       )}
 
-      <div style={{ display: "grid", gap: 10 }}>
-        {rows.map((r) => (
-          <div key={r.id} style={{ padding: 12, border: "1px solid #e5e5e5", borderRadius: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-              <b>{String(r.action || "").toUpperCase()}</b>
-              <span style={{ opacity: 0.7, fontSize: 12 }}>
-                {r.outfit_id || r.id}
-              </span>
-            </div>
-
-            <div style={{ marginTop: 6, fontSize: 13, opacity: 0.8 }}>
-              Occasion: {r.occasion || "—"} | Vibe: {r.vibe || "—"}
-            </div>
-
-            {Array.isArray(r.reason_tags) && r.reason_tags.length > 0 && (
-              <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {r.reason_tags.map((t, i) => (
-                  <span key={i} style={{ fontSize: 12, padding: "2px 8px", borderRadius: 999, background: "#f2f2f2" }}>
-                    {t}
-                  </span>
-                ))}
+      {!loading && !err && rows.length > 0 && (
+        <div style={{ display: "grid", gap: 10 }}>
+          {rows.map((r) => (
+            <div key={r.id} style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 10, padding: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                <div style={{ color: "#fff", fontWeight: 700 }}>
+                  {String(r.action || "").toUpperCase()}
+                </div>
+                <div style={{ color: "#fff", opacity: 0.7, fontSize: 12 }}>
+                  {r.created_at?.toDate ? r.created_at.toDate().toLocaleString() : ""}
+                </div>
               </div>
-            )}
 
-            {Array.isArray(r.items) && r.items.length > 0 && (
-              <div style={{ marginTop: 10, fontSize: 13 }}>
-                {r.items.slice(0, 5).map((it, i) => (
-                  <div key={i} style={{ opacity: 0.9 }}>
-                    • {it.name || it.category || "Item"} ({it.category || "—"})
-                  </div>
-                ))}
-                {r.items.length > 5 && <div style={{ opacity: 0.7 }}>… +{r.items.length - 5} more</div>}
+              <div style={{ marginTop: 6, color: "#fff", opacity: 0.85, fontSize: 13 }}>
+                <div>Occasion: {r.occasion || "—"}</div>
+                <div>Vibe: {r.vibe || "—"}</div>
+                <div style={{ opacity: 0.8 }}>Outfit ID: {r.outfit_id || "—"}</div>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+
+              {Array.isArray(r.items) && r.items.length > 0 && (
+                <div style={{ marginTop: 8, color: "#fff", opacity: 0.9, fontSize: 13 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Items</div>
+                  <ul style={{ margin: 0, paddingLeft: 16 }}>
+                    {r.items.slice(0, 8).map((it, idx) => (
+                      <li key={idx}>
+                        {it.name || "Item"} <span style={{ opacity: 0.7 }}>({it.category || "—"})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
