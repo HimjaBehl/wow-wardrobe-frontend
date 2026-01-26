@@ -2986,3 +2986,70 @@ a{ color:var(--link); }
   transform: translateY(-1px) !important;
   box-shadow: 0 12px 26px rgba(0,0,0,0.10) !important;
 }
+
+/* =========================
+   STYLE TAB – FIX "LOVE THIS LOOK" BIG BUTTON
+   Paste at VERY bottom of App.css
+   ========================= */
+
+.wow-look-actions{
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-top: 16px !important;
+}
+
+/* Fix the big pink slab */
+.wow-love-btn{
+  width: min(420px, 100%) !important;
+  height: 52px !important;
+  padding: 0 18px !important;
+  border-radius: 14px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10) !important;
+}
+
+/* Icon row under it */
+.wow-look-actions__row{
+  display: flex !important;
+  gap: 12px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Small premium icon buttons */
+.wow-action-btn{
+  width: 52px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  background: #fff !important;
+  border: 1px solid rgba(17,17,17,0.12) !important;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.06) !important;
+}
+
+.wow-action-btn:hover{
+  transform: translateY(-1px) !important;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.10) !important;
+}
+
+/* Hard reset only for this button */
+.wow-love-btn.btn{
+  padding: 0 18px !important;
+  min-height: 52px !important;
+  height: 52px !important;
+}
