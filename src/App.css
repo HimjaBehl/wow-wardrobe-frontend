@@ -2700,3 +2700,130 @@ a{ color:var(--link); }
 .btn.btn-accent{
   color: #111 !important;
 }
+
+.wow-feedback-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.wow-feedback-primary {
+  background: #ff5c8a;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wow-feedback-secondary {
+  display: flex;
+  gap: 20px;
+}
+
+.wow-feedback-icon {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.wow-feedback-icon:hover {
+  opacity: 1;
+}
+
+/* --- Stylist actions polish --- */
+.wow-look-actions{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+  margin-top:18px;
+}
+
+.wow-love-btn{
+  width:100%;
+  max-width:420px;
+  border-radius:14px;
+  padding:14px 18px;
+  font-weight:700;
+}
+
+.wow-look-actions__row{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  justify-content:center;
+}
+
+.wow-action-btn{
+  width:52px;
+  height:44px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  padding:0;
+}
+
+/* --- Swap dropdown --- */
+.wow-swap-wrap{
+  position:relative;
+  display:inline-flex;
+  z-index:10;
+}
+
+.wow-swap-menu{
+  position:absolute;
+  top:52px;
+  right:0;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.12);
+  padding:12px;
+  min-width:240px;
+  z-index:999;
+}
+
+.wow-swap-title{
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+.wow-swap-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.wow-swap-chip{
+  border:1px solid #e5e7eb;
+  background:#f9fafb;
+  border-radius:12px;
+  padding:10px 10px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.wow-swap-chip:hover{
+  background:#f3f4f6;
+}
+
+.wow-swap-close{
+  width:100%;
+  margin-top:10px;
+  border:none;
+  background:#111;
+  color:#fff;
+  border-radius:12px;
+  padding:10px 12px;
+  font-weight:700;
+  cursor:pointer;
+}

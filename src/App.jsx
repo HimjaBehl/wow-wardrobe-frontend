@@ -255,7 +255,6 @@ export default function App() {
         console.warn("Plan feedback log failed (non-blocking):", e);
       }
 
-      alert("🗓️ Added to your calendar!");
       closePlanModal();
       fetchTodayPlan(user.uid);
  } catch (err) {
@@ -2268,18 +2267,10 @@ async function suggestOutfit(options = {}) {
                     })}
                   </div>
 
-                          <div className="look-actions">
-
-                 {/* existing buttons */}
+                  <div className="look-actions wow-look-actions">
+                    {/* Primary CTA */}
                     <button
-                      className="btn btn-outline"
-                      onClick={() => openPlanModal(look)}
-                    >
-                      📅 Add to Calendar
-                    </button>
-
-                    <button
-                      className="btn btn-accent"
+                      className="btn btn-accent wow-love-btn"
                       onClick={async () => {
                         try {
                           const outfit_id = look?.outfit_id;
@@ -2291,95 +2282,91 @@ async function suggestOutfit(options = {}) {
                             occasion,
                             vibe,
                             items: toFeedbackItems(look),
-                            meta: {
-                              source: "stylist",
-                              look_index: idx,
-                            },
+                            meta: { source: "stylist", look_index: idx },
                           });
-                        alert("❤️ Loved this look!");
+
+                          alert("❤️ Loved this look!");
                         } catch (e) {
                           console.error("Love feedback failed:", e);
                           alert("Couldn’t save feedback. Try again.");
                         }
                       }}
-
                     >
-                      ❤️ Love This Look
+                      ❤️ Love this look
                     </button>
 
-  
-
-                    <button
-                      className="btn btn-outline"
-                      onClick={async () => {
-                        try {
-                          const outfit_id = look?.outfit_id;
-
-                          await logOutfitFeedback({
-                            uid: user.uid,
-                            occasion,
-                            vibe,
-                            action: "dislike",
-                            outfit_id,
-                            items: (look?.items || []).map((it) => ({
-                              wardrobe_id: String(it.id),
-                              name: it.name || "",
-                              category: it.category || "",
-                            })),
-                            reason_tags: [], // later you can add UI chips
-                          });
-
-                          alert("💔 Noted — won’t repeat this vibe.");
-                        } catch (e) {
-                          console.error("Dislike feedback failed:", e);
-                          alert("Couldn’t save feedback. Try again.");
-                        }
-                      }}
-                    >
-                      💔 Dislike
-                    </button>
-                  {/* 🔁 NEW: Swap menu */}
-                          <div style={{ position: "relative", display: "inline-flex", zIndex: 10 }}>
-                   <button
-                        className="btn btn-outline"
-                        onClick={() => setSwapOpenIdx(swapOpenIdx === idx ? null : idx)}
+                    {/* Secondary row */}
+                    <div className="wow-look-actions__row">
+                      <button
+                        className="btn btn-outline wow-action-btn"
+                        onClick={() => openPlanModal(look)}
+                        title="Add to calendar"
                       >
-                        🔁 Swap…
+                        📅
                       </button>
 
-                      {swapOpenIdx === idx && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "110%",
-                            left: 0,
-                            background: "#fff",
-                            border: "1px solid #ddd",
-                            borderRadius: 10,
-                            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                            padding: 10,
-                            zIndex: 999,
-                            minWidth: 220
-                          }}
+                      <button
+                        className="btn btn-outline wow-action-btn"
+                        onClick={async () => {
+                          try {
+                            const outfit_id = look?.outfit_id;
+
+                            await logOutfitFeedback({
+                              uid: user.uid,
+                              occasion,
+                              vibe,
+                              action: "dislike",
+                              outfit_id,
+                              items: (look?.items || []).map((it) => ({
+                                wardrobe_id: String(it.id),
+                                name: it.name || "",
+                                category: it.category || "",
+                              })),
+                              reason_tags: [],
+                            });
+
+                            alert("💔 Noted — won’t repeat this vibe.");
+                          } catch (e) {
+                            console.error("Dislike feedback failed:", e);
+                            alert("Couldn’t save feedback. Try again.");
+                          }
+                        }}
+                        title="Not my style"
+                      >
+                        💔
+                      </button>
+
+                      {/* Swap menu */}
+                      <div className="wow-swap-wrap">
+                        <button
+                          className="btn btn-outline wow-action-btn"
+                          onClick={() => setSwapOpenIdx(swapOpenIdx === idx ? null : idx)}
+                          title="Swap one piece"
                         >
-                          <p style={{ margin: "4px 8px 8px", fontWeight: 600 }}>Swap only this piece:</p>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "top")}>Top</button>
-                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "bottom")}>Bottom</button>
-                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "footwear")}>Footwear</button>
-                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "bag")}>Bag</button>
-                            <button className="btn btn-secondary" onClick={() => handleSwap(look, "dress")}>Dress</button>
+                          🔁
+                        </button>
+
+                        {swapOpenIdx === idx && (
+                          <div className="wow-swap-menu">
+                            <div className="wow-swap-title">Swap only:</div>
+
+                            <div className="wow-swap-grid">
+                              <button className="wow-swap-chip" onClick={() => handleSwap(look, "top")}>Top</button>
+                              <button className="wow-swap-chip" onClick={() => handleSwap(look, "bottom")}>Bottom</button>
+                              <button className="wow-swap-chip" onClick={() => handleSwap(look, "footwear")}>Footwear</button>
+                              <button className="wow-swap-chip" onClick={() => handleSwap(look, "bag")}>Bag</button>
+                              <button className="wow-swap-chip" onClick={() => handleSwap(look, "dress")}>Dress</button>
+                            </div>
+
+                            <button className="wow-swap-close" onClick={() => setSwapOpenIdx(null)}>
+                              Close
+                            </button>
                           </div>
-                          <button
-                            className="btn"
-                            onClick={() => setSwapOpenIdx(null)}
-                            style={{ marginTop: 8, width: "100%" }}
-                          >
-                            Close
-                          </button>
-                        </div>                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
+
                   {look.trends_used?.length > 0 && (
                     <div className="look-trends">
                       <h4 className="trends-title">🔥 Trending Inspiration</h4>
@@ -2432,10 +2419,12 @@ async function suggestOutfit(options = {}) {
                 {activeTab === "profile" && (
               <section className="section" style={{ paddingBottom: 120 }}>
                 <div style={{ color: "#fff", fontWeight: 700, marginBottom: 12 }}>
-                  TEST: Feedback panel should appear below
+                  
                 </div>
 
-                <FeedbackPanel uid={user?.uid} />
+                {/* FeedbackPanel disabled for Phase 1 UI polish */}
+                {/* <FeedbackPanel uid={user?.uid} /> */}
+
 
                 <div style={{ height: 24 }} />
 
