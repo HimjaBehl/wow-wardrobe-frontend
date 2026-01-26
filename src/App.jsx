@@ -13,6 +13,8 @@ import HomeDashboard from "./HomeDashboard";
 import VirtualTryOn from "./VirtualTryOn";
 // near the other imports
 import TrendsPanel from "./trendPanel";
+import { logOutfitFeedback } from "./logOutfitFeedback";
+
 
 
 
@@ -2204,19 +2206,31 @@ async function suggestOutfit(options = {}) {
                     <button
                       className="btn btn-accent"
                       onClick={async () => {
-                        await fetch(`${BASE_URL}/feedback`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
+                        try {
+                          const outfit_id =
+                            look?.outfit_id ||
+                            `outfit_${Date.now()}_${idx}`; // temporary stable id (backend can own later)
+
+                          await logOutfitFeedback({
                             uid: user.uid,
-                            outfit_ids: (look?.items || []).map(i => i.id),
-                            vibe,
                             occasion,
-                            liked: true,
-                          }),
-                        });
-                        alert("❤️ Loved this look!");
+                            vibe,
+                            action: "love",
+                            outfit_id,
+                            items: (look?.items || []).map((it) => ({
+                              wardrobe_id: String(it.id),
+                              name: it.name || "",
+                              category: it.category || "",
+                            })),
+                          });
+
+                          alert("❤️ Loved this look!");
+                        } catch (e) {
+                          console.error("Love feedback failed:", e);
+                          alert("Couldn’t save feedback. Try again.");
+                        }
                       }}
+
                     >
                       ❤️ Love This Look
                     </button>
