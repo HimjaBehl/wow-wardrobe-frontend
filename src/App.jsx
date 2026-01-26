@@ -1,6 +1,8 @@
 import { doc, getDoc, deleteDoc, addDoc, collection, serverTimestamp, writeBatch } from "firebase/firestore";
 import Profile from "./Profile";
-import { useState, useEffect, useMemo } from "react";
+import FeedbackPanel from "./FeedbackPanel";
+
+import { useState, useEffect, useMemo, useRef } from "react";
 import "./App.css";
 import "./Wardrobe.css";
 import Onboarding from "./Onboarding";
@@ -120,6 +122,24 @@ function normalizeCategoryFront(category = "", name = "") {
 
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
 const SHOW_INSPIRATION = false;
+con
+
+// -----------------------------
+// Outfit Feedback helpers
+// -----------------------------
+function makeOutfitId(look, fallbackIdx = 0) {
+  // stable-ish id based on wardrobe ids (so it doesn't change every click)
+  const ids = (look?.items || []).map(x => String(x.id || "")).filter(Boolean).sort();
+  return ids.length ? `outfit_${ids.join("_")}` : `outfit_${Date.now()}_${fallbackIdx}`;
+}
+
+function toFeedbackItems(look) {
+  return (look?.items || []).map((it) => ({
+    wardrobe_id: String(it.id || ""),
+    name: it.name || "",
+    category: it.category || "",
+  })).filter(x => x.wardrobe_id);
+}
 const SHOW_TRENDS = false; 
 function LoadingState({ text = "Loading…" }) {
   return (
@@ -130,7 +150,8 @@ function LoadingState({ text = "Loading…" }) {
 }
 
 
-/* ======================================== */
+/* 
+======================================== */
 
 export default function App() {
   const [userPrefs, setUserPrefs] = useState({});
@@ -146,7 +167,7 @@ export default function App() {
   const [todayPlan, setTodayPlan] = useState({ outfit: { items: [] } });
 
 
-  // 🔎 Viewer for a saved plan/outfit
+    const feedbackSessionIdRef = useRef(String(Date.now()));// 🔎 Viewer for a saved plan/outfit
   const [viewOpen, setViewOpen] = useState(false);
   const [viewPlan, setViewPlan] = useState(null);
 
@@ -216,9 +237,29 @@ export default function App() {
 
       // Optional: quick feedback + refresh (today will only show if date == today)
       alert("🗓️ Added to your calendar!");
+   
+      try {
+        await logOutfitFeedback({
+          uid: user.uid,
+          occasion,
+          vibe,
+          action: "plan",                 // ✅ calendar intent
+          outfit_id: planLook?.outfit_id || `plan_${feedbackSessionIdRef.current}`,
+          items: (planLook?.items || []).map((it) => ({
+            wardrobe_id: String(it.id),
+            name: it.name || "",
+            category: it.category || "",
+          })),
+          reason_tags: [],
+        });
+      } catch (e) {
+        console.warn("Plan feedback log failed (non-blocking):", e);
+      }
+
+      alert("🗓️ Added to your calendar!");
       closePlanModal();
       fetchTodayPlan(user.uid);
-    } catch (err) {
+ } catch (err) {
       console.error("Add-to-calendar failed:", err);
       alert("Couldn’t add to calendar. Please try again.");
     }
@@ -835,6 +876,16 @@ export default function App() {
     }
   };
 
+  // Get unique outfit ID
+  function getLookOutfitId(look, idx = 0) {
+    return (
+      look?.outfit_id ||
+      look?.outfitId ||
+      look?.id ||
+      `outfit_${Date.now()}_${idx}`
+    );
+  }
+
   // ——— Swap helpers ———
   function groupOf(category = "", name = "") {
     // Normalize to canonical bucket labels first
@@ -873,10 +924,30 @@ export default function App() {
     if (!user?.uid) return;
 
     const lockedIds = (baseLook?.items || [])
-    .filter(p => groupOf(p.category, p.name) !== targetGroup)
-    .map(p => String(p.id))
-    .filter(Boolean);
+      .filter(p => groupOf(p.category, p.name) !== targetGroup)
+      .map(p => String(p.id))
+      .filter(Boolean);
 
+    // ✅ LOG SWAP action to Firestore
+    try {
+      await logOutfitFeedback({
+        uid: user.uid,
+        occasion,
+        vibe,
+        action: "swap",
+        outfit_id: getLookOutfitId(baseLook, 0),
+        items: (baseLook?.items || []).map((it) => ({
+          wardrobe_id: String(it.id),
+          name: it.name || "",
+          category: it.category || "",
+        })),
+        reason_tags: [],
+        meta: { swap_target: targetGroup, locked_ids: lockedIds },
+      });
+      console.log("✅ swap feedback saved");
+    } catch (e) {
+      console.error("❌ swap feedback failed:", e);
+    }
 
     const instruction = [
       `Swap only the ${targetGroup.toUpperCase()}.`,
@@ -894,14 +965,12 @@ export default function App() {
       occasion,
       vibe,
       constraints: instruction,
-      swapTarget: targetGroup,      // 👈 pass target
-      lockedIds,                    // 👈 pass hard locks
-      baseLook                       // 👈 pass original so we can enforce on client
+      swapTarget: targetGroup,
+      lockedIds,
+      baseLook
     });
   }
 
-
-  
 
   // Turn a look into buckets
   function bucketByGroup(items = []) {
@@ -1121,14 +1190,20 @@ export default function App() {
 
            const validation = look.validation?.styleRules || null;
 
+               const stableOutfitId =
+             look.outfit_id ||
+             look.outfitId ||
+             `outfit_${feedbackSessionIdRef.current}_${idx}`;
+
            return {
+             outfit_id: stableOutfitId, // ✅ stable per look in this session
              title,
              style_note: note,
              trends_used: look.trends_used || [],
              validation,
              items: mappedItems,
            };
-         });
+      });
 
 
          // If this was a swap request, hard-enforce locks on the client
@@ -2194,8 +2269,9 @@ async function suggestOutfit(options = {}) {
                     })}
                   </div>
 
-                  <div className="look-actions">
-                    {/* existing buttons */}
+                          <div className="look-actions">
+
+                 {/* existing buttons */}
                     <button
                       className="btn btn-outline"
                       onClick={() => openPlanModal(look)}
@@ -2207,24 +2283,21 @@ async function suggestOutfit(options = {}) {
                       className="btn btn-accent"
                       onClick={async () => {
                         try {
-                          const outfit_id =
-                            look?.outfit_id ||
-                            `outfit_${Date.now()}_${idx}`; // temporary stable id (backend can own later)
+                          const outfit_id = look?.outfit_id;
 
                           await logOutfitFeedback({
                             uid: user.uid,
-                            occasion,
-                            vibe,
                             action: "love",
                             outfit_id,
-                            items: (look?.items || []).map((it) => ({
-                              wardrobe_id: String(it.id),
-                              name: it.name || "",
-                              category: it.category || "",
-                            })),
+                            occasion,
+                            vibe,
+                            items: toFeedbackItems(look),
+                            meta: {
+                              source: "stylist",
+                              look_index: idx,
+                            },
                           });
-
-                          alert("❤️ Loved this look!");
+                        alert("❤️ Loved this look!");
                         } catch (e) {
                           console.error("Love feedback failed:", e);
                           alert("Couldn’t save feedback. Try again.");
@@ -2235,9 +2308,40 @@ async function suggestOutfit(options = {}) {
                       ❤️ Love This Look
                     </button>
 
-                    {/* 🔁 NEW: Swap menu */}
-                    <div style={{ position: "relative", display: "inline-block" }}>
-                      <button
+  
+
+                    <button
+                      className="btn btn-outline"
+                      onClick={async () => {
+                        try {
+                          const outfit_id = look?.outfit_id;
+
+                          await logOutfitFeedback({
+                            uid: user.uid,
+                            occasion,
+                            vibe,
+                            action: "dislike",
+                            outfit_id,
+                            items: (look?.items || []).map((it) => ({
+                              wardrobe_id: String(it.id),
+                              name: it.name || "",
+                              category: it.category || "",
+                            })),
+                            reason_tags: [], // later you can add UI chips
+                          });
+
+                          alert("💔 Noted — won’t repeat this vibe.");
+                        } catch (e) {
+                          console.error("Dislike feedback failed:", e);
+                          alert("Couldn’t save feedback. Try again.");
+                        }
+                      }}
+                    >
+                      💔 Dislike
+                    </button>
+                  {/* 🔁 NEW: Swap menu */}
+                          <div style={{ position: "relative", display: "inline-flex", zIndex: 10 }}>
+                   <button
                         className="btn btn-outline"
                         onClick={() => setSwapOpenIdx(swapOpenIdx === idx ? null : idx)}
                       >
@@ -2255,7 +2359,7 @@ async function suggestOutfit(options = {}) {
                             borderRadius: 10,
                             boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                             padding: 10,
-                            zIndex: 50,
+                            zIndex: 999,
                             minWidth: 220
                           }}
                         >
@@ -2326,14 +2430,22 @@ async function suggestOutfit(options = {}) {
 
 
             {/* Profile Section */}
-            {activeTab === "profile" && (
-              <section className="section">
+                {activeTab === "profile" && (
+              <section className="section" style={{ paddingBottom: 120 }}>
+                <div style={{ color: "#fff", fontWeight: 700, marginBottom: 12 }}>
+                  TEST: Feedback panel should appear below
+                </div>
+
+                <FeedbackPanel uid={user?.uid} />
+
+                <div style={{ height: 24 }} />
+
                 <Profile user={user} />
               </section>
             )}
 
-
-          {/* Tag Edit Modal */}
+            
+         {/* Tag Edit Modal */}
           {showModal && selectedItem && (
             <section
               style={{

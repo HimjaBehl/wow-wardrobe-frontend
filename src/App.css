@@ -50,8 +50,22 @@ body{
 img{ display:block; max-width:100%; }
 
 /* ─── App frame ────────────────────────────────── */
-.app{ min-height:100vh; display:flex; flex-direction:column; background:var(--bg); }
-.app-main{ flex:1; padding-bottom:5rem; container-type:inline-size; }
+.app{
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* main scrolls */
+}
+
+.app-main{
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;              /* ✅ allow scrolling */
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 140px;         /* ✅ space for bottom nav */
+}
+
 
 /* Header (black) */
 .app-header{
@@ -321,16 +335,19 @@ a{ color:var(--link); }
 
 .look-actions{
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;        /* ✅ allows buttons to go to next line */
+  flex-wrap: wrap;          /* ✅ wrap so nothing cuts */
+  gap: 12px;
+  justify-content: center;
   align-items: center;
-  margin-top: 12px;
-  position: relative;     /* ✅ helps dropdown positioning */
-  z-index: 1;
+  margin-top: 16px;
 }
+
 .look-actions .btn{
-  flex: 0 0 auto;         /* ✅ prevents weird shrinking */
+  flex: 1 1 180px;          /* ✅ nice responsive buttons */
+  min-width: 160px;
+  max-width: 260px;
 }
+
 
 
 /* Safety override: keep text dark inside cards EXCEPT in wardrobe + planner */
