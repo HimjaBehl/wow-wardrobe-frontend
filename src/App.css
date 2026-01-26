@@ -319,13 +319,19 @@ a{ color:var(--link); }
 }
 
 
-.look-actions {
+.look-actions{
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-top: 1rem;
+  gap: 10px;
+  flex-wrap: wrap;        /* ✅ allows buttons to go to next line */
+  align-items: center;
+  margin-top: 12px;
+  position: relative;     /* ✅ helps dropdown positioning */
+  z-index: 1;
 }
+.look-actions .btn{
+  flex: 0 0 auto;         /* ✅ prevents weird shrinking */
+}
+
 
 /* Safety override: keep text dark inside cards EXCEPT in wardrobe + planner */
 .section:not(.section-wardrobe):not(.planner-page) .card,
@@ -2667,4 +2673,13 @@ a{ color:var(--link); }
   background: linear-gradient(135deg, rgba(255,105,180,0.22), rgba(167,120,255,0.22)) !important;
   border-color: rgba(255,105,180,0.45) !important;
   color: #fff !important;
+}
+
+.btn.btn-outline{
+  background: transparent !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.35) !important;
+}
+.btn.btn-accent{
+  color: #111 !important;
 }
