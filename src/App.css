@@ -343,11 +343,19 @@ a{ color:var(--link); }
 }
 
 .look-actions .btn{
-  flex: 1 1 180px;          /* ✅ nice responsive buttons */
-  min-width: 160px;
-  max-width: 260px;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: none;
 }
 
+
+/* Do NOT stretch the pink Love button */
+.look-actions .btn.wow-love-btn{
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  width: fit-content !important;
+}
 
 
 /* Safety override: keep text dark inside cards EXCEPT in wardrobe + planner */
@@ -2738,12 +2746,23 @@ a{ color:var(--link); }
 }
 
 .wow-love-btn{
-  width:100%;
-  max-width:420px;
-  border-radius:14px;
-  padding:14px 18px;
-  font-weight:700;
+  width: fit-content !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+
+  height: 40px !important;
+  min-height: 40px !important;
+
+  padding: 0 14px !important;
+  border-radius: 12px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  font-weight: 700 !important;
 }
+
 
 .wow-look-actions__row{
   display:flex;
@@ -3095,4 +3114,23 @@ a{ color:var(--link); }
 /* ✅ remove any “card” styling that makes it look like a big tile */
 .look-actions .love-card{
   background: var(--accent-pink) !important;
+}
+
+/* FORCE small Love this look button */
+.look-actions .btn.btn-accent.wow-love-btn{
+  width: fit-content !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+}
+
+.wow-look-actions .btn.btn-accent.wow-love-btn{
+  width: fit-content !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
 }
