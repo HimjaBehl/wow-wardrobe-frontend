@@ -3072,54 +3072,10 @@ a{ color:var(--link); }
   .wow-pill{ width:104px; }
 }
 
-/* =========================
-   STYLE TAB – FINAL ACTION BAR FIX
-   (Paste at VERY bottom)
-   ========================= */
-
-/* One centered module width for CTA + icon row */
-.wow-look-actions,
-.look-actions,
-.wow-feedback-actions{
-  width: min(520px, 92%) !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* If "Love this look" is a DIV (pink slab), force it to behave like a compact button */
-
-
-/* Tighten the vertical gap between pink CTA and icon row */
-.wow-look-actions{
-  gap: 10px !important;
-  margin-top: 14px !important;
-}
-
-/* Icon row: equal alignment and same width as CTA */
-.wow-look-actions__row,
-.wow-action-row{
-  width: 100% !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  padding: 0 !important;
-}
-
-/* Pills should be equal-width and responsive */
-.wow-pill{
-  flex: 1 !important;
-  width: auto !important;
-  height: 44px !important;
-  border-radius: 999px !important;
-}
-
-/* Slightly smaller icon so it looks premium */
-.wow-ico{
-  font-size: 18px !important;
-}
-
-/* Small "Love this look" button */
-.wow-feedback-primary,
-.wow-love-btn{
+/* ✅ Love this look — force small (wins everything) */
+.look-actions .wow-love-btn,
+.look-actions .wow-feedback-primary,
+.look-actions .love-card{
   width: fit-content !important;
   max-width: none !important;
 
@@ -3129,21 +3085,14 @@ a{ color:var(--link); }
   padding: 0 14px !important;
   border-radius: 12px !important;
 
-  font-size: 14px !important;
-  font-weight: 700 !important;
-
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
 
-  box-shadow: 0 8px 18px rgba(0,0,0,0.10) !important;
+  box-sizing: border-box !important;
 }
 
-.wow-look-actions,
-.wow-feedback-actions{
-  width: 100% !important;
-  max-width: 520px !important;
-  margin: 14px auto 0 !important;
-
-  align-items: center !important;
+/* ✅ remove any “card” styling that makes it look like a big tile */
+.look-actions .love-card{
+  background: var(--accent-pink) !important;
 }
