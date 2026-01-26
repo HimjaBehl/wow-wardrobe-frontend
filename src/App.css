@@ -3124,22 +3124,7 @@ a{ color:var(--link); }
 }
 
 /* If "Love this look" is a DIV (pink slab), force it to behave like a compact button */
-.wow-love-btn,
-.love-card,
-.wow-feedback-primary{
-  width: 100% !important;
-  max-width: 520px !important;
-  height: 52px !important;
-  min-height: 52px !important;
-  padding: 0 18px !important;
 
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  border-radius: 16px !important;
-  box-shadow: 0 10px 22px rgba(0,0,0,0.10) !important;
-}
 
 /* Tighten the vertical gap between pink CTA and icon row */
 .wow-look-actions{
@@ -3169,19 +3154,33 @@ a{ color:var(--link); }
   font-size: 18px !important;
 }
 
+/* Small "Love this look" button */
 .wow-feedback-primary,
 .wow-love-btn{
-  width: min(420px, 100%) !important;
-  height: 52px !important;
-  min-height: 52px !important;
-  padding: 0 18px !important;
-  border-radius: 14px !important;
+  width: fit-content !important;
+  max-width: none !important;
+
+  height: 40px !important;
+  min-height: 40px !important;
+
+  padding: 0 14px !important;
+  border-radius: 12px !important;
+
+  font-size: 14px !important;
+  font-weight: 700 !important;
 
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
 
-  font-weight: 700 !important;
-  font-size: 16px !important;
-  line-height: 1 !important;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.10) !important;
+}
+
+.wow-look-actions,
+.wow-feedback-actions{
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 14px auto 0 !important;
+
+  align-items: center !important;
 }
