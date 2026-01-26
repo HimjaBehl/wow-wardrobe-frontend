@@ -2322,8 +2322,9 @@ async function suggestOutfit(options = {}) {
                                 name: it.name || "",
                                 category: it.category || "",
                               })),
-                              reason_tags: [],
+                              reason_tags: ["outfit_only"], // 👈 IMPORTANT
                             });
+
 
                             alert("💔 Noted — won’t repeat this vibe.");
                           } catch (e) {
