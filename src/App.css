@@ -2827,3 +2827,100 @@ a{ color:var(--link); }
   font-weight:700;
   cursor:pointer;
 }
+
+/* =============================
+   WOW – Look action buttons fix
+   Paste at bottom of App.css
+   ============================= */
+
+/* Container */
+.look-actions{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+  margin-top:18px;
+}
+
+/* Primary button (Love) */
+.look-actions .btn.btn-accent{
+  width:min(420px, 100%);
+  height:52px;
+  border-radius:14px;
+  padding:0 18px;
+  font-weight:700;
+  font-size:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 10px 22px rgba(0,0,0,0.10);
+}
+
+/* Remove the giant block feel */
+.look-actions .btn.btn-accent,
+.wow-love-btn{
+  max-width:420px;
+}
+
+/* Secondary icon row */
+.wow-look-actions__row,
+.look-actions > div{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+
+/* Icon buttons (calendar/dislike/swap) */
+.wow-action-btn,
+.look-actions .btn.btn-outline{
+  width:48px;
+  height:44px;
+  padding:0 !important;
+  border-radius:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  background:#fff;
+  border:1px solid rgba(17,17,17,0.12);
+  box-shadow:0 8px 18px rgba(0,0,0,0.06);
+}
+
+/* Hover / active feels */
+.wow-action-btn:hover,
+.look-actions .btn.btn-outline:hover{
+  transform:translateY(-1px);
+  box-shadow:0 12px 26px rgba(0,0,0,0.10);
+}
+
+/* Make sure outline buttons don’t stretch full width anywhere */
+.look-actions .btn.btn-outline{
+  width:48px !important;
+}
+
+/* If you still have older “emoji buttons” (icons without btn classes) */
+.look-actions button:not(.btn){
+  width:48px;
+  height:44px;
+  border-radius:14px;
+  border:1px solid rgba(17,17,17,0.12);
+  background:#fff;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 8px 18px rgba(0,0,0,0.06);
+}
+
+/* Swap dropdown polish (so it doesn’t look like a random box) */
+.wow-swap-menu{
+  border-radius:14px !important;
+  border:1px solid rgba(17,17,17,0.10) !important;
+  box-shadow:0 14px 30px rgba(0,0,0,0.14) !important;
+}
+.wow-swap-chip{
+  border-radius:12px !important;
+}
+.wow-swap-close{
+  border-radius:12px !important;
+}
