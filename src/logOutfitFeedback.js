@@ -26,6 +26,8 @@ export async function logOutfitFeedback({
     created_at: serverTimestamp(),
   };
 
-  await addDoc(collection(db, "outfitFeedback"), payload);
-  return payload;
+  const ref = await addDoc(collection(db, "outfitFeedback"), payload);
+  console.log("✅ outfitFeedback saved:", ref.id, payload);
+  return { id: ref.id, ...payload };
+
 }
