@@ -122,7 +122,6 @@ function normalizeCategoryFront(category = "", name = "") {
 
 // Toggle this if you want to also show external “inspiration” items that are not in the wardrobe.
 const SHOW_INSPIRATION = false;
-con
 
 // -----------------------------
 // Outfit Feedback helpers
