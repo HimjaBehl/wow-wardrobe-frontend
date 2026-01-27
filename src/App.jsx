@@ -2649,10 +2649,12 @@ async function suggestOutfit(options = {}) {
                     setNeedsOnboarding(false);
                   }}
                 />
+                <div style={{ marginTop: 16 }}>
+                  <button className="btn btn-secondary" onClick={handleLogout}>
+                    Logout
+                  </button>
+                </div>
 
-                <div style={{ height: 24 }} />
-
-                <Profile user={user} />
               </section>
             )}
 

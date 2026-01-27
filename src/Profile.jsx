@@ -1,98 +1,35 @@
-import { useState, useEffect } from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "./firebase";
 
 export default function Profile({ user }) {
-  const [gender, setGender] = useState("");
-  const [bodyShape, setBodyShape] = useState("");
-  const [complexion, setComplexion] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
-
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    fetch(`${BASE_URL}/onboarding?uid=${user.uid}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.gender) setGender(data.gender);
-        if (data.bodyShape) setBodyShape(data.bodyShape);
-        if (data.complexion) setComplexion(data.complexion);
-      })
-      .catch((err) => console.error("❌ Failed to load profile:", err));
-  }, [user]);
-
-  const saveProfile = async () => {
-    if (!user?.uid) return alert("Login first!");
-
-    setLoading(true);
-    try {
-      const res = await fetch(`${BASE_URL}/onboarding`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: user.uid, gender, bodyShape, complexion }),
-      });
-
-      if (res.ok) {
-        alert("✅ Profile updated!");
-      } else {
-        alert("❌ Failed to update profile");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error updating profile");
-    }
-    setLoading(false);
-  };
+  if (!user) return null;
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>Your Profile 👤</h2>
-      <p>Update your preferences anytime.</p>
+    <div className="wow-account">
+      <h2 className="wow-account__title">Account</h2>
 
-      <label>Gender</label>
-      <select
-        value={gender}
-        onChange={(e) => setGender(e.target.value)}
-        style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
-      >
-        <option value="">Select gender</option>
-        <option value="female">👩 Female</option>
-        <option value="male">👨 Male</option>
-        <option value="nonbinary">⚧ Non-binary</option>
-        <option value="other">Other</option>
-      </select>
+      <div className="wow-account__card">
+        <div className="wow-account__row">
+          <div className="wow-account__label">Signed in as</div>
+          <div className="wow-account__value">{user.email || user.displayName || "—"}</div>
+        </div>
 
-      <label>Body Shape</label>
-      <input
-        type="text"
-        placeholder="e.g., pear, rectangle"
-        value={bodyShape}
-        onChange={(e) => setBodyShape(e.target.value)}
-        style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
-      />
+        {user.photoURL && (
+          <img
+            src={user.photoURL}
+            alt="Profile"
+            style={{ width: 56, height: 56, borderRadius: "50%", marginTop: 12 }}
+          />
+        )}
 
-      <label>Complexion</label>
-      <input
-        type="text"
-        placeholder="e.g., fair, olive, deep"
-        value={complexion}
-        onChange={(e) => setComplexion(e.target.value)}
-        style={{ width: "100%", padding: "0.75rem", marginBottom: "1rem" }}
-      />
-
-      <button
-        onClick={saveProfile}
-        disabled={loading}
-        style={{
-          marginTop: "1rem",
-          padding: "1rem 2rem",
-          background: "#000",
-          color: "#fff",
-          border: "none",
-        }}
-      >
-        {loading ? "Saving…" : "Save Changes"}
-      </button>
+        <button
+          className="btn btn-secondary"
+          style={{ marginTop: 16, width: "100%" }}
+          onClick={() => signOut(auth)}
+        >
+          Logout
+        </button>
+      </div>
     </div>
   );
 }

@@ -3421,3 +3421,21 @@ a{ color:var(--link); }
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.wow-onb-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.wow-onb-progress{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.wow-onb-close{
+  flex:0 0 auto;
+}
