@@ -189,14 +189,47 @@ function ProfileOnboardingEditor({ userPrefs, onSave }) {
             <option value="Prefer not to say">Prefer not to say</option>
           </select>
         </label>
-        <label className="wow-profile-label">
-          Body Shape
-          <input type="text" value={bodyShape} onChange={(e) => setBodyShape(e.target.value)} placeholder="e.g. Hourglass" className="wow-profile-input" />
-        </label>
-        <label className="wow-profile-label">
-          Complexion
-          <input type="text" value={complexion} onChange={(e) => setComplexion(e.target.value)} placeholder="e.g. Medium" className="wow-profile-input" />
-        </label>
+        <div className="wow-profile-label">
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>Body Shape</div>
+
+          <div className="wow-card-grid">
+            {BODY_SHAPE_OPTIONS.map((opt) => {
+              const active = (bodyShape || "").toLowerCase() === opt.label.toLowerCase();
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  className={`wow-choice-card ${active ? "is-active" : ""}`}
+                  onClick={() => setBodyShape(opt.label)}
+                >
+                  <div className="wow-choice-title">{opt.label}</div>
+                  {opt.hint ? <div className="wow-choice-hint">{opt.hint}</div> : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="wow-profile-label">
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>Complexion</div>
+
+          <div className="wow-card-grid wow-card-grid--compact">
+            {COMPLEXION_OPTIONS.map((opt) => {
+              const active = (complexion || "").toLowerCase() === opt.label.toLowerCase();
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  className={`wow-choice-card ${active ? "is-active" : ""}`}
+                  onClick={() => setComplexion(opt.label)}
+                >
+                  <div className="wow-choice-title">{opt.label}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
       <button className="wow-profile-save" onClick={handleSave} disabled={saving}>
         {saving ? "Saving..." : saved ? "Saved!" : "Save Preferences"}
@@ -204,6 +237,24 @@ function ProfileOnboardingEditor({ userPrefs, onSave }) {
     </div>
   );
 }
+
+const BODY_SHAPE_OPTIONS = [
+  { key: "hourglass", label: "Hourglass", hint: "Balanced bust + hips" },
+  { key: "pear", label: "Pear", hint: "Hips > shoulders" },
+  { key: "apple", label: "Apple", hint: "Midsection focus" },
+  { key: "rectangle", label: "Rectangle", hint: "Straight silhouette" },
+  { key: "inverted", label: "Inverted Triangle", hint: "Shoulders > hips" },
+  { key: "athletic", label: "Athletic", hint: "Lean + defined" },
+];
+
+const COMPLEXION_OPTIONS = [
+  { key: "fair", label: "Fair" },
+  { key: "light", label: "Light" },
+  { key: "medium", label: "Medium" },
+  { key: "wheatish", label: "Wheatish" },
+  { key: "tan", label: "Tan" },
+  { key: "deep", label: "Deep" },
+];
 
 function OnboardingModal({
   open,
@@ -283,27 +334,48 @@ function OnboardingModal({
             </select>
           </label>
 
-          <label className="wow-onb-label">
-            Body Shape
-            <input
-              type="text"
-              value={formBodyShape}
-              onChange={(e) => setFormBodyShape(e.target.value)}
-              placeholder="e.g. Hourglass, Athletic, Pear"
-              className="wow-onb-input"
-            />
-          </label>
+          <div className="wow-onb-label">
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>Body Shape</div>
 
-          <label className="wow-onb-label">
-            Complexion
-            <input
-              type="text"
-              value={formComplexion}
-              onChange={(e) => setFormComplexion(e.target.value)}
-              placeholder="e.g. Fair, Medium, Dark"
-              className="wow-onb-input"
-            />
-          </label>
+            <div className="wow-card-grid">
+              {BODY_SHAPE_OPTIONS.map((opt) => {
+                const active = (formBodyShape || "").toLowerCase() === opt.label.toLowerCase();
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    className={`wow-choice-card ${active ? "is-active" : ""}`}
+                    onClick={() => setFormBodyShape(opt.label)}
+                  >
+                    <div className="wow-choice-title">{opt.label}</div>
+                    {opt.hint ? <div className="wow-choice-hint">{opt.hint}</div> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+
+          <div className="wow-onb-label">
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>Complexion</div>
+
+            <div className="wow-card-grid wow-card-grid--compact">
+              {COMPLEXION_OPTIONS.map((opt) => {
+                const active = (formComplexion || "").toLowerCase() === opt.label.toLowerCase();
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    className={`wow-choice-card ${active ? "is-active" : ""}`}
+                    onClick={() => setFormComplexion(opt.label)}
+                  >
+                    <div className="wow-choice-title">{opt.label}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
 
         <div className="wow-onb-actions">
