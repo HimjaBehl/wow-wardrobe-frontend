@@ -325,7 +325,11 @@ function OnboardingModal({
 
 export default function App() {
   const [userPrefs, setUserPrefs] = useState({});
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState(null); // current preview (optional)
+  const [files, setFiles] = useState([]);           // selected files (multi)
+  const [fileQueue, setFileQueue] = useState([]);   // queue of remaining files
+  const [activeFile, setActiveFile] = useState(null); // current file being processed
+  const [busyDetecting, setBusyDetecting] = useState(false);
   const [items, setItems] = useState([]);
   const [filterCategory, setFilterCategory] = useState("");
   const [filterColor, setFilterColor] = useState("");
@@ -759,18 +763,22 @@ export default function App() {
       console.error("Logout failed:", err.message);
     }
   };
-  const handleUpload = async () => {
-    if (!file || !user) {
-      alert("Please select a file and login first.");
-      return;
-    }
+  // -----------------------------
+  // Multi-upload queue (safe sequential processing)
+  // -----------------------------
+  const detectSingleFile = async (oneFile) => {
+    if (!oneFile || !user) return;
 
-    const uniqueName = `${user.uid}/${Date.now()}_${file.name}`;
+    setBusyDetecting(true);
+
+    const uniqueName = `${user.uid}/${Date.now()}_${oneFile.name}`;
     const storageRef = ref(storage, `wardrobe/${uniqueName}`);
+
     try {
-      await uploadBytes(storageRef, file);
-      const imageUrl   = await getDownloadURL(storageRef);   // used for Ximilar preview
-      const storagePath = storageRef.fullPath;               // ➡  "wardrobe/…filename…"
+      await uploadBytes(storageRef, oneFile);
+
+      const imageUrl = await getDownloadURL(storageRef);
+      const storagePath = storageRef.fullPath;
 
       const res = await fetch(`${BASE_URL}/auto-tag`, {
         method: "POST",
@@ -781,24 +789,76 @@ export default function App() {
       const contentType = res.headers.get("content-type") || "";
       if (!res.ok || !contentType.includes("application/json")) {
         const text = await res.text();
-        console.error("❌ Upload failed:", text);
-        alert("Auto-tagging failed. Try another image.");
+        console.error("❌ Auto-tag failed:", text);
+        alert("Auto-tagging failed for this photo. Try another image.");
+        setDetectedItems([]);
         return;
       }
 
       const data = await res.json();
       const tagged = (data.detectedItems || data.detected || []).map((obj) => ({
-
         ...obj,
         approved: true,
-        imagePath: storagePath, // will be saved to Firestore
-        image_url: imageUrl,
+        imagePath: storagePath, // ✅ always stored
+        image_url: imageUrl,    // ✅ always stored
       }));
+
       setDetectedItems(tagged);
     } catch (err) {
-      console.error("Upload error:", err);
-      alert("Something went wrong during upload.");
+      console.error("Upload/detect error:", err);
+      alert("Something went wrong during upload/detection.");
+      setDetectedItems([]);
+    } finally {
+      setBusyDetecting(false);
     }
+  };
+
+  const startDetectionQueue = async () => {
+    if (!user?.uid) {
+      alert("Please login first.");
+      return;
+    }
+
+    const chosen = (files && files.length) ? files : (file ? [file] : []);
+    if (!chosen.length) {
+      alert("Please select at least one photo.");
+      return;
+    }
+
+    setFileQueue(chosen);
+    setActiveFile(chosen[0]);
+    setDetectedItems([]);
+    setOpenEditors({});
+    await detectSingleFile(chosen[0]);
+  };
+
+  const goNextPhoto = async () => {
+    setDetectedItems([]);
+    setOpenEditors({});
+
+    setFileQueue((prev) => {
+      const remaining = prev.slice(1);
+
+      if (remaining.length === 0) {
+        setActiveFile(null);
+        setFiles([]);
+        setFile(null);
+        alert("✅ All photos processed!");
+        return [];
+      }
+
+      setActiveFile(remaining[0]);
+      // run detection for next photo
+      detectSingleFile(remaining[0]);
+      return remaining;
+    });
+  };
+
+  const skipCurrentPhoto = async () => {
+    if (!activeFile) return;
+
+    // Clear current detections and move on
+    await goNextPhoto();
   };
 
   const toggleItemApproval = (index) => {
@@ -879,9 +939,12 @@ export default function App() {
 
       
 
-      alert(" Selected items added to wardrobe!");
-      setDetectedItems([]);
+      alert("✅ Selected items added to wardrobe!");
       fetchItems(user.uid); // refresh wardrobe
+
+      // ✅ continue to next selected photo (if any)
+      await goNextPhoto();
+
     } catch (err) {
       console.error(" Error saving selected items:", err);
       alert("Something went wrong while saving wardrobe items.");
@@ -1788,9 +1851,15 @@ async function suggestOutfit(options = {}) {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        multiple
+                        onChange={(e) => {
+                          const picked = Array.from(e.target.files || []);
+                          setFiles(picked);
+                          setFile(picked[0] || null); // keep preview working
+                        }}
                         className="upload-input"
                       />
+
                       <div className="upload-card__top">
                         <div className="upload-card__title">Browse</div>
                         <div className="upload-card__sub">Choose from your device</div>
@@ -1803,9 +1872,14 @@ async function suggestOutfit(options = {}) {
                         type="file"
                         accept="image/*"
                         capture="environment"
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        onChange={(e) => {
+                          const picked = Array.from(e.target.files || []);
+                          setFiles(picked);           // camera typically gives 1, but keep consistent
+                          setFile(picked[0] || null);
+                        }}
                         className="upload-input"
                       />
+
                       <div className="upload-card__top">
                         <div className="upload-card__title">Camera</div>
                         <div className="upload-card__sub">Take a new photo</div>
@@ -1816,18 +1890,30 @@ async function suggestOutfit(options = {}) {
 
 
                   
-                  {file && (
-                    <div className="upload-preview">
-                      <img src={URL.createObjectURL(file)} alt="Preview" className="preview-image" />
+                      {file && (
+                        <div className="upload-preview">
+                          {activeFile && (
+                            <div className="muted" style={{ marginBottom: 8 }}>
+                              Processing: <b>{activeFile.name}</b>{" "}
+                              {fileQueue?.length ? `(${(files.length - fileQueue.length + 1)} / ${files.length})` : ""}
+                            </div>
+                          )}
+
+                          <img
+                            src={URL.createObjectURL(activeFile || file)}
+                            alt="Preview"
+                            className="preview-image"
+                          />
+
                       <button 
                         className="btn btn-primary"
-                        onClick={handleUpload}
-
+                        onClick={startDetectionQueue}
+                        disabled={busyDetecting}
                         style={{ marginTop: "var(--spacing-md)" }}
                       >
-                        {uiCopy.upload.detectBtn}
-
+                        {busyDetecting ? "Detecting…" : uiCopy.upload.detectBtn}
                       </button>
+
                     </div>
                   )}
                 </div>
@@ -1941,14 +2027,31 @@ async function suggestOutfit(options = {}) {
                       ))}
                     </div>
 
-                    <button
-                      className="btn btn-primary"
-                      onClick={confirmSelectedItems}
-                      style={{ marginTop: "var(--spacing-lg)", width: "100%" }}
-                    >
-                      {uiCopy.upload.addSelectedBtn}
+                {activeFile && (
+                  <button
+                    type="button"
+                    onClick={skipCurrentPhoto}
+                    disabled={busyDetecting}
+                    style={{
+                      marginTop: 10,
+                      width: "auto",
+                      display: "block",
+                      marginLeft: "auto",
+                      marginRight: "auto",
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      color: "#9ca3af",              // very light grey
+                      textDecoration: "underline",    // clickable underline
+                      fontSize: "0.9rem",
+                      cursor: busyDetecting ? "not-allowed" : "pointer",
+                      opacity: busyDetecting ? 0.55 : 1,
+                    }}
+                  >
+                    Skip this photo
+                  </button>
+                )}
 
-                    </button>
                   </div>
                 )}
 
