@@ -1,0 +1,49 @@
+You are working in my React app (single App.jsx + App.css/Wardrobe.css). I have a new “Welcome to WOW” modal (with a close X and a step number badge) but it has issues:
+1) It is re-mounting / behaving like a new modal each time (feels like a new id/instance). It should NOT reset/open as a new instance once dismissed for the same logged-in user.
+2) The close X and the number badge overlap. Fix the layout so they never overlap on any screen size.
+3) Previously I had an onboarding form for Gender, Body Shape, Complexion. That form is no longer showing. I want these 3 fields to be INCLUDED inside this same Welcome modal (below title/subtitle) and saved to the existing onboarding prefs store, and then also shown in the Profile tab for editing.
+
+REQUIREMENTS / BEHAVIOR:
+A) Show Welcome+Onboarding modal ONLY when user is logged in AND onboarding is incomplete (gender/bodyShape/complexion missing). Also show it if user clicks “Get started” from home (optional), but default is: if missing prefs → modal opens automatically.
+B) Persist dismissal so it doesn’t reopen endlessly:
+   - If user clicks X or Skip → save a localStorage flag keyed by uid: `wow_welcome_dismissed_<uid>=true` so it won’t re-open again in the same state.
+   - But if onboarding is still incomplete, user should still be prompted somewhere subtle (e.g., a banner in Profile/Home saying “Complete your profile for better styling” with a button to reopen modal). Do NOT hard-block the app.
+C) “Get started” submits the 3 fields (gender/bodyShape/complexion) to the same backend endpoint you already use for onboarding (or Firestore) and updates userPrefs in state, then closes modal, sets needsOnboarding=false.
+D) Fix overlap: Close button sits top-right, Step badge sits top-left or just left of close with spacing, never overlap. Use flex container in the modal header.
+E) Make sure the modal does NOT re-mount due to unstable keys like Date.now(). Do not use Date.now() for modal key. If you need an id, derive from uid.
+
+IMPLEMENTATION NOTES (do this cleanly):
+1) Create/adjust a component like <WelcomeOnboardingModal />.
+2) Use App.jsx state:
+   - `needsOnboarding` already exists and is computed from fetched onboarding prefs.
+   - Add `showWelcomeModal` state; initialize it based on:
+        user exists AND needsOnboarding true AND localStorage dismissed flag is not set.
+3) Add controlled inputs inside the modal:
+   - gender: select (Female/Male/Other/Prefer not)
+   - bodyShape: text
+   - complexion: text
+   Prefill with existing userPrefs values if present.
+4) On submit (Get started):
+   - validate non-empty gender/bodyShape/complexion (basic)
+   - POST to backend endpoint (use the same one you already use to save onboarding; if not present, add a function that saves it)
+   - update local `userPrefs` state
+   - setNeedsOnboarding(false)
+   - set showWelcomeModal(false)
+   - set localStorage dismissed flag true
+5) On Skip / X:
+   - set showWelcomeModal(false)
+   - set localStorage dismissed flag true
+6) In Profile tab:
+   - show the same 3 fields (gender/bodyShape/complexion) with current saved values (from userPrefs or fetched onboarding)
+   - allow editing + saving (reuse existing Profile save if present; otherwise add a simple save button that calls the onboarding save endpoint and updates userPrefs)
+
+CSS FIX:
+- Modal header should be:
+   .modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+   left: title/step badge container, right: close button
+- Step badge must not be absolute positioned over close.
+- Ensure buttons have min hit size 40px and spacing.
+
+DELIVERABLE:
+- Provide updated App.jsx changes + any CSS additions in App.css (or a small new CSS block).
+- Ensure the modal opens reliably, never overlaps, and onboarding fields show in both modal + Profile.

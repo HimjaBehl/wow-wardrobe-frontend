@@ -148,74 +148,170 @@ function LoadingState({ text = "Loading…" }) {
   );
 }
 
+function ProfileOnboardingEditor({ userPrefs, onSave }) {
+  const [gender, setGender] = useState(userPrefs?.gender || "");
+  const [bodyShape, setBodyShape] = useState(userPrefs?.bodyShape || "");
+  const [complexion, setComplexion] = useState(userPrefs?.complexion || "");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setGender(userPrefs?.gender || "");
+    setBodyShape(userPrefs?.bodyShape || "");
+    setComplexion(userPrefs?.complexion || "");
+  }, [userPrefs]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      await onSave({ gender, bodyShape, complexion });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error("Error saving profile:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="wow-profile-editor">
+      <h3 className="wow-profile-editor-title">Styling Preferences</h3>
+      <div className="wow-profile-editor-grid">
+        <label className="wow-profile-label">
+          Gender
+          <select value={gender} onChange={(e) => setGender(e.target.value)} className="wow-profile-select">
+            <option value="">Select...</option>
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+            <option value="Other">Other</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </label>
+        <label className="wow-profile-label">
+          Body Shape
+          <input type="text" value={bodyShape} onChange={(e) => setBodyShape(e.target.value)} placeholder="e.g. Hourglass" className="wow-profile-input" />
+        </label>
+        <label className="wow-profile-label">
+          Complexion
+          <input type="text" value={complexion} onChange={(e) => setComplexion(e.target.value)} placeholder="e.g. Medium" className="wow-profile-input" />
+        </label>
+      </div>
+      <button className="wow-profile-save" onClick={handleSave} disabled={saving}>
+        {saving ? "Saving..." : saved ? "Saved!" : "Save Preferences"}
+      </button>
+    </div>
+  );
+}
+
 function OnboardingModal({
   open,
-  step,
+  uid,
+  userPrefs,
   onClose,
-  onNext,
-  onGoUpload,
-  onGoStylist,
+  onSavePrefs,
 }) {
-  if (!open) return null;
+  const [formGender, setFormGender] = useState(userPrefs?.gender || "");
+  const [formBodyShape, setFormBodyShape] = useState(userPrefs?.bodyShape || "");
+  const [formComplexion, setFormComplexion] = useState(userPrefs?.complexion || "");
+  const [saving, setSaving] = useState(false);
 
-  const steps = [
-    {
-      title: "Welcome to WOW",
-      subtitle: "Less thinking. Better outfits.",
-      primary: "Get started →",
-      onPrimary: onNext,
-    },
-    {
-      title: "Let's start with your wardrobe",
-      subtitle: "Upload 5–10 items you wear often. That's enough for WOW to work.",
-      helper: "Takes about 2 minutes",
-      primary: "Upload items →",
-      onPrimary: onGoUpload,
-    },
-    {
-      title: "This is how WOW works",
-      subtitle: "Add your clothes → See what you own → Get dressed without thinking",
-      primary: "Style me for today →",
-      onPrimary: onGoStylist,
-    },
-  ];
-
-  const s = steps[Math.max(0, Math.min(step, steps.length - 1))];
-
-  // Esc closes
   useEffect(() => {
+    setFormGender(userPrefs?.gender || "");
+    setFormBodyShape(userPrefs?.bodyShape || "");
+    setFormComplexion(userPrefs?.complexion || "");
+  }, [userPrefs]);
+
+  useEffect(() => {
+    if (!open) return;
     const onKey = (e) => {
       if (e.key === "Escape") onClose?.();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const handleDismiss = () => {
+    if (uid) localStorage.setItem(`wow_welcome_dismissed_${uid}`, "true");
+    onClose?.();
+  };
+
+  const handleSubmit = async () => {
+    if (!formGender.trim() || !formBodyShape.trim() || !formComplexion.trim()) {
+      alert("Please fill in all fields.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSavePrefs({ gender: formGender, bodyShape: formBodyShape, complexion: formComplexion });
+      if (uid) localStorage.setItem(`wow_welcome_dismissed_${uid}`, "true");
+    } catch (err) {
+      console.error("Error saving onboarding:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <div className="wow-onb-overlay" role="dialog" aria-modal="true" onClick={onClose}>
+    <div className="wow-onb-overlay" role="dialog" aria-modal="true" onClick={handleDismiss}>
       <div className="wow-onb-card" onClick={(e) => e.stopPropagation()}>
-        <button className="wow-onb-close" type="button" onClick={onClose} aria-label="Close onboarding">
-          ✕
-        </button>
-
-        <div className="wow-onb-progress" aria-label="Onboarding progress">
-          {[0, 1, 2].map((i) => (
-            <span key={i} className={`wow-onb-dot ${i === step ? "is-active" : ""}`} />
-          ))}
-          <span className="wow-onb-count">{step + 1}/3</span>
+        <div className="wow-onb-header">
+          <div className="wow-onb-progress" aria-label="Onboarding progress">
+            <span className="wow-onb-dot is-active" />
+            <span className="wow-onb-count">Profile Setup</span>
+          </div>
+          <button className="wow-onb-close" type="button" onClick={handleDismiss} aria-label="Close onboarding">
+            ✕
+          </button>
         </div>
 
-        <h2 className="wow-onb-title">{s.title}</h2>
-        <p className="wow-onb-subtitle">{s.subtitle}</p>
-        {s.helper ? <p className="wow-onb-helper">{s.helper}</p> : null}
+        <h2 className="wow-onb-title">Welcome to WOW</h2>
+        <p className="wow-onb-subtitle">Tell us a bit about yourself for better styling recommendations.</p>
+
+        <div className="wow-onb-form">
+          <label className="wow-onb-label">
+            Gender
+            <select value={formGender} onChange={(e) => setFormGender(e.target.value)} className="wow-onb-select">
+              <option value="">Select...</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+          </label>
+
+          <label className="wow-onb-label">
+            Body Shape
+            <input
+              type="text"
+              value={formBodyShape}
+              onChange={(e) => setFormBodyShape(e.target.value)}
+              placeholder="e.g. Hourglass, Athletic, Pear"
+              className="wow-onb-input"
+            />
+          </label>
+
+          <label className="wow-onb-label">
+            Complexion
+            <input
+              type="text"
+              value={formComplexion}
+              onChange={(e) => setFormComplexion(e.target.value)}
+              placeholder="e.g. Fair, Medium, Dark"
+              className="wow-onb-input"
+            />
+          </label>
+        </div>
 
         <div className="wow-onb-actions">
-          <button className="wow-onb-primary" type="button" onClick={s.onPrimary}>
-            {s.primary}
+          <button className="wow-onb-primary" type="button" onClick={handleSubmit} disabled={saving}>
+            {saving ? "Saving..." : "Get started →"}
           </button>
-
-          <button className="wow-onb-skip" type="button" onClick={onClose}>
-            Skip
+          <button className="wow-onb-skip" type="button" onClick={handleDismiss}>
+            Skip for now
           </button>
         </div>
       </div>
@@ -242,7 +338,6 @@ export default function App() {
 
   // ── Onboarding modal UI state (frontend-only) ──
   const [onboardingOpen, setOnboardingOpen] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(0);
 
 
     const feedbackSessionIdRef = useRef(String(Date.now()));// 🔎 Viewer for a saved plan/outfit
@@ -475,22 +570,20 @@ export default function App() {
     return () => document.removeEventListener("click", onDocClick);
   }, []);
 
-  // ── Frontend-only onboarding gate (opens modal when prefs are missing) ──
+  // ── Frontend-only onboarding gate (opens modal when prefs are missing + not dismissed) ──
   useEffect(() => {
-    // if user logs out, close/reset
     if (!user?.uid) {
       setOnboardingOpen(false);
-      setOnboardingStep(0);
       return;
     }
 
-    // open modal only after prefs are done loading
-    if (!loadingPrefs && needsOnboarding) {
+    const dismissedKey = `wow_welcome_dismissed_${user.uid}`;
+    const wasDismissed = localStorage.getItem(dismissedKey) === "true";
+
+    if (!loadingPrefs && needsOnboarding && !wasDismissed) {
       setOnboardingOpen(true);
-      setOnboardingStep(0);
     }
 
-    // if onboarding becomes not-needed, close modal
     if (!loadingPrefs && !needsOnboarding) {
       setOnboardingOpen(false);
     }
@@ -1616,16 +1709,19 @@ async function suggestOutfit(options = {}) {
 
       <OnboardingModal
         open={!!user && onboardingOpen}
-        step={onboardingStep}
+        uid={user?.uid}
+        userPrefs={userPrefs}
         onClose={() => setOnboardingOpen(false)}
-        onNext={() => setOnboardingStep((s) => Math.min(2, s + 1))}
-        onGoUpload={() => {
+        onSavePrefs={async (prefs) => {
+          const res = await fetch(`${BASE_URL}/onboarding`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uid: user.uid, ...prefs }),
+          });
+          if (!res.ok) throw new Error("Failed to save");
+          setUserPrefs((prev) => ({ ...prev, ...prefs }));
+          setNeedsOnboarding(false);
           setOnboardingOpen(false);
-          setActiveTab("upload");
-        }}
-        onGoStylist={() => {
-          setOnboardingOpen(false);
-          setActiveTab("stylist");
         }}
       />
 
@@ -2533,13 +2629,26 @@ async function suggestOutfit(options = {}) {
             {/* Profile Section */}
                 {activeTab === "profile" && (
               <section className="section" style={{ paddingBottom: 120 }}>
-                <div style={{ color: "#fff", fontWeight: 700, marginBottom: 12 }}>
-                  
-                </div>
+                {needsOnboarding && (
+                  <div className="wow-profile-banner">
+                    <span>Complete your profile for better styling</span>
+                    <button onClick={() => setOnboardingOpen(true)}>Complete Profile</button>
+                  </div>
+                )}
 
-                {/* FeedbackPanel disabled for Phase 1 UI polish */}
-                {/* <FeedbackPanel uid={user?.uid} /> */}
-
+                <ProfileOnboardingEditor
+                  userPrefs={userPrefs}
+                  onSave={async (prefs) => {
+                    const res = await fetch(`${BASE_URL}/onboarding`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ uid: user.uid, ...prefs }),
+                    });
+                    if (!res.ok) throw new Error("Failed to save");
+                    setUserPrefs((prev) => ({ ...prev, ...prefs }));
+                    setNeedsOnboarding(false);
+                  }}
+                />
 
                 <div style={{ height: 24 }} />
 
