@@ -2032,7 +2032,6 @@ async function suggestOutfit(options = {}) {
                     className="btn btn-primary"
                     onClick={confirmSelectedItems}
                     disabled={busyDetecting}
-                    style={{ width: "100%" }}
                   >
                     {uiCopy.upload.addSelectedBtn}
                   </button>
@@ -2041,41 +2040,13 @@ async function suggestOutfit(options = {}) {
                     type="button"
                     className="skip-link"
                     onClick={skipCurrentPhoto}
+                    disabled={busyDetecting}
                   >
                     Skip this photo
                   </button>
                 </div>
-
-                {activeFile && (
-                  <button
-                    type="button"
-                    onClick={skipCurrentPhoto}
-                    disabled={busyDetecting}
-                    style={{
-                      marginTop: 10,
-                      width: "auto",
-                      display: "block",
-                      marginLeft: "auto",
-                      marginRight: "auto",
-                      background: "transparent",
-                      border: "none",
-                      padding: 0,
-                      color: "#9ca3af",              // very light grey
-                      textDecoration: "underline",    // clickable underline
-                      fontSize: "0.9rem",
-                      cursor: busyDetecting ? "not-allowed" : "pointer",
-                      opacity: busyDetecting ? 0.55 : 1,
-                    }}
-                  >
-                    Skip this photo
-                  </button>
-                )}
-
-                  </div>
-                )}
-
-              
-                
+              </div>
+            )}
 
             {/* 2. Quick Add Staples Section */}
               <div className="upload-section quickadd-section">

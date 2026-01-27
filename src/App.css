@@ -3464,3 +3464,31 @@ a{ color:var(--link); }
 .upload-page{
   padding-bottom: 140px; /* space for pill nav */
 }
+
+.upload-results-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.upload-results-actions .btn{
+  flex:1;              /* main button takes space */
+  width:auto !important;
+}
+
+.skip-link{
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: rgba(255,255,255,0.55);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  white-space: nowrap; /* keep it on one line */
+}
+
+.skip-link:disabled{
+  opacity: 0.55;
+  cursor: not-allowed;
+}
