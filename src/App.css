@@ -3439,3 +3439,28 @@ a{ color:var(--link); }
 .wow-onb-close{
   flex:0 0 auto;
 }
+
+.skip-link{
+  background: transparent;
+  border: 0;
+  padding: 10px 0 0;
+  margin: 0 auto;
+  display: block;
+  color: rgba(255,255,255,0.55); /* light grey on black */
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.skip-link:hover{
+  color: rgba(255,255,255,0.75);
+}
+
+.skip-link:active{
+  color: rgba(255,255,255,0.9);
+}
+
+.upload-page{
+  padding-bottom: 140px; /* space for pill nav */
+}

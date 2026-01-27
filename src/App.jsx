@@ -2027,6 +2027,25 @@ async function suggestOutfit(options = {}) {
                       ))}
                     </div>
 
+                <div className="upload-results-actions">
+                  <button
+                    className="btn btn-primary"
+                    onClick={confirmSelectedItems}
+                    disabled={busyDetecting}
+                    style={{ width: "100%" }}
+                  >
+                    {uiCopy.upload.addSelectedBtn}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="skip-link"
+                    onClick={skipCurrentPhoto}
+                  >
+                    Skip this photo
+                  </button>
+                </div>
+
                 {activeFile && (
                   <button
                     type="button"
