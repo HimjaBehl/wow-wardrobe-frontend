@@ -3134,3 +3134,127 @@ a{ color:var(--link); }
   min-height: 40px !important;
   padding: 0 14px !important;
 }
+/* =========================
+   WOW Onboarding Modal
+   ========================= */
+.wow-onb-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 18px;
+  backdrop-filter: blur(6px);
+}
+
+.wow-onb-card{
+  width: min(520px, 100%);
+  background: rgba(18,18,18,0.92);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 20px;
+  padding: 22px 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  transform: translateY(6px);
+  animation: wowOnbIn 180ms ease-out forwards;
+  position: relative;
+}
+
+@keyframes wowOnbIn{
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(6px); }
+}
+
+.wow-onb-close{
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  height: 36px;
+  width: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  cursor: pointer;
+}
+
+.wow-onb-progress{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.wow-onb-dot{
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.18);
+}
+
+.wow-onb-dot.is-active{
+  background: rgba(255,255,255,0.85);
+}
+
+.wow-onb-count{
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.75;
+  color: #fff;
+}
+
+.wow-onb-title{
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  color: #fff;
+  letter-spacing: 0.2px;
+}
+
+.wow-onb-subtitle{
+  margin: 10px 0 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.82);
+}
+
+.wow-onb-helper{
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: rgba(255,255,255,0.65);
+}
+
+.wow-onb-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.wow-onb-primary{
+  width: 100%;
+  height: 46px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: #ffffff;
+  color: #111;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wow-onb-skip{
+  width: 100%;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  cursor: pointer;
+}
+
+.wow-onb-primary:active,
+.wow-onb-skip:active,
+.wow-onb-close:active{
+  transform: translateY(1px);
+}

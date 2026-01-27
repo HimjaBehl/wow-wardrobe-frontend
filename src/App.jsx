@@ -148,6 +148,81 @@ function LoadingState({ text = "Loading…" }) {
   );
 }
 
+function OnboardingModal({
+  open,
+  step,
+  onClose,
+  onNext,
+  onGoUpload,
+  onGoStylist,
+}) {
+  if (!open) return null;
+
+  const steps = [
+    {
+      title: "Welcome to WOW",
+      subtitle: "Less thinking. Better outfits.",
+      primary: "Get started →",
+      onPrimary: onNext,
+    },
+    {
+      title: "Let's start with your wardrobe",
+      subtitle: "Upload 5–10 items you wear often. That's enough for WOW to work.",
+      helper: "Takes about 2 minutes",
+      primary: "Upload items →",
+      onPrimary: onGoUpload,
+    },
+    {
+      title: "This is how WOW works",
+      subtitle: "Add your clothes → See what you own → Get dressed without thinking",
+      primary: "Style me for today →",
+      onPrimary: onGoStylist,
+    },
+  ];
+
+  const s = steps[Math.max(0, Math.min(step, steps.length - 1))];
+
+  // Esc closes
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="wow-onb-overlay" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="wow-onb-card" onClick={(e) => e.stopPropagation()}>
+        <button className="wow-onb-close" type="button" onClick={onClose} aria-label="Close onboarding">
+          ✕
+        </button>
+
+        <div className="wow-onb-progress" aria-label="Onboarding progress">
+          {[0, 1, 2].map((i) => (
+            <span key={i} className={`wow-onb-dot ${i === step ? "is-active" : ""}`} />
+          ))}
+          <span className="wow-onb-count">{step + 1}/3</span>
+        </div>
+
+        <h2 className="wow-onb-title">{s.title}</h2>
+        <p className="wow-onb-subtitle">{s.subtitle}</p>
+        {s.helper ? <p className="wow-onb-helper">{s.helper}</p> : null}
+
+        <div className="wow-onb-actions">
+          <button className="wow-onb-primary" type="button" onClick={s.onPrimary}>
+            {s.primary}
+          </button>
+
+          <button className="wow-onb-skip" type="button" onClick={onClose}>
+            Skip
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 /* 
 ======================================== */
@@ -164,6 +239,10 @@ export default function App() {
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [todayPlan, setTodayPlan] = useState({ outfit: { items: [] } });
+
+  // ── Onboarding modal UI state (frontend-only) ──
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
 
 
     const feedbackSessionIdRef = useRef(String(Date.now()));// 🔎 Viewer for a saved plan/outfit
@@ -396,6 +475,26 @@ export default function App() {
     return () => document.removeEventListener("click", onDocClick);
   }, []);
 
+  // ── Frontend-only onboarding gate (opens modal when prefs are missing) ──
+  useEffect(() => {
+    // if user logs out, close/reset
+    if (!user?.uid) {
+      setOnboardingOpen(false);
+      setOnboardingStep(0);
+      return;
+    }
+
+    // open modal only after prefs are done loading
+    if (!loadingPrefs && needsOnboarding) {
+      setOnboardingOpen(true);
+      setOnboardingStep(0);
+    }
+
+    // if onboarding becomes not-needed, close modal
+    if (!loadingPrefs && !needsOnboarding) {
+      setOnboardingOpen(false);
+    }
+  }, [user?.uid, loadingPrefs, needsOnboarding]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -1514,6 +1613,21 @@ async function suggestOutfit(options = {}) {
       
         )}
       </header>
+
+      <OnboardingModal
+        open={!!user && onboardingOpen}
+        step={onboardingStep}
+        onClose={() => setOnboardingOpen(false)}
+        onNext={() => setOnboardingStep((s) => Math.min(2, s + 1))}
+        onGoUpload={() => {
+          setOnboardingOpen(false);
+          setActiveTab("upload");
+        }}
+        onGoStylist={() => {
+          setOnboardingOpen(false);
+          setActiveTab("stylist");
+        }}
+      />
 
       
 
