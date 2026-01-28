@@ -139,7 +139,19 @@ function toFeedbackItems(look) {
     category: it.category || "",
   })).filter(x => x.wardrobe_id);
 }
-const SHOW_TRENDS = false; 
+const SHOW_TRENDS = false;
+
+const COMPLEXION_OPTIONS = [
+  { id: "fair", label: "Fair", hex: "#F7E7D9" },
+  { id: "light", label: "Light", hex: "#E9C9B3" },
+  { id: "medium", label: "Medium", hex: "#D1A27F" },
+  { id: "wheatish", label: "Wheatish", hex: "#B8845F" },
+  { id: "tan", label: "Tan", hex: "#8D5A3D" },
+  { id: "deep", label: "Deep", hex: "#4A2C1F" },
+  { id: "very_fair", label: "Very fair", hex: "#FBEFE6" },
+  { id: "deep_2", label: "Deep+", hex: "#2B1A13" },
+];
+
 function LoadingState({ text = "Loading…" }) {
   return (
     <div className="section text-center" style={{ padding: "2rem 1rem" }}>
@@ -226,23 +238,26 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
         <div className="wow-profile-label">
           <div style={{ fontWeight: 600, marginBottom: 8 }}>Complexion</div>
 
-          <div className="wow-card-grid wow-card-grid--compact">
+          <div className="wow-swatch-grid" role="list">
             {COMPLEXION_OPTIONS.map((opt) => {
-              const active = (complexion || "").toLowerCase() === opt.label.toLowerCase();
+              const active = (complexion || "").toLowerCase() === opt.id.toLowerCase();
               return (
                 <button
-                  key={opt.key}
+                  key={opt.id}
                   type="button"
-                  className={`wow-choice-card ${active ? "is-active" : ""}`}
-                  onClick={() => setComplexion(opt.label)}
+                  className={`wow-swatch ${active ? "is-active" : ""}`}
+                  onClick={() => setComplexion(opt.id)}
+                  aria-label={opt.label}
+                  title={opt.label}
+                  role="listitem"
                 >
-                  <div className="wow-choice-title">{opt.label}</div>
+                  <span className="wow-swatch-dot" style={{ backgroundColor: opt.hex }} />
+                  <span className="wow-swatch-label">{opt.label}</span>
                 </button>
               );
             })}
           </div>
         </div>
-
       </div>
       <button className="wow-profile-save" onClick={handleSave} disabled={saving}>
         {saving ? "Saving..." : saved ? "Saved!" : "Save Preferences"}
@@ -251,44 +266,7 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
   );
 }
 
-
-
-const [complexion, setComplexion] = useState("");
-
-const COMPLEXION_OPTIONS = [
-  { id: "fair", label: "Fair", hex: "#F7E7D9" },
-  { id: "light", label: "Light", hex: "#E9C9B3" },
-  { id: "medium", label: "Medium", hex: "#D1A27F" },
-  { id: "wheatish", label: "Wheatish", hex: "#B8845F" },
-  { id: "tan", label: "Tan", hex: "#8D5A3D" },
-  { id: "deep", label: "Deep", hex: "#4A2C1F" },
-  { id: "very_fair", label: "Very fair", hex: "#FBEFE6" },
-  { id: "deep_2", label: "Deep+", hex: "#2B1A13" },
-];
-
-<div className="complexionRow">
-  {COMPLEXION_OPTIONS.map((opt) => (
-    <button
-      key={opt.id}
-      type="button"
-      className={`swatch ${complexion === opt.id ? "active" : ""}`}
-      onClick={() => setComplexion(opt.id)}
-      aria-label={opt.label}
-      title={opt.label}
-    >
-      <span
-        className="swatchDot"
-        style={{ backgroundColor: opt.hex }}
-      />
-      <span className="swatchLabel">{opt.label}</span>
-    </button>
-  ))}
-</div>
-
-
-  function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShapeAssets, assetsLoading, setBodyShapeAssets, setAssetsLoading }) {
-
-
+function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShapeAssets, assetsLoading, setBodyShapeAssets, setAssetsLoading }) {
   const [formGender, setFormGender] = useState(userPrefs?.gender || "");
   const [formBodyShape, setFormBodyShape] = useState(userPrefs?.bodyShape || "");
   const [formComplexion, setFormComplexion] = useState(userPrefs?.complexion || "");
@@ -455,23 +433,26 @@ const COMPLEXION_OPTIONS = [
           <div className="wow-onb-label">
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Complexion</div>
 
-            <div className="wow-card-grid wow-card-grid--compact">
+            <div className="wow-swatch-grid" role="list">
               {COMPLEXION_OPTIONS.map((opt) => {
-                const active = (formComplexion || "").toLowerCase() === opt.label.toLowerCase();
+                const active = (formComplexion || "").toLowerCase() === opt.id.toLowerCase();
                 return (
                   <button
-                    key={opt.key}
+                    key={opt.id}
                     type="button"
-                    className={`wow-choice-card ${active ? "is-active" : ""}`}
-                    onClick={() => setFormComplexion(opt.label)}
+                    className={`wow-swatch ${active ? "is-active" : ""}`}
+                    onClick={() => setFormComplexion(opt.id)}
+                    aria-label={opt.label}
+                    title={opt.label}
+                    role="listitem"
                   >
-                    <div className="wow-choice-title">{opt.label}</div>
+                    <span className="wow-swatch-dot" style={{ backgroundColor: opt.hex }} />
+                    <span className="wow-swatch-label">{opt.label}</span>
                   </button>
                 );
               })}
             </div>
           </div>
-
         </div>
 
         <div className="wow-onb-actions">
@@ -487,9 +468,7 @@ const COMPLEXION_OPTIONS = [
   );
 }
 
-
-/* 
-======================================== */
+/* ======================================== */
 
 export default function App() {
   const [userPrefs, setUserPrefs] = useState({});
