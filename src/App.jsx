@@ -291,25 +291,45 @@ const COMPLEXION_OPTIONS = [
           console.log("onboarding_assets keys:", Object.keys(data || {}));
           console.log("bodyShapes exists?", !!data?.bodyShapes, "bodyshapes exists?", !!data?.bodyshapes);
 
-          
-          const shapes = data?.bodyShapes || data?.bodyshapes || data?.bodyShape || data?.body_shapes || {};
+          const shapes =
+            data?.bodyShapes ||
+            data?.bodyshapes ||
+            data?.bodyShape ||
+            data?.body_shapes ||
+            {};
 
-          const normalize = (val) =>
-            Array.isArray(val)
-              ? val
-              : val && typeof val === "object"
-                ? Object.values(val)
-                : [];
+          // ✅ Firestore console often stores these as MAPS with numeric keys "0","1","2"
+          const normalize = (val) => {
+            if (Array.isArray(val)) return val;
+
+            if (val && typeof val === "object") {
+              // keep numeric order if keys are "0","1","2"
+              return Object.entries(val)
+                .sort(([a], [b]) => Number(a) - Number(b))
+                .map(([k, v]) => ({
+                  // ensure an id exists so React keys + selection works
+                  id: v?.id || v?.key || v?.label || `shape_${k}`,
+                  ...v,
+                }));
+            }
+
+            return [];
+          };
+
+          const femaleList = normalize(shapes.female);
+          const maleList = normalize(shapes.male);
+
+          console.log("female raw:", shapes.female);
+          console.log("female normalized:", femaleList);
 
           setBodyShapeAssets({
-            female: normalize(shapes.female),
-            male: normalize(shapes.male),
+            female: femaleList,
+            male: maleList,
           });
-
         } else {
-          // ✅ doc not found → still set empty so UI doesn't hang
           setBodyShapeAssets({ female: [], male: [] });
         }
+
         console.log("female raw:", shapes.female);
         console.log("female normalized:", normalize(shapes.female));
 
