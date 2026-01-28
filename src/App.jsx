@@ -253,7 +253,7 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
 
 
 
-
+const [complexion, setComplexion] = useState("");
 
 const COMPLEXION_OPTIONS = [
   { id: "fair", label: "Fair", hex: "#F7E7D9" },
