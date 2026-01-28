@@ -256,13 +256,35 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
 
 
 const COMPLEXION_OPTIONS = [
-  { key: "fair", label: "Fair" },
-  { key: "light", label: "Light" },
-  { key: "medium", label: "Medium" },
-  { key: "wheatish", label: "Wheatish" },
-  { key: "tan", label: "Tan" },
-  { key: "deep", label: "Deep" },
+  { id: "fair", label: "Fair", hex: "#F7E7D9" },
+  { id: "light", label: "Light", hex: "#E9C9B3" },
+  { id: "medium", label: "Medium", hex: "#D1A27F" },
+  { id: "wheatish", label: "Wheatish", hex: "#B8845F" },
+  { id: "tan", label: "Tan", hex: "#8D5A3D" },
+  { id: "deep", label: "Deep", hex: "#4A2C1F" },
+  { id: "very_fair", label: "Very fair", hex: "#FBEFE6" },
+  { id: "deep_2", label: "Deep+", hex: "#2B1A13" },
 ];
+
+<div className="complexionRow">
+  {COMPLEXION_OPTIONS.map((opt) => (
+    <button
+      key={opt.id}
+      type="button"
+      className={`swatch ${complexion === opt.id ? "active" : ""}`}
+      onClick={() => setComplexion(opt.id)}
+      aria-label={opt.label}
+      title={opt.label}
+    >
+      <span
+        className="swatchDot"
+        style={{ backgroundColor: opt.hex }}
+      />
+      <span className="swatchLabel">{opt.label}</span>
+    </button>
+  ))}
+</div>
+
 
   function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShapeAssets, assetsLoading, setBodyShapeAssets, setAssetsLoading }) {
 
