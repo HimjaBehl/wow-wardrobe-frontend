@@ -3569,3 +3569,89 @@ a{ color:var(--link); }
   max-height: 360px;
   overflow-y: auto;
 }
+
+/* ===== Body Shape cards: premium mobile tiles ===== */
+
+.wow-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.wow-choice-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 10px;
+  text-align: left;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+
+  /* KEY: stop tall strips */
+  height: auto;
+  min-height: 0;
+
+  /* make it feel tappable */
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border 0.12s ease;
+}
+
+.wow-choice-card.is-active {
+  border: 2px solid #000;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+  transform: translateY(-1px);
+}
+
+/* Image: fixed height so all tiles match */
+.shapeImage {
+  width: 100%;
+  height: 110px;
+  object-fit: contain;
+  display: block;
+  margin: 2px auto 8px;
+}
+
+/* Label + hint: clamp so it doesn't stretch vertically */
+.wow-choice-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  text-transform: capitalize;
+  margin: 0 0 4px 0;
+}
+
+.wow-choice-hint {
+  font-size: 11px;
+  line-height: 1.25;
+  color: #6b7280;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;     /* IMPORTANT: keeps cards short */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Make the whole profile editor not feel cramped */
+.wow-profile-editor-grid {
+  display: grid;
+  gap: 16px;
+}
+
+/* On phone: keep gender full width, shapes grid below */
+@media (max-width: 480px) {
+  .wow-profile-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wow-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shapeImage {
+    height: 100px;
+  }
+}
+
+/* Give profile page breathing room above bottom nav */
+.wow-has-bottom-nav {
+  padding-bottom: 110px;
+}
