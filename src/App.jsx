@@ -195,31 +195,32 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
 
           {assetsLoading ? (
             <div style={{ opacity: 0.7 }}>Loading body shapes…</div>
-          ) : (
-            ((gender === "Male" ? bodyShapeAssets.male : bodyShapeAssets.female).length === 0) && (
-              <div style={{ opacity: 0.7 }}>No body shapes found in Firestore.</div>
-            )
-          )}
-
-
-          <div className="wow-card-grid">
-            {(gender === "Male" ? bodyShapeAssets.male : bodyShapeAssets.female).map((opt) => {
-              const active = (bodyShape || "").toLowerCase() === (opt.id || "").toLowerCase();
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className={`wow-choice-card ${active ? "is-active" : ""}`}
-                  onClick={() => setBodyShape(opt.id)}
-                >
-                  <img src={opt.image_url} alt={opt.label} className="shapeImage" />
-                  <div className="wow-choice-title">{opt.label}</div>
-                  {opt.hint ? <div className="wow-choice-hint">{opt.hint}</div> : null}
-                </button>
-              );
-            })}
-
-          </div>
+          ) : (() => {
+            const isMale = String(gender || "").toLowerCase() === "male";
+            const list = isMale ? (bodyShapeAssets?.male || []) : (bodyShapeAssets?.female || []);
+            if (list.length === 0) {
+              return <div style={{ opacity: 0.7 }}>No body shapes found.</div>;
+            }
+            return (
+              <div className="wow-card-grid">
+                {list.map((opt) => {
+                  const active = (bodyShape || "").toLowerCase() === (opt.id || "").toLowerCase();
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`wow-choice-card ${active ? "is-active" : ""}`}
+                      onClick={() => setBodyShape(opt.id)}
+                    >
+                      {opt.image_url && <img src={opt.image_url} alt={opt.label} className="shapeImage" />}
+                      <div className="wow-choice-title">{opt.label}</div>
+                      {opt.hint ? <div className="wow-choice-hint">{opt.hint}</div> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
 
         <div className="wow-profile-label">
@@ -286,15 +287,31 @@ const COMPLEXION_OPTIONS = [
 
         if (snap.exists()) {
           const data = snap.data();
-          const shapes = data?.bodyShapes || {};
+
+          console.log("onboarding_assets keys:", Object.keys(data || {}));
+          console.log("bodyShapes exists?", !!data?.bodyShapes, "bodyshapes exists?", !!data?.bodyshapes);
+
+          
+          const shapes = data?.bodyShapes || data?.bodyshapes || data?.bodyShape || data?.body_shapes || {};
+
+          const normalize = (val) =>
+            Array.isArray(val)
+              ? val
+              : val && typeof val === "object"
+                ? Object.values(val)
+                : [];
+
           setBodyShapeAssets({
-            female: Array.isArray(shapes.female) ? shapes.female : [],
-            male: Array.isArray(shapes.male) ? shapes.male : [],
+            female: normalize(shapes.female),
+            male: normalize(shapes.male),
           });
+
         } else {
           // ✅ doc not found → still set empty so UI doesn't hang
           setBodyShapeAssets({ female: [], male: [] });
         }
+        console.log("female raw:", shapes.female);
+        console.log("female normalized:", normalize(shapes.female));
 
       } catch (e) {
         console.error("Failed to load bodyShapes:", e);
