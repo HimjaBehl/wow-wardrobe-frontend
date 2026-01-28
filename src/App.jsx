@@ -193,7 +193,14 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
         <div className="wow-profile-label">
           <div style={{ fontWeight: 600, marginBottom: 8 }}>Body Shape</div>
 
-          {assetsLoading && <div style={{ opacity: 0.7 }}>Loading body shapes…</div>}
+          {assetsLoading ? (
+            <div style={{ opacity: 0.7 }}>Loading body shapes…</div>
+          ) : (
+            ((gender === "Male" ? bodyShapeAssets.male : bodyShapeAssets.female).length === 0) && (
+              <div style={{ opacity: 0.7 }}>No body shapes found in Firestore.</div>
+            )
+          )}
+
 
           <div className="wow-card-grid">
             {(gender === "Male" ? bodyShapeAssets.male : bodyShapeAssets.female).map((opt) => {
@@ -256,7 +263,8 @@ const COMPLEXION_OPTIONS = [
   { key: "deep", label: "Deep" },
 ];
 
-function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShapeAssets, assetsLoading }) {
+  function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShapeAssets, assetsLoading, setBodyShapeAssets, setAssetsLoading }) {
+
 
   const [formGender, setFormGender] = useState(userPrefs?.gender || "");
   const [formBodyShape, setFormBodyShape] = useState(userPrefs?.bodyShape || "");
@@ -283,7 +291,11 @@ function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShape
             female: Array.isArray(shapes.female) ? shapes.female : [],
             male: Array.isArray(shapes.male) ? shapes.male : [],
           });
+        } else {
+          // ✅ doc not found → still set empty so UI doesn't hang
+          setBodyShapeAssets({ female: [], male: [] });
         }
+
       } catch (e) {
         console.error("Failed to load bodyShapes:", e);
       } finally {
@@ -357,7 +369,10 @@ function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShape
           <div className="wow-onb-label">
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Body Shape</div>
 
+            {assetsLoading && <div style={{ opacity: 0.7, marginBottom: 8 }}>Loading body shapes…</div>}
+
             <div className="wow-card-grid">
+
               {(formGender === "Male" ? bodyShapeAssets.male : bodyShapeAssets.female).map((opt) => {
                 const active = (formBodyShape || "").toLowerCase() === (opt.id || "").toLowerCase();
                 return (
@@ -1884,6 +1899,8 @@ async function suggestOutfit(options = {}) {
         }}
         bodyShapeAssets={bodyShapeAssets}
         assetsLoading={assetsLoading}
+        setBodyShapeAssets={setBodyShapeAssets}
+        setAssetsLoading={setAssetsLoading}
       />
 
       
