@@ -245,8 +245,7 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
 
 
 
-const [bodyShapeAssets, setBodyShapeAssets] = useState({ female: [], male: [] });
-const [assetsLoading, setAssetsLoading] = useState(true);
+
 
 const COMPLEXION_OPTIONS = [
   { key: "fair", label: "Fair" },
@@ -452,6 +451,8 @@ export default function App() {
     setViewOpen(true);
   };
 
+  const [bodyShapeAssets, setBodyShapeAssets] = useState({ female: [], male: [] });
+  const [assetsLoading, setAssetsLoading] = useState(true);
 
   const closePlanViewer = () => {
     setViewOpen(false);
@@ -2838,6 +2839,8 @@ async function suggestOutfit(options = {}) {
                     setUserPrefs((prev) => ({ ...prev, ...prefs }));
                     setNeedsOnboarding(false);
                   }}
+                  bodyShapeAssets={bodyShapeAssets}
+                  assetsLoading={assetsLoading}
                 />
 
                 <div style={{ marginTop: 16 }}>
