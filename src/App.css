@@ -3542,3 +3542,30 @@ a{ color:var(--link); }
   margin-bottom: 8px;
   background: #f2f2f2;
 }
+
+.bodyshape-card {
+  width: 140px;
+  padding: 12px;
+  border-radius: 16px;
+}
+
+.bodyshape-image {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.bodyshape-card.selected {
+  border: 2px solid #000;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+}
+
+.bodyshape-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-height: 360px;
+  overflow-y: auto;
+}
