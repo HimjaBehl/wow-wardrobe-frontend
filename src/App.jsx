@@ -148,7 +148,8 @@ function LoadingState({ text = "Loading…" }) {
   );
 }
 
-function ProfileOnboardingEditor({ userPrefs, onSave }) {
+function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoading }) {
+
   const [gender, setGender] = useState(userPrefs?.gender || "");
   const [bodyShape, setBodyShape] = useState(userPrefs?.bodyShape || "");
   const [complexion, setComplexion] = useState(userPrefs?.complexion || "");
@@ -192,21 +193,25 @@ function ProfileOnboardingEditor({ userPrefs, onSave }) {
         <div className="wow-profile-label">
           <div style={{ fontWeight: 600, marginBottom: 8 }}>Body Shape</div>
 
+          {assetsLoading && <div style={{ opacity: 0.7 }}>Loading body shapes…</div>}
+
           <div className="wow-card-grid">
-            {BODY_SHAPE_OPTIONS.map((opt) => {
-              const active = (bodyShape || "").toLowerCase() === opt.label.toLowerCase();
+            {(gender === "Male" ? bodyShapeAssets.male : bodyShapeAssets.female).map((opt) => {
+              const active = (bodyShape || "").toLowerCase() === (opt.id || "").toLowerCase();
               return (
                 <button
-                  key={opt.key}
+                  key={opt.id}
                   type="button"
                   className={`wow-choice-card ${active ? "is-active" : ""}`}
-                  onClick={() => setBodyShape(opt.label)}
+                  onClick={() => setBodyShape(opt.id)}
                 >
+                  <img src={opt.image_url} alt={opt.label} className="shapeImage" />
                   <div className="wow-choice-title">{opt.label}</div>
                   {opt.hint ? <div className="wow-choice-hint">{opt.hint}</div> : null}
                 </button>
               );
             })}
+
           </div>
         </div>
 
@@ -238,14 +243,10 @@ function ProfileOnboardingEditor({ userPrefs, onSave }) {
   );
 }
 
-const BODY_SHAPE_OPTIONS = [
-  { key: "hourglass", label: "Hourglass", hint: "Balanced bust + hips" },
-  { key: "pear", label: "Pear", hint: "Hips > shoulders" },
-  { key: "apple", label: "Apple", hint: "Midsection focus" },
-  { key: "rectangle", label: "Rectangle", hint: "Straight silhouette" },
-  { key: "inverted", label: "Inverted Triangle", hint: "Shoulders > hips" },
-  { key: "athletic", label: "Athletic", hint: "Lean + defined" },
-];
+
+
+const [bodyShapeAssets, setBodyShapeAssets] = useState({ female: [], male: [] });
+const [assetsLoading, setAssetsLoading] = useState(true);
 
 const COMPLEXION_OPTIONS = [
   { key: "fair", label: "Fair" },
@@ -256,13 +257,8 @@ const COMPLEXION_OPTIONS = [
   { key: "deep", label: "Deep" },
 ];
 
-function OnboardingModal({
-  open,
-  uid,
-  userPrefs,
-  onClose,
-  onSavePrefs,
-}) {
+function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShapeAssets, assetsLoading }) {
+
   const [formGender, setFormGender] = useState(userPrefs?.gender || "");
   const [formBodyShape, setFormBodyShape] = useState(userPrefs?.bodyShape || "");
   const [formComplexion, setFormComplexion] = useState(userPrefs?.complexion || "");
@@ -273,6 +269,31 @@ function OnboardingModal({
     setFormBodyShape(userPrefs?.bodyShape || "");
     setFormComplexion(userPrefs?.complexion || "");
   }, [userPrefs]);
+
+  useEffect(() => {
+    const loadBodyShapes = async () => {
+      try {
+        setAssetsLoading(true);
+        const ref = doc(db, "app_config", "onboarding_assets");
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          const data = snap.data();
+          const shapes = data?.bodyShapes || {};
+          setBodyShapeAssets({
+            female: Array.isArray(shapes.female) ? shapes.female : [],
+            male: Array.isArray(shapes.male) ? shapes.male : [],
+          });
+        }
+      } catch (e) {
+        console.error("Failed to load bodyShapes:", e);
+      } finally {
+        setAssetsLoading(false);
+      }
+    };
+
+    loadBodyShapes();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -338,20 +359,22 @@ function OnboardingModal({
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Body Shape</div>
 
             <div className="wow-card-grid">
-              {BODY_SHAPE_OPTIONS.map((opt) => {
-                const active = (formBodyShape || "").toLowerCase() === opt.label.toLowerCase();
+              {(formGender === "Male" ? bodyShapeAssets.male : bodyShapeAssets.female).map((opt) => {
+                const active = (formBodyShape || "").toLowerCase() === (opt.id || "").toLowerCase();
                 return (
                   <button
-                    key={opt.key}
+                    key={opt.id}
                     type="button"
                     className={`wow-choice-card ${active ? "is-active" : ""}`}
-                    onClick={() => setFormBodyShape(opt.label)}
+                    onClick={() => setFormBodyShape(opt.id)}
                   >
+                    <img src={opt.image_url} alt={opt.label} className="shapeImage" />
                     <div className="wow-choice-title">{opt.label}</div>
                     {opt.hint ? <div className="wow-choice-hint">{opt.hint}</div> : null}
                   </button>
                 );
               })}
+
             </div>
           </div>
 
@@ -1858,6 +1881,8 @@ async function suggestOutfit(options = {}) {
           setNeedsOnboarding(false);
           setOnboardingOpen(false);
         }}
+        bodyShapeAssets={bodyShapeAssets}
+        assetsLoading={assetsLoading}
       />
 
       
@@ -2814,6 +2839,7 @@ async function suggestOutfit(options = {}) {
                     setNeedsOnboarding(false);
                   }}
                 />
+
                 <div style={{ marginTop: 16 }}>
                   <button className="btn btn-secondary" onClick={handleLogout}>
                     Logout
