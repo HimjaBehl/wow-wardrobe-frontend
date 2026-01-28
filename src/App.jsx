@@ -142,15 +142,26 @@ function toFeedbackItems(look) {
 const SHOW_TRENDS = false;
 
 const COMPLEXION_OPTIONS = [
-  { id: "fair", label: "Fair", hex: "#F7E7D9" },
-  { id: "light", label: "Light", hex: "#E9C9B3" },
-  { id: "medium", label: "Medium", hex: "#D1A27F" },
-  { id: "wheatish", label: "Wheatish", hex: "#B8845F" },
-  { id: "tan", label: "Tan", hex: "#8D5A3D" },
-  { id: "deep", label: "Deep", hex: "#4A2C1F" },
-  { id: "very_fair", label: "Very fair", hex: "#FBEFE6" },
-  { id: "deep_2", label: "Deep+", hex: "#2B1A13" },
+  // light (less “white”)
+  { id: "light_1", label: "Light 1", hex: "#F2D6C9" },
+  { id: "light_2", label: "Light 2", hex: "#E7C3B0" },
+
+  // medium (more variety)
+  { id: "medium_1", label: "Medium 1", hex: "#D2A07C" },
+  { id: "medium_2", label: "Medium 2", hex: "#C38961" },
+  { id: "medium_3", label: "Medium 3", hex: "#B1734B" },
+
+  // brown (3 shades)
+  { id: "brown_1", label: "Brown 1", hex: "#9A5E3D" },
+  { id: "brown_2", label: "Brown 2", hex: "#7E442B" },
+  { id: "brown_3", label: "Brown 3", hex: "#5F2F1E" },
+
+  // deep brown (3 shades)
+  { id: "deep_1", label: "Deep 1", hex: "#4B2417" },
+  { id: "deep_2", label: "Deep 2", hex: "#35180F" },
+  { id: "deep_3", label: "Deep 3", hex: "#241009" },
 ];
+
 
 function LoadingState({ text = "Loading…" }) {
   return (
@@ -252,7 +263,7 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
                   role="listitem"
                 >
                   <span className="wow-swatch-dot" style={{ backgroundColor: opt.hex }} />
-                  <span className="wow-swatch-label">{opt.label}</span>
+                  
                 </button>
               );
             })}
@@ -447,7 +458,7 @@ function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShape
                     role="listitem"
                   >
                     <span className="wow-swatch-dot" style={{ backgroundColor: opt.hex }} />
-                    <span className="wow-swatch-label">{opt.label}</span>
+                    
                   </button>
                 );
               })}
