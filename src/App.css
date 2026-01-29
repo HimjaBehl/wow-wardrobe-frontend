@@ -3706,3 +3706,16 @@ a{ color:var(--link); }
   .wow-swatch-grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .wow-swatch-dot{ width: 30px; height: 30px; }
 }
+
+.change-pref-btn{
+  border:1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.06);
+  color:#fff;
+  padding:6px 12px;
+  border-radius:10px;
+  font-size:12px;
+  cursor:pointer;
+}
+.change-pref-btn:hover{
+  background: rgba(255,255,255,.12);
+}

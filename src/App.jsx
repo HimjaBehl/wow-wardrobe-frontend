@@ -178,6 +178,8 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
   const [complexion, setComplexion] = useState(userPrefs?.complexion || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [lockedPrefs, setLockedPrefs] = useState(false);
+
 
   useEffect(() => {
     setGender(userPrefs?.gender || "");
@@ -202,7 +204,19 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
   return (
     <div className="wow-profile-editor">
       <h3 className="wow-profile-editor-title">Styling Preferences</h3>
-      <div className="wow-profile-editor-grid">
+        <div className="wow-profile-editor-grid">
+          {lockedPrefs && (
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+              <button
+                type="button"
+                className="change-pref-btn"
+                onClick={() => setLockedPrefs(false)}
+              >
+                Change
+              </button>
+            </div>
+          )}
+
         <label className="wow-profile-label">
           Gender
           <select value={gender} onChange={(e) => setGender(e.target.value)} className="wow-profile-select">
@@ -226,14 +240,17 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
             }
             return (
               <div className="wow-card-grid">
-                {list.map((opt) => {
+                {(lockedPrefs ? list.filter(o => (o.id || "").toLowerCase() === (bodyShape || "").toLowerCase()) : list).map((opt) => {
                   const active = (bodyShape || "").toLowerCase() === (opt.id || "").toLowerCase();
                   return (
                     <button
                       key={opt.id}
                       type="button"
                       className={`wow-choice-card ${active ? "is-active" : ""}`}
-                      onClick={() => setBodyShape(opt.id)}
+                      onClick={() => {
+                        setBodyShape(opt.id);
+                        if (complexion) setLockedPrefs(true);
+                      }}
                     >
                       {opt.image_url && <img src={opt.image_url} alt={opt.label} className="shapeImage" />}
                       <div className="wow-choice-title">{opt.label}</div>
@@ -250,14 +267,18 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
           <div style={{ fontWeight: 600, marginBottom: 8 }}>Complexion</div>
 
           <div className="wow-swatch-grid" role="list">
-            {COMPLEXION_OPTIONS.map((opt) => {
+      {(lockedPrefs ? COMPLEXION_OPTIONS.filter(o => o.id.toLowerCase() === (complexion || "").toLowerCase()) : COMPLEXION_OPTIONS).map((opt) => {
+
               const active = (complexion || "").toLowerCase() === opt.id.toLowerCase();
               return (
                 <button
                   key={opt.id}
                   type="button"
                   className={`wow-swatch ${active ? "is-active" : ""}`}
-                  onClick={() => setComplexion(opt.id)}
+                  onClick={() => {
+                    setComplexion(opt.id);
+                    if (bodyShape) setLockedPrefs(true);
+                  }}
                   aria-label={opt.label}
                   title={opt.label}
                   role="listitem"
@@ -283,11 +304,19 @@ function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShape
   const [formComplexion, setFormComplexion] = useState(userPrefs?.complexion || "");
   const [saving, setSaving] = useState(false);
 
+// ✅ NEW: lock UI after both selections
+const [lockedPrefs, setLockedPrefs] = useState(false);
+
+
   useEffect(() => {
     setFormGender(userPrefs?.gender || "");
     setFormBodyShape(userPrefs?.bodyShape || "");
     setFormComplexion(userPrefs?.complexion || "");
+
+    // ✅ unlock when prefs change / modal loads
+    setLockedPrefs(false);
   }, [userPrefs]);
+
 
   useEffect(() => {
     const loadBodyShapes = async () => {
@@ -419,40 +448,65 @@ function OnboardingModal({ open, uid, userPrefs, onClose, onSavePrefs, bodyShape
 
             {assetsLoading && <div style={{ opacity: 0.7, marginBottom: 8 }}>Loading body shapes…</div>}
 
+            {lockedPrefs && (
+              <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+                <button
+                  type="button"
+                  className="change-pref-btn"
+                  onClick={() => setLockedPrefs(false)}
+                >
+                  Change
+                </button>
+              </div>
+            )}
+
             <div className="wow-card-grid">
 
-              {(formGender === "Male" ? bodyShapeAssets.male : bodyShapeAssets.female).map((opt) => {
+      {(() => {
+        const list = (formGender === "Male" ? bodyShapeAssets.male : bodyShapeAssets.female) || [];
+        const viewList = lockedPrefs
+          ? list.filter(o => (o.id || "").toLowerCase() === (formBodyShape || "").toLowerCase())
+          : list;
+        return viewList.map((opt) => {
+
                 const active = (formBodyShape || "").toLowerCase() === (opt.id || "").toLowerCase();
                 return (
                   <button
                     key={opt.id}
                     type="button"
                     className={`wow-choice-card ${active ? "is-active" : ""}`}
-                    onClick={() => setFormBodyShape(opt.id)}
+                    onClick={() => {
+                      setFormBodyShape(opt.id);
+                      if (formComplexion) setLockedPrefs(true);
+                    }}
+
                   >
                     <img src={opt.image_url} alt={opt.label} className="shapeImage" />
                     <div className="wow-choice-title">{opt.label}</div>
                     {opt.hint ? <div className="wow-choice-hint">{opt.hint}</div> : null}
                   </button>
                 );
-              })}
-
+              });
+            })()}
             </div>
           </div>
-
 
           <div className="wow-onb-label">
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Complexion</div>
 
             <div className="wow-swatch-grid" role="list">
-              {COMPLEXION_OPTIONS.map((opt) => {
+              {(lockedPrefs ? COMPLEXION_OPTIONS.filter(o => o.id.toLowerCase() === (formComplexion || "").toLowerCase()) : COMPLEXION_OPTIONS).map((opt) => {
                 const active = (formComplexion || "").toLowerCase() === opt.id.toLowerCase();
                 return (
                   <button
                     key={opt.id}
                     type="button"
                     className={`wow-swatch ${active ? "is-active" : ""}`}
-                    onClick={() => setFormComplexion(opt.id)}
+                    onClick={() => {
+                      setFormComplexion(opt.id);
+                      if (formBodyShape) setLockedPrefs(true);
+                    }}
+
                     aria-label={opt.label}
                     title={opt.label}
                     role="listitem"
@@ -514,6 +568,12 @@ export default function App() {
     setViewPlan(safe);
     setViewOpen(true);
   };
+
+  const [selectedBodyshape, setSelectedBodyshape] = useState(null);
+  const [selectedComplexion, setSelectedComplexion] = useState(null);
+
+  // NEW
+  const [lockedPrefs, setLockedPrefs] = useState(false);
 
   const [bodyShapeAssets, setBodyShapeAssets] = useState({ female: [], male: [] });
   const [assetsLoading, setAssetsLoading] = useState(true);
