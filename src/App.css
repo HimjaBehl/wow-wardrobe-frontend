@@ -3140,25 +3140,32 @@ a{ color:var(--link); }
 .wow-onb-overlay{
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.62);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(0,0,0,0.55);
   z-index: 3000;
-  padding: 18px;
-  backdrop-filter: blur(6px);
+
+  display: flex;
+  justify-content: center;
+
+  /* ✅ important for mobile: don't center vertically (causes clipping) */
+  align-items: flex-start;
+
+  padding: 14px;
+  padding-top: calc(14px + env(safe-area-inset-top));
 }
 
+
 .wow-onb-card{
-  width: min(520px, 100%);
-  background: rgba(18,18,18,0.92);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 20px;
-  padding: 22px 20px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
-  transform: translateY(6px);
-  animation: wowOnbIn 180ms ease-out forwards;
-  position: relative;
+  width: min(520px, 94vw);
+  background: #0b0b0b;
+  color: #fff;
+  border-radius: 16px;
+
+  /* ✅ key fix */
+  max-height: calc(100vh - 28px - env(safe-area-inset-top));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  padding: 16px;
 }
 
 @keyframes wowOnbIn{

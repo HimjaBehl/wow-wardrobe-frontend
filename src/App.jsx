@@ -448,7 +448,18 @@ const [lockedPrefs, setLockedPrefs] = useState(false);
   };
 
   return (
-    <div className="wow-onb-overlay" role="dialog" aria-modal="true" onClick={handleDismiss}>
+      <div
+        className="wow-onb-overlay"
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) handleDismiss();
+        }}
+        onTouchStart={(e) => {
+          if (e.target === e.currentTarget) handleDismiss();
+        }}
+      >
+
       <div className="wow-onb-card" onClick={(e) => e.stopPropagation()}>
         <div className="wow-onb-header">
           <div className="wow-onb-progress" aria-label="Onboarding progress">
