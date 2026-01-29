@@ -8,8 +8,9 @@ import {
   browserLocalPersistence,
   signInWithRedirect,
   getRedirectResult,
-  signInWithPopup, // ✅ ADD
+  signInWithPopup
 } from "firebase/auth";
+
 import { getFirestore, collection, query, where } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -45,5 +46,5 @@ export {
   where,
   signInWithRedirect,
   getRedirectResult,
-  signInWithPopup, // ✅ EXPORT
+  signInWithPopup
 };
