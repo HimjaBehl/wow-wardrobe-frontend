@@ -6,7 +6,8 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import "./App.css";
 import "./Wardrobe.css";
 import Onboarding from "./Onboarding";
-import { storage, auth, provider, signInWithPopup, signOut, db } from "./firebase";
+import { storage, auth, provider, signOut, db, signInWithRedirect, getRedirectResult } from "./firebase";
+
 import { query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import WeeklyPlanner from "./WeeklyPlanner";
@@ -871,6 +872,22 @@ export default function App() {
 
   }, [user]);
 
+  useEffect(() => {
+    // ✅ Completes Google redirect flow (iOS/Safari)
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          setUser(result.user);
+          fetchItems(result.user.uid);
+          fetchTodayPlan(result.user.uid);
+          setNeedsOnboarding(true);
+        }
+      })
+      .catch((err) => {
+        // Not fatal — just log
+        console.warn("Redirect result error:", err);
+      });
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
@@ -913,13 +930,11 @@ export default function App() {
 
   const handleLogin = async () => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      setUser(result.user);
-      fetchItems(result.user.uid);
-      setNeedsOnboarding(true);
-
+      // ✅ Best for iOS / Safari / WhatsApp browser
+      await signInWithRedirect(auth, provider);
     } catch (err) {
       console.error("Login failed:", err.message);
+      alert("Login failed. Please try again.");
     }
   };
 
