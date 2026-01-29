@@ -7,7 +7,8 @@ import {
   setPersistence,
   browserLocalPersistence,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  signInWithPopup, // ✅ ADD
 } from "firebase/auth";
 import { getFirestore, collection, query, where } from "firebase/firestore";
 
@@ -17,7 +18,7 @@ const firebaseConfig = {
   projectId: "wowapp1406",
   storageBucket: "wowapp1406.appspot.com",
   messagingSenderId: "397999508782",
-  appId: "1:397999508782:web:a2ddb8e1c9c577747d3ebf"
+  appId: "1:397999508782:web:a2ddb8e1c9c577747d3ebf",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -25,7 +26,7 @@ const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 const auth = getAuth(app);
 
-// ✅ Persist auth across Safari / iOS / in-app browsers
+// ✅ Persist auth across refresh
 setPersistence(auth, browserLocalPersistence).catch((err) => {
   console.warn("Auth persistence failed:", err);
 });
@@ -43,5 +44,6 @@ export {
   query,
   where,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  signInWithPopup, // ✅ EXPORT
 };
