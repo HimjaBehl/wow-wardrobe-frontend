@@ -178,14 +178,28 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
   const [complexion, setComplexion] = useState(userPrefs?.complexion || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // ✅ NEW: stop userPrefs from overwriting while editing
+  const [dirtyPrefs, setDirtyPrefs] = useState(false);
+
+  // ✅ lock UI after both selections
   const [lockedPrefs, setLockedPrefs] = useState(false);
 
 
+
+
   useEffect(() => {
+    // ✅ if user is actively editing, don't overwrite their picks
+    if (dirtyPrefs) return;
+
     setGender(userPrefs?.gender || "");
     setBodyShape(userPrefs?.bodyShape || "");
     setComplexion(userPrefs?.complexion || "");
-  }, [userPrefs]);
+
+    // ✅ if prefs already exist, keep locked view
+    const hasBoth = !!(userPrefs?.bodyShape && userPrefs?.complexion);
+    setLockedPrefs(hasBoth);
+  }, [userPrefs, dirtyPrefs]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -193,7 +207,13 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
     try {
       await onSave({ gender, bodyShape, complexion });
       setSaved(true);
+
+      // ✅ persist locked state after saving
+      setDirtyPrefs(false);
+      setLockedPrefs(true);
+
       setTimeout(() => setSaved(false), 2000);
+
     } catch (err) {
       console.error("Error saving profile:", err);
     } finally {
@@ -210,7 +230,11 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
               <button
                 type="button"
                 className="change-pref-btn"
-                onClick={() => setLockedPrefs(false)}
+                onClick={() => {
+                  setLockedPrefs(false);
+                  setDirtyPrefs(false);
+                }}
+
               >
                 Change
               </button>
@@ -248,9 +272,11 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
                       type="button"
                       className={`wow-choice-card ${active ? "is-active" : ""}`}
                       onClick={() => {
+                        setDirtyPrefs(true);
                         setBodyShape(opt.id);
                         if (complexion) setLockedPrefs(true);
                       }}
+
                     >
                       {opt.image_url && <img src={opt.image_url} alt={opt.label} className="shapeImage" />}
                       <div className="wow-choice-title">{opt.label}</div>
@@ -276,9 +302,11 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
                   type="button"
                   className={`wow-swatch ${active ? "is-active" : ""}`}
                   onClick={() => {
+                    setDirtyPrefs(true);
                     setComplexion(opt.id);
                     if (bodyShape) setLockedPrefs(true);
                   }}
+
                   aria-label={opt.label}
                   title={opt.label}
                   role="listitem"
@@ -313,9 +341,11 @@ const [lockedPrefs, setLockedPrefs] = useState(false);
     setFormBodyShape(userPrefs?.bodyShape || "");
     setFormComplexion(userPrefs?.complexion || "");
 
-    // ✅ unlock when prefs change / modal loads
-    setLockedPrefs(false);
+    // ✅ if prefs already exist, start locked (and don't keep flipping)
+    const hasBoth = !!(userPrefs?.bodyShape && userPrefs?.complexion);
+    setLockedPrefs(hasBoth);
   }, [userPrefs]);
+
 
 
   useEffect(() => {
