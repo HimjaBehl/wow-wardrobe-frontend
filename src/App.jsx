@@ -223,10 +223,12 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
 
   return (
     <div className="wow-profile-editor">
-      <h3 className="wow-profile-editor-title">Styling Preferences</h3>
+      
         <div className="wow-profile-editor-grid">
-          {lockedPrefs && (
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+          <div className="prefs-head">
+            
+
+            {lockedPrefs && (
               <button
                 type="button"
                 className="change-pref-btn"
@@ -234,12 +236,11 @@ function ProfileOnboardingEditor({ userPrefs, onSave, bodyShapeAssets, assetsLoa
                   setLockedPrefs(false);
                   setDirtyPrefs(false);
                 }}
-
               >
                 Change
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
         <label className="wow-profile-label">
           Gender

@@ -3719,3 +3719,125 @@ a{ color:var(--link); }
 .change-pref-btn:hover{
   background: rgba(255,255,255,.12);
 }
+/* ✅ Profile prefs – clean layout */
+.wow-profile-editor{
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.prefs-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom: 14px;
+}
+
+.wow-profile-editor-title{
+  margin:0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.change-pref-btn{
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.change-pref-btn:hover{
+  background: rgba(255,255,255,0.12);
+}
+
+/* ✅ grid spacing */
+.wow-profile-editor-grid{
+  display:grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 18px;
+  align-items:start;
+}
+
+/* ✅ body shape cards */
+.wow-card-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.wow-choice-card{
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: 12px;
+  text-align:left;
+  cursor:pointer;
+}
+.wow-choice-card.is-active{
+  border-color: rgba(255,255,255,0.35);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.08) inset;
+}
+
+.shapeImage{
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  margin-bottom: 10px;
+}
+
+/* ✅ complexion swatches */
+.wow-swatch-grid{
+  display:grid;
+  grid-template-columns: repeat(4, 44px);
+  gap: 10px;
+}
+.wow-swatch{
+  width:44px;
+  height:44px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.10);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.wow-swatch.is-active{
+  border-color: rgba(255,255,255,0.35);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.08) inset;
+}
+.wow-swatch-dot{
+  width:26px;
+  height:26px;
+  border-radius: 10px;
+}
+
+/* ✅ save button (not huge bar) */
+.wow-profile-save{
+  margin-top: 16px;
+  width: 220px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 0;
+  background: #ffffff;
+  color: #000;
+  font-weight: 700;
+  cursor: pointer;
+}
+.wow-profile-save:disabled{
+  opacity: 0.6;
+  cursor:not-allowed;
+}
+
+/* Mobile fallback */
+@media (max-width: 900px){
+  .wow-profile-editor-grid{
+    grid-template-columns: 1fr;
+  }
+  .wow-swatch-grid{
+    grid-template-columns: repeat(6, 44px);
+  }
+}
