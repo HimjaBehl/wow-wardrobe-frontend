@@ -6,7 +6,9 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import "./App.css";
 import "./Wardrobe.css";
 import Onboarding from "./Onboarding";
-import { storage, auth, provider, signOut, db, signInWithRedirect, getRedirectResult } from "./firebase";
+import { storage, auth, provider, signOut, db } from "./firebase";
+import { signInWithRedirect, getRedirectResult } from "firebase/auth";
+
 
 import { query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -878,12 +880,18 @@ export default function App() {
   useEffect(() => {
     getRedirectResult(auth)
       .then((result) => {
-        console.log("REDIRECT RESULT:", result?.user?.uid || null);
+        console.log("REDIRECT RESULT RAW:", result);
+        if (result?.user) {
+          console.log("✅ REDIRECT USER:", result.user.uid, result.user.email);
+        } else {
+          console.log("⚠️ No redirect user returned");
+        }
       })
-          .catch((err) => {
-            console.warn("Redirect result error FULL:", err, err?.code, err?.message);
-          });
-      }, []);
+      .catch((err) => {
+        console.warn("❌ REDIRECT ERROR:", err?.code, err?.message, err);
+      });
+  }, []);
+
 
       useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
