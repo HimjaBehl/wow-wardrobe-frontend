@@ -895,9 +895,10 @@ export default function App() {
         }
       })
       .catch((err) => {
-        // Not fatal — just log
-        console.warn("Redirect result error:", err);
+        console.warn("Redirect result error:", err?.code, err?.message, err);
+        alert(`Redirect error: ${err?.code}\n${err?.message}`);
       });
+
   }, []);
 
   useEffect(() => {
