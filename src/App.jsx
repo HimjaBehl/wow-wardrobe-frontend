@@ -370,6 +370,10 @@ const [lockedPrefs, setLockedPrefs] = useState(false);
             data?.body_shapes ||
             {};
 
+          console.log("female raw:", shapes?.female);
+          console.log("female normalized:", normalize(shapes?.female));
+
+          
           // ✅ Firestore console often stores these as MAPS with numeric keys "0","1","2"
           const normalize = (val) => {
             if (Array.isArray(val)) return val;
@@ -391,8 +395,7 @@ const [lockedPrefs, setLockedPrefs] = useState(false);
           const femaleList = normalize(shapes.female);
           const maleList = normalize(shapes.male);
 
-          console.log("female raw:", shapes.female);
-          console.log("female normalized:", femaleList);
+         
 
           setBodyShapeAssets({
             female: femaleList,
@@ -402,8 +405,7 @@ const [lockedPrefs, setLockedPrefs] = useState(false);
           setBodyShapeAssets({ female: [], male: [] });
         }
 
-        console.log("female raw:", shapes.female);
-        console.log("female normalized:", normalize(shapes.female));
+        
 
       } catch (e) {
         console.error("Failed to load bodyShapes:", e);
