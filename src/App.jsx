@@ -884,21 +884,14 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    // ✅ Completes Google redirect flow (iOS/Safari)
     getRedirectResult(auth)
       .then((result) => {
-        if (result?.user) {
-          setUser(result.user);
-          fetchItems(result.user.uid);
-          fetchTodayPlan(result.user.uid);
-          setNeedsOnboarding(true);
-        }
+        console.log("✅ getRedirectResult:", result);
       })
       .catch((err) => {
-        console.warn("Redirect result error:", err?.code, err?.message, err);
-        alert(`Redirect error: ${err?.code}\n${err?.message}`);
+        console.error("❌ getRedirectResult:", err?.code, err?.message, err);
+        alert(`Auth error: ${err?.code || err?.message || "unknown"}`);
       });
-
   }, []);
 
   useEffect(() => {
