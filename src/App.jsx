@@ -7,7 +7,7 @@ import "./App.css";
 import "./Wardrobe.css";
 import Onboarding from "./Onboarding";
 import { storage, auth, provider, signOut, db } from "./firebase";
-import { signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { signInWithRedirect, getRedirectResult, onAuthStateChanged } from "firebase/auth";
 
 
 import { query, where } from "firebase/firestore";
@@ -894,7 +894,7 @@ export default function App() {
 
 
       useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
           console.log("AUTH STATE:", firebaseUser ? firebaseUser.uid : null);
           setUser(firebaseUser);
       if (firebaseUser) {
