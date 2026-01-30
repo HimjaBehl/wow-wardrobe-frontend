@@ -354,61 +354,50 @@ const [lockedPrefs, setLockedPrefs] = useState(false);
     const loadBodyShapes = async () => {
       try {
         setAssetsLoading(true);
-        const ref = doc(db, "app_config", "onboarding_assets");
-        const snap = await getDoc(ref);
 
-        if (snap.exists()) {
-          const data = snap.data();
+        const refDoc = doc(db, "app_config", "onboarding_assets");
+        const snap = await getDoc(refDoc);
 
-          console.log("onboarding_assets keys:", Object.keys(data || {}));
-          console.log("bodyShapes exists?", !!data?.bodyShapes, "bodyshapes exists?", !!data?.bodyshapes);
-
-          const shapes =
-            data?.bodyShapes ||
-            data?.bodyshapes ||
-            data?.bodyShape ||
-            data?.body_shapes ||
-            {};
-
-          console.log("female raw:", shapes?.female);
-          console.log("female normalized:", normalize(shapes?.female));
-
-          
-          // ✅ Firestore console often stores these as MAPS with numeric keys "0","1","2"
-          const normalize = (val) => {
-            if (Array.isArray(val)) return val;
-
-            if (val && typeof val === "object") {
-              // keep numeric order if keys are "0","1","2"
-              return Object.entries(val)
-                .sort(([a], [b]) => Number(a) - Number(b))
-                .map(([k, v]) => ({
-                  // ensure an id exists so React keys + selection works
-                  id: v?.id || v?.key || v?.label || `shape_${k}`,
-                  ...v,
-                }));
-            }
-
-            return [];
-          };
-
-          const femaleList = normalize(shapes.female);
-          const maleList = normalize(shapes.male);
-
-         
-
-          setBodyShapeAssets({
-            female: femaleList,
-            male: maleList,
-          });
-        } else {
+        if (!snap.exists()) {
           setBodyShapeAssets({ female: [], male: [] });
+          return;
         }
 
-        
+        const data = snap.data() || {};
+        console.log("onboarding_assets keys:", Object.keys(data));
 
+        const shapes =
+          data.bodyShapes ||
+          data.bodyshapes ||
+          data.bodyShape ||
+          data.body_shapes ||
+          {};
+
+        const normalize = (val) => {
+          if (Array.isArray(val)) return val;
+
+          if (val && typeof val === "object") {
+            return Object.entries(val)
+              .sort(([a], [b]) => Number(a) - Number(b))
+              .map(([k, v]) => ({
+                id: v?.id || v?.key || v?.label || `shape_${k}`,
+                ...v,
+              }));
+          }
+
+          return [];
+        };
+
+        const femaleList = normalize(shapes?.female);
+        const maleList = normalize(shapes?.male);
+
+        console.log("female normalized length:", femaleList.length);
+        console.log("male normalized length:", maleList.length);
+
+        setBodyShapeAssets({ female: femaleList, male: maleList });
       } catch (e) {
         console.error("Failed to load bodyShapes:", e);
+        setBodyShapeAssets({ female: [], male: [] });
       } finally {
         setAssetsLoading(false);
       }
@@ -416,6 +405,7 @@ const [lockedPrefs, setLockedPrefs] = useState(false);
 
     loadBodyShapes();
   }, []);
+
 
   useEffect(() => {
     if (!open) return;
@@ -888,17 +878,17 @@ export default function App() {
   useEffect(() => {
     getRedirectResult(auth)
       .then((result) => {
-        console.log("✅ getRedirectResult:", result);
+        console.log("REDIRECT RESULT:", result?.user?.uid || null);
       })
-      .catch((err) => {
-        console.error("❌ getRedirectResult:", err?.code, err?.message, err);
-        alert(`Auth error: ${err?.code || err?.message || "unknown"}`);
-      });
-  }, []);
+          .catch((err) => {
+            console.warn("Redirect result error FULL:", err, err?.code, err?.message);
+          });
+      }, []);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-      setUser(firebaseUser);
+      useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+          console.log("AUTH STATE:", firebaseUser ? firebaseUser.uid : null);
+          setUser(firebaseUser);
       if (firebaseUser) {
         console.log("🔥 Your UID is:", firebaseUser.uid);
         Promise.allSettled([fetchItems(firebaseUser.uid), fetchTodayPlan(firebaseUser.uid)])
@@ -906,9 +896,9 @@ export default function App() {
       } else {
         setLoading(false);
       }
-    });
-    return () => unsubscribe();
-  }, []);
+        });
+          return () => unsubscribe();
+        }, []);
 
 
   // Fetch staples from backend (list of individual items)
