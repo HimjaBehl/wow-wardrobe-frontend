@@ -7,7 +7,7 @@ import "./App.css";
 import "./Wardrobe.css";
 import Onboarding from "./Onboarding";
 import { storage, auth, provider, db } from "./firebase";
-import { signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
+import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 
 
 import { query, where } from "firebase/firestore";
@@ -877,20 +877,6 @@ export default function App() {
 
   }, [user]);
 
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
-        console.log("REDIRECT RESULT RAW:", result);
-        if (result?.user) {
-          console.log("✅ REDIRECT USER:", result.user.uid, result.user.email);
-        } else {
-          console.log("⚠️ No redirect user returned");
-        }
-      })
-      .catch((err) => {
-        console.warn("❌ REDIRECT ERROR:", err?.code, err?.message, err);
-      });
-  }, []);
 
 
       useEffect(() => {
@@ -935,27 +921,18 @@ export default function App() {
 
   const handleLogin = async () => {
     try {
-      console.log("LOGIN CLICK", {
-        authDomain: auth?.app?.options?.authDomain,
-        origin: window.location.origin,
-        href: window.location.href,
-        provider: !!provider,
-      });
-
-      try {
-        await signInWithRedirect(auth, provider);
-      } catch (e) {
-        console.warn("Redirect failed, trying popup:", e?.code);
-        await signInWithPopup(auth, provider);
-      }
-
-
-      // If redirect is blocked/cancelled, code will continue and we can detect that
-      console.log("signInWithRedirect returned without redirect (likely blocked)");
-      alert("Login redirect was blocked. Check authorized domains / browser blocking.");
+      console.log("LOGIN CLICK - using popup auth");
+      const result = await signInWithPopup(auth, provider);
+      console.log("LOGIN SUCCESS:", result?.user?.uid);
     } catch (err) {
-      console.error("Login failed:", err);
-      alert(`Login failed: ${err?.code || ""}\n${err?.message || ""}`);
+      console.error("Login failed:", err?.code, err?.message);
+      if (err?.code === "auth/popup-blocked") {
+        alert("Popup was blocked. Please allow popups for this site.");
+      } else if (err?.code === "auth/popup-closed-by-user") {
+        console.log("User closed the popup");
+      } else {
+        alert(`Login failed: ${err?.message || "Unknown error"}`);
+      }
     }
   };
 
