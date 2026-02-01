@@ -587,6 +587,8 @@ export default function App() {
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [todayPlan, setTodayPlan] = useState({ outfit: { items: [] } });
+  const [autoSuggestedOutfit, setAutoSuggestedOutfit] = useState(null);
+  const [autoSuggestLoading, setAutoSuggestLoading] = useState(false);
 
   // ── Onboarding modal UI state (frontend-only) ──
   const [onboardingOpen, setOnboardingOpen] = useState(false);
@@ -1004,6 +1006,96 @@ export default function App() {
       setTodayPlan(null);
     }
   };
+
+  // Auto-generate outfit suggestion when no plan exists for today
+  useEffect(() => {
+    const hasNoPlan = !todayPlan?.outfit?.items?.length;
+    const hasWardrobe = items.length > 0;
+    const isReady = user?.uid && userPrefs.gender && !loadingPrefs && !autoSuggestLoading;
+    
+    if (hasNoPlan && hasWardrobe && isReady && !autoSuggestedOutfit) {
+      console.log("Auto-generating Tina suggestion for home...");
+      setAutoSuggestLoading(true);
+      
+      // Get user's location for weather-appropriate suggestions
+      const getLocationAndSuggest = async () => {
+        let userCity = city;
+        
+        try {
+          // Try to get user's location
+          if (navigator.geolocation) {
+            const position = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+            });
+            
+            // Reverse geocode to get city name
+            const { latitude, longitude } = position.coords;
+            const geoRes = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+            );
+            const geoData = await geoRes.json();
+            userCity = geoData.address?.city || geoData.address?.town || geoData.address?.state || city;
+            setCity(userCity);
+          }
+        } catch (err) {
+          console.log("Location not available, using default city:", city);
+        }
+        
+        try {
+          const res = await fetch(`${BASE_URL}/suggest-outfit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: user.uid,
+              city: userCity,
+              wardrobe: items.map((w) => ({
+                wardrobe_id: String(w.id),
+                id: String(w.id),
+                image_url: w.image_url,
+                name: w.displayName || w.name || "",
+                category: w.category || "",
+                color: w.color || "",
+              })),
+              profile: {
+                gender: userPrefs.gender,
+                bodyShape: userPrefs.bodyShape,
+                complexion: userPrefs.complexion
+              },
+              constraints: "Smart Casual occasion. Create a stylish everyday outfit.",
+            }),
+          });
+          
+          const rawText = await res.text();
+          let clean = rawText.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+          
+          let data;
+          try {
+            data = JSON.parse(clean);
+          } catch {
+            data = { looks: [] };
+          }
+          
+          // Extract the first look
+          const looks = data.looks || (data.look ? [data.look] : []) || (data.outfits || []);
+          if (looks.length > 0) {
+            const firstLook = looks[0];
+            setAutoSuggestedOutfit({
+              ...firstLook,
+              style_note: firstLook.style_note || "Tina's suggestion for today",
+              isSuggestion: true
+            });
+            console.log("Auto-suggestion ready:", firstLook);
+          }
+        } catch (err) {
+          console.error("Auto-suggestion failed:", err);
+        } finally {
+          setAutoSuggestLoading(false);
+        }
+      };
+      
+      getLocationAndSuggest();
+    }
+  }, [todayPlan, items, user?.uid, userPrefs.gender, loadingPrefs, autoSuggestedOutfit, autoSuggestLoading, city]);
 
 
   const fetchItems = async (uid) => {
@@ -2121,6 +2213,34 @@ async function suggestOutfit(options = {}) {
                   items={items}
                   todayPlan={todayPlan?.outfit?.items ? todayPlan : { outfit: { items: [] } }}
                   onGo={(tab) => setActiveTab(tab)}
+                  autoSuggestedOutfit={autoSuggestedOutfit}
+                  autoSuggestLoading={autoSuggestLoading}
+                  onSaveSuggestion={async (look) => {
+                    if (!user?.uid || !look?.items?.length) return;
+                    try {
+                      const date = new Date().toISOString().split("T")[0];
+                      const res = await fetch(`${BASE_URL}/plan-outfit`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          uid: user.uid,
+                          date,
+                          outfit: {
+                            items: look.items,
+                            style_note: look.style_note || "Tina's Smart Casual suggestion"
+                          }
+                        })
+                      });
+                      if (res.ok) {
+                        setTodayPlan({ outfit: look });
+                        setAutoSuggestedOutfit(null);
+                        alert("Saved to today's plan!");
+                      }
+                    } catch (err) {
+                      console.error("Failed to save suggestion:", err);
+                      alert("Could not save. Please try again.");
+                    }
+                  }}
                 />
 
                 {/* 🔥 Trends below the dashboard */}

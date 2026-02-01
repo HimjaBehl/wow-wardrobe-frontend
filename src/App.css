@@ -2258,6 +2258,85 @@ a{ color:var(--link); }
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* Loading state for auto-suggestion */
+.today-meta--loading {
+  color: #ff6b9d;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.today-items--loading {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.loading-shimmer {
+  width: 70px;
+  height: 90px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #222 25%, #333 50%, #222 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Suggestion actions */
+.suggestion-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.suggestion-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.suggestion-btn--save {
+  background: #ff6b9d;
+  color: #000;
+  border: none;
+}
+
+.suggestion-btn--save:hover {
+  background: #ff85b1;
+}
+
+.suggestion-btn--regen {
+  background: transparent;
+  color: #ff6b9d;
+  border: 1px solid #ff6b9d;
+}
+
+.suggestion-btn--regen:hover {
+  background: rgba(255,107,157,0.1);
+}
+
+.today-cta--save {
+  background: #ff6b9d;
+  color: #000;
+}
+
+.today-cta--save:hover {
+  background: #ff85b1;
+}
+
 /* ---------- QUICK ACTIONS ---------- */
 .home-actions {
   display: grid;
