@@ -1013,18 +1013,6 @@ export default function App() {
     const hasWardrobe = items.length > 0;
     const isReady = user?.uid && userPrefs.gender && !loadingPrefs && !autoSuggestLoading;
     
-    console.log("Auto-suggest check:", { 
-      hasNoPlan, 
-      hasWardrobe, 
-      itemsCount: items.length,
-      uid: user?.uid, 
-      gender: userPrefs.gender, 
-      loadingPrefs, 
-      autoSuggestLoading,
-      autoSuggestedOutfit: !!autoSuggestedOutfit,
-      isReady
-    });
-    
     if (hasNoPlan && hasWardrobe && isReady && !autoSuggestedOutfit) {
       console.log("Auto-generating Tina suggestion for home...");
       setAutoSuggestLoading(true);
