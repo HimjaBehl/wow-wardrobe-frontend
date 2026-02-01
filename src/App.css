@@ -2313,6 +2313,39 @@ a{ color:var(--link); }
   border-color: #ff6b9d;
 }
 
+.outfit-hero__btn--tertiary {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex: none;
+  width: 100%;
+}
+
+.outfit-hero__btn--tertiary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* Occasion Section */
+.outfit-hero__occasion {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.outfit-hero__occasion-text {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.outfit-hero__occasion-text span {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
 /* Loading State */
 .outfit-hero__loading {
   text-align: center;
