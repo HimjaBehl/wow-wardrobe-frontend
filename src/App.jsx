@@ -920,8 +920,22 @@ export default function App() {
 
 
   const isInAppBrowser = () => {
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    return /FBAN|FBAV|Instagram|WhatsApp|Twitter|Snapchat|Line|Pinterest/i.test(ua);
+    const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+    const isStandalone = window.navigator.standalone;
+    const isUIWebView = /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(ua);
+    const isAndroidWebView = /wv|WebView/i.test(ua);
+    const isFacebookApp = /FBAN|FBAV/i.test(ua);
+    const isInstagram = /Instagram/i.test(ua);
+    const isWhatsApp = /WhatsApp/i.test(ua);
+    const isTwitter = /Twitter/i.test(ua);
+    const isSnapchat = /Snapchat/i.test(ua);
+    const isLine = /Line\//i.test(ua);
+    const isTelegram = /Telegram/i.test(ua);
+    
+    const result = isUIWebView || isAndroidWebView || isFacebookApp || isInstagram || 
+                   isWhatsApp || isTwitter || isSnapchat || isLine || isTelegram;
+    console.log("In-app browser check:", result, "UA:", ua.substring(0, 100));
+    return result;
   };
 
   const isMobile = () => {
