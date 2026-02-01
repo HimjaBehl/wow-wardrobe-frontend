@@ -77,24 +77,22 @@ export default function HomeDashboard({
                 <>
                   <button
                     type="button"
-                    className="outfit-hero__btn outfit-hero__btn--primary"
+                    className="outfit-hero__btn outfit-hero__btn--save"
                     onClick={handleSaveSuggestion}
                   >
                     Wear this today
                   </button>
-                  <div className="outfit-hero__occasion">
-                    <p className="outfit-hero__occasion-text">
-                      Have an occasion in mind?<br />
-                      <span>Date, meeting, dinner, festive — let's tweak this look.</span>
-                    </p>
-                    <button
-                      type="button"
-                      className="outfit-hero__btn outfit-hero__btn--tertiary"
-                      onClick={() => handleGo("stylist")}
-                    >
-                      Refine for an occasion →
-                    </button>
+                  <div className="outfit-hero__divider">
+                    <span>or</span>
                   </div>
+                  <button
+                    type="button"
+                    className="outfit-hero__btn outfit-hero__btn--occasion"
+                    onClick={() => handleGo("stylist")}
+                  >
+                    <span className="occasion-label">Have an occasion?</span>
+                    <span className="occasion-cta">Refine this look →</span>
+                  </button>
                 </>
               ) : (
                 <>

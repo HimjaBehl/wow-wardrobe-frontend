@@ -2313,37 +2313,81 @@ a{ color:var(--link); }
   border-color: #ff6b9d;
 }
 
-.outfit-hero__btn--tertiary {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+/* Save Button - Compact pill style */
+.outfit-hero__btn--save {
+  background: #fff;
+  color: #111;
+  border: none;
+  padding: 12px 28px;
+  font-size: 0.95rem;
   flex: none;
-  width: 100%;
 }
 
-.outfit-hero__btn--tertiary:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.35);
+.outfit-hero__btn--save:hover {
+  background: #f0f0f0;
+  transform: translateY(-1px);
 }
 
-/* Occasion Section */
-.outfit-hero__occasion {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: center;
+/* Divider */
+.outfit-hero__divider {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
 }
 
-.outfit-hero__occasion-text {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 14px;
-  line-height: 1.5;
+.outfit-hero__divider span {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
 }
 
-.outfit-hero__occasion-text span {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.55);
+/* Occasion Button - Text style */
+.outfit-hero__btn--occasion {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: none;
+}
+
+.outfit-hero__btn--occasion:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.outfit-hero__btn--occasion .occasion-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+}
+
+.outfit-hero__btn--occasion .occasion-cta {
+  font-size: 0.95rem;
+  color: #fff;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .outfit-hero__actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .outfit-hero__divider {
+    justify-content: center;
+    padding: 4px 0;
+  }
+  
+  .outfit-hero__btn--save,
+  .outfit-hero__btn--occasion {
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
 }
 
 /* Loading State */
