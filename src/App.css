@@ -2184,6 +2184,200 @@ a{ color:var(--link); }
   opacity: 0.9;
 }
 
+/* ========================================
+   OUTFIT HERO - Main Feature Display
+   ======================================== */
+.outfit-hero {
+  background: linear-gradient(145deg, rgba(30, 30, 35, 0.95), rgba(20, 20, 25, 0.98));
+  border-radius: 24px;
+  padding: 28px 24px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 107, 157, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.outfit-hero__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.outfit-hero__greeting {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  color: #fff;
+}
+
+.outfit-hero__tagline {
+  margin-top: 6px;
+  font-size: 1.1rem;
+  color: #ff6b9d;
+  font-weight: 500;
+}
+
+.outfit-hero__badge {
+  background: linear-gradient(135deg, #ff6b9d, #c77dff);
+  color: #000;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Outfit Items Grid */
+.outfit-hero__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.outfit-hero__item {
+  text-align: center;
+}
+
+.outfit-hero__item img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  border-radius: 14px;
+  background: #111;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.outfit-hero__item:hover img {
+  transform: scale(1.03);
+  border-color: rgba(255, 107, 157, 0.4);
+}
+
+.outfit-hero__item-name {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.outfit-hero__note {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: rgba(255, 107, 157, 0.08);
+  border-radius: 12px;
+  border-left: 3px solid #ff6b9d;
+}
+
+/* Action Buttons */
+.outfit-hero__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.outfit-hero__btn {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.outfit-hero__btn--primary {
+  background: linear-gradient(135deg, #ff6b9d, #ff85b1);
+  color: #000;
+  border: none;
+}
+
+.outfit-hero__btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4);
+}
+
+.outfit-hero__btn--secondary {
+  background: transparent;
+  color: #ff6b9d;
+  border: 2px solid rgba(255, 107, 157, 0.5);
+}
+
+.outfit-hero__btn--secondary:hover {
+  background: rgba(255, 107, 157, 0.1);
+  border-color: #ff6b9d;
+}
+
+/* Loading State */
+.outfit-hero__loading {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.outfit-loading-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.loading-shimmer--large {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #1a1a1f 25%, #2a2a30 50%, #1a1a1f 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.outfit-hero__loading-text {
+  color: #ff6b9d;
+  font-size: 1rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Empty State */
+.outfit-hero__empty {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.outfit-hero__empty-text {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 20px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .outfit-hero {
+    padding: 20px 16px;
+    border-radius: 20px;
+  }
+  
+  .outfit-hero__greeting {
+    font-size: 1.5rem;
+  }
+  
+  .outfit-hero__items {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  
+  .outfit-hero__actions {
+    flex-direction: column;
+  }
+  
+  .outfit-loading-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 /* ---------- TODAY CARD ---------- */
 .premium-card {
   background: rgba(18, 18, 18, 0.85);

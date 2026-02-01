@@ -16,7 +16,6 @@ export default function HomeDashboard({
       ? firstLookRaw
       : null;
 
-  // Use auto-suggested outfit if no saved plan
   const displayLook = firstLook || autoSuggestedOutfit;
   const isSuggestion = !firstLook && autoSuggestedOutfit;
 
@@ -24,10 +23,6 @@ export default function HomeDashboard({
 
   const handleGo = (key) => {
     if (typeof onGo === "function") onGo(key);
-  };
-
-  const handleTodayClick = () => {
-    handleGo(firstLook ? "planner" : "stylist");
   };
 
   const handleSaveSuggestion = (e) => {
@@ -39,112 +34,113 @@ export default function HomeDashboard({
 
   return (
     <section className="home-wrap">
-      {/* Hero */}
-      <div className="home-hero">
-        <div>
-          <h1 className="home-title">Hi, {firstName}</h1>
-          <p className="home-sub">Ready in seconds • Styled from your wardrobe</p>
-        </div>
-
-        <button className="home-cta" onClick={() => handleGo("stylist")}>
-          Style me for today
-        </button>
-      </div>
-
-      {/* Today */}
-      <div
-        className="premium-card"
-        role="button"
-        tabIndex={0}
-        onClick={handleTodayClick}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") handleTodayClick();
-        }}
-        aria-label={displayLook ? "View today's look" : "Create a look for today"}
-      >
-        <div className="today-card__header">
-          <div className="today-left">
-            <div className="today-kicker">
-              {isSuggestion ? "Tina's Pick for Today" : "Today"}
-            </div>
-
-            {autoSuggestLoading ? (
-              <p className="today-meta today-meta--loading">
-                Tina is styling your look...
-              </p>
-            ) : displayLook ? (
-              <p className="today-meta">
-                {displayLook.style_note || (isSuggestion ? "Smart Casual suggestion" : "Planned look")}
-              </p>
-            ) : (
-              <p className="today-meta today-meta--empty">No outfit saved yet</p>
-            )}
+      {/* HERO: Today's Outfit - The Main Feature */}
+      <div className="outfit-hero">
+        <div className="outfit-hero__header">
+          <div>
+            <h1 className="outfit-hero__greeting">Hi, {firstName}</h1>
+            <p className="outfit-hero__tagline">
+              {autoSuggestLoading 
+                ? "Tina is styling your look..." 
+                : displayLook 
+                  ? "Your outfit is ready" 
+                  : "Let's style your day"}
+            </p>
           </div>
-
-          {isSuggestion ? (
-            <button
-              type="button"
-              className="today-cta today-cta--save"
-              onClick={handleSaveSuggestion}
-            >
-              Save to plan
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="today-cta"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleTodayClick();
-              }}
-            >
-              {displayLook ? "View plan →" : "Create a look →"}
-            </button>
+          {isSuggestion && (
+            <span className="outfit-hero__badge">Tina's Pick</span>
           )}
         </div>
 
         {autoSuggestLoading ? (
-          <div className="today-items today-items--loading">
-            <div className="loading-shimmer"></div>
-            <div className="loading-shimmer"></div>
-            <div className="loading-shimmer"></div>
-            <div className="loading-shimmer"></div>
+          <div className="outfit-hero__loading">
+            <div className="outfit-loading-grid">
+              <div className="loading-shimmer loading-shimmer--large"></div>
+              <div className="loading-shimmer loading-shimmer--large"></div>
+              <div className="loading-shimmer loading-shimmer--large"></div>
+              <div className="loading-shimmer loading-shimmer--large"></div>
+            </div>
+            <p className="outfit-hero__loading-text">Creating your Smart Casual look...</p>
           </div>
         ) : displayLook?.items?.length > 0 ? (
-          <div className="today-items">
-            {displayLook.items.slice(0, 6).map((it, i) => (
-              <div key={`${it.id || it.name || "it"}_${i}`} className="today-item">
-                <img src={it.image_url || it.image} alt={it.name || `Item ${i + 1}`} />
-                <p className="caption">{it.name || it.category || "Item"}</p>
-              </div>
-            ))}
-          </div>
-        ) : null}
+          <>
+            <div className="outfit-hero__items">
+              {displayLook.items.slice(0, 6).map((it, i) => (
+                <div key={`${it.id || it.name || "it"}_${i}`} className="outfit-hero__item">
+                  <img src={it.image_url || it.image} alt={it.name || `Item ${i + 1}`} />
+                  <p className="outfit-hero__item-name">{it.name || it.category || "Item"}</p>
+                </div>
+              ))}
+            </div>
+            
+            {displayLook.style_note && (
+              <p className="outfit-hero__note">{displayLook.style_note}</p>
+            )}
 
-        {isSuggestion && displayLook?.items?.length > 0 && (
-          <div className="suggestion-actions">
+            <div className="outfit-hero__actions">
+              {isSuggestion ? (
+                <>
+                  <button
+                    type="button"
+                    className="outfit-hero__btn outfit-hero__btn--primary"
+                    onClick={handleSaveSuggestion}
+                  >
+                    Wear this today
+                  </button>
+                  <button
+                    type="button"
+                    className="outfit-hero__btn outfit-hero__btn--secondary"
+                    onClick={() => handleGo("stylist")}
+                  >
+                    Show me more
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="outfit-hero__btn outfit-hero__btn--primary"
+                    onClick={() => handleGo("planner")}
+                  >
+                    View full plan
+                  </button>
+                  <button
+                    type="button"
+                    className="outfit-hero__btn outfit-hero__btn--secondary"
+                    onClick={() => handleGo("stylist")}
+                  >
+                    Style something new
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        ) : items.length === 0 ? (
+          <div className="outfit-hero__empty">
+            <p className="outfit-hero__empty-text">Add clothes to your wardrobe to get started</p>
             <button
               type="button"
-              className="suggestion-btn suggestion-btn--save"
-              onClick={handleSaveSuggestion}
+              className="outfit-hero__btn outfit-hero__btn--primary"
+              onClick={() => handleGo("upload")}
             >
-              Add to today's plan
+              Add your first item
             </button>
+          </div>
+        ) : (
+          <div className="outfit-hero__empty">
+            <p className="outfit-hero__empty-text">Ready to style your wardrobe?</p>
             <button
               type="button"
-              className="suggestion-btn suggestion-btn--regen"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleGo("stylist");
-              }}
+              className="outfit-hero__btn outfit-hero__btn--primary"
+              onClick={() => handleGo("stylist")}
             >
-              Try another look →
+              Create my look
             </button>
           </div>
         )}
       </div>
 
-      {/* Quick actions */}
+      {/* Quick actions - secondary */}
       <div className="home-actions">
         <button type="button" className="action-tile" onClick={() => handleGo("wardrobe")}>
           <div className="action-tile__left">
