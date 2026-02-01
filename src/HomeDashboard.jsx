@@ -48,7 +48,7 @@ export default function HomeDashboard({
             </p>
           </div>
           {isSuggestion && (
-            <span className="outfit-hero__badge">Tina's Pick</span>
+            <span className="outfit-hero__badge">Picked for today • From your wardrobe</span>
           )}
         </div>
 

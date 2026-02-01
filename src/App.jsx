@@ -1007,14 +1007,17 @@ export default function App() {
     }
   };
 
-  // Auto-generate outfit suggestion when no plan exists for today
+  // Track if we've already generated a suggestion this session
+  const [hasGeneratedThisSession, setHasGeneratedThisSession] = useState(false);
+
+  // Auto-generate outfit suggestion on every login/refresh
   useEffect(() => {
-    const hasNoPlan = !todayPlan?.outfit?.items?.length;
     const hasWardrobe = items.length > 0;
     const isReady = user?.uid && userPrefs.gender && !loadingPrefs && !autoSuggestLoading;
     
-    if (hasNoPlan && hasWardrobe && isReady && !autoSuggestedOutfit) {
-      console.log("Auto-generating Tina suggestion for home...");
+    if (hasWardrobe && isReady && !hasGeneratedThisSession) {
+      console.log("Auto-generating fresh outfit for today...");
+      setHasGeneratedThisSession(true);
       setAutoSuggestLoading(true);
       
       // Get user's location for weather-appropriate suggestions
@@ -1095,7 +1098,7 @@ export default function App() {
       
       getLocationAndSuggest();
     }
-  }, [todayPlan, items, user?.uid, userPrefs.gender, loadingPrefs, autoSuggestedOutfit, autoSuggestLoading, city]);
+  }, [items, user?.uid, userPrefs.gender, loadingPrefs, hasGeneratedThisSession, autoSuggestLoading, city]);
 
 
   const fetchItems = async (uid) => {
