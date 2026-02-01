@@ -919,19 +919,38 @@ export default function App() {
   
 
 
+  const isInAppBrowser = () => {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    return /FBAN|FBAV|Instagram|WhatsApp|Twitter|Snapchat|Line|Pinterest/i.test(ua);
+  };
+
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
   const handleLogin = async () => {
     try {
-      console.log("LOGIN CLICK - using popup auth");
+      console.log("LOGIN CLICK");
+      
+      if (isInAppBrowser()) {
+        const currentUrl = window.location.href;
+        alert("Please open this app in your regular browser (Chrome/Safari) for login to work.\n\nTap the menu (⋮ or ⋯) and select 'Open in Browser'");
+        return;
+      }
+
+      console.log("Using popup auth");
       const result = await signInWithPopup(auth, provider);
       console.log("LOGIN SUCCESS:", result?.user?.uid);
     } catch (err) {
       console.error("Login failed:", err?.code, err?.message);
       if (err?.code === "auth/popup-blocked") {
-        alert("Popup was blocked. Please allow popups for this site.");
+        alert("Popup was blocked. Please allow popups for this site, or try opening in a different browser.");
       } else if (err?.code === "auth/popup-closed-by-user") {
         console.log("User closed the popup");
+      } else if (err?.code === "auth/unauthorized-domain") {
+        alert("This domain is not authorized. Please contact the app administrator.");
       } else {
-        alert(`Login failed: ${err?.message || "Unknown error"}`);
+        alert(`Login failed: ${err?.message || "Unknown error"}. Try opening in Chrome or Safari.`);
       }
     }
   };
