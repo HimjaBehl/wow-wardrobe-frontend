@@ -5,6 +5,7 @@ entrypoint = "index.html"
 
 [nix]
 channel = "stable-24_05"
+packages = ["google-cloud-sdk-gce"]
 
 [unitTest]
 language = "nodejs"
