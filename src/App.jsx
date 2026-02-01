@@ -9,8 +9,7 @@ import Onboarding from "./Onboarding";
 import { storage, auth, provider, db } from "./firebase";
 import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 
-
-import { query, where } from "firebase/firestore";
+import { getDocs, query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import WeeklyPlanner from "./WeeklyPlanner";
 import PlanViewer from "./PlanViewer";
@@ -898,17 +897,23 @@ export default function App() {
   // Fetch staples from backend (list of individual items)
   useEffect(() => {
     const fetchStaples = async () => {
-      if (!user?.uid || !userPrefs.gender) return; // wait for prefs
+      if (!user?.uid || !userPrefs.gender) {
+        console.log("Staples fetch skipped - uid:", user?.uid, "gender:", userPrefs.gender);
+        return;
+      }
       try {
-        const res = await fetch(`${BASE_URL}/staples?gender=${userPrefs.gender}`);
-        if (!res.ok) { setStaples([]); return; } // quiet fallback on 404/500
+        const genderParam = userPrefs.gender.toLowerCase();
+        console.log("Fetching staples for gender:", genderParam);
+        const res = await fetch(`${BASE_URL}/staples?gender=${genderParam}`);
+        if (!res.ok) { setStaples([]); return; }
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data.staples || []);
+        console.log("Staples received:", list.length, "items for", genderParam);
         setStaples(list);
 
       } catch (err) {
         console.error("Failed to fetch staples:", err);
-        setStaples([]); // safe fallback
+        setStaples([]);
       }
     };
 
