@@ -6,8 +6,8 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import "./App.css";
 import "./Wardrobe.css";
 import Onboarding from "./Onboarding";
-import { storage, auth, provider, signOut, db } from "./firebase";
-import { signInWithRedirect, getRedirectResult, onAuthStateChanged } from "firebase/auth";
+import { storage, auth, provider, db } from "./firebase";
+import { signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "firebase/auth";
 
 
 import { query, where } from "firebase/firestore";
@@ -935,13 +935,30 @@ export default function App() {
 
   const handleLogin = async () => {
     try {
-      // ✅ Best for iOS / Safari / WhatsApp browser
-      await signInWithRedirect(auth, provider);
+      console.log("LOGIN CLICK", {
+        authDomain: auth?.app?.options?.authDomain,
+        origin: window.location.origin,
+        href: window.location.href,
+        provider: !!provider,
+      });
+
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (e) {
+        console.warn("Redirect failed, trying popup:", e?.code);
+        await signInWithPopup(auth, provider);
+      }
+
+
+      // If redirect is blocked/cancelled, code will continue and we can detect that
+      console.log("signInWithRedirect returned without redirect (likely blocked)");
+      alert("Login redirect was blocked. Check authorized domains / browser blocking.");
     } catch (err) {
-      console.error("Login failed:", err.message);
-      alert("Login failed. Please try again.");
+      console.error("Login failed:", err);
+      alert(`Login failed: ${err?.code || ""}\n${err?.message || ""}`);
     }
   };
+
 
   const fetchTodayPlan = async (uid) => {
     try {
