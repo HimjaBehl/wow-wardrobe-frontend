@@ -10,14 +10,9 @@ export default function HomeDashboard({
   autoSuggestLoading,
   onSaveSuggestion
 }) {
-  const firstLookRaw = todayPlan?.outfit || todayPlan?.look || null;
-  const firstLook =
-    Array.isArray(firstLookRaw?.items) && firstLookRaw.items.length > 0
-      ? firstLookRaw
-      : null;
-
-  const displayLook = firstLook || autoSuggestedOutfit;
-  const isSuggestion = !firstLook && autoSuggestedOutfit;
+  // Always show the fresh auto-generated suggestion on each refresh
+  const displayLook = autoSuggestedOutfit;
+  const isSuggestion = !!autoSuggestedOutfit;
 
   const firstName = user?.displayName ? user.displayName.split(" ")[0] : "there";
 
