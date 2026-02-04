@@ -1821,15 +1821,40 @@ export default function App() {
                w = WARDROBE_BY_URL.get(key) || null;
              }
 
-             // If still no match, log and drop the item
+             // If still no match, allow rendering as "inspiration/staple" (so 5 items show, not 3)
              if (!w) {
-               console.warn("🧨 Tina item not matched (dropped):", {
+               const canRenderFromUrl = !!tinaUrl && String(tinaUrl).startsWith("http");
+               const looksLikeStaple =
+                 /staples/i.test(String(tinaUrl || "")) ||
+                 /staple/i.test(String(it?.source || "")) ||
+                 it?.is_staple === true;
+
+               console.warn("🧨 Tina item not matched to wardrobe:", {
                  tinaId: tinaId != null ? String(tinaId) : null,
+                 tinaIdx: tinaIdx != null ? String(tinaIdx) : null,
+                 tinaPath,
                  tinaUrl: tinaUrl ? normalizeUrl(tinaUrl) : null,
-                 tinaItem: it
+                 looksLikeStaple,
+                 tinaItem: it,
                });
+
+               // Render staples/inspiration instead of dropping
+               if (canRenderFromUrl && looksLikeStaple) {
+                 return {
+                   id: it.wardrobe_id || it.id || `insp-${idx}-${i}`,
+                   name: it.name || it.title || "Extra piece",
+                   category: it.category || "",
+                   color: it.color || "",
+                   image_url: tinaUrl,
+                   tags: Array.isArray(it.tags) ? it.tags : [],
+                   source: "inspiration", // will show a badge if you want
+                 };
+               }
+
+               // otherwise keep strict behavior
                return null;
              }
+
 
              return {
                id: w.id,
@@ -1842,6 +1867,11 @@ export default function App() {
              };
            })
            .filter(Boolean);
+
+           console.log("🧮 Item counts:", {
+             tinaReturned: (look.items || []).length,
+             matchedWardrobe: mappedItems.length,
+           })
 
            if ((look.items || []).length !== mappedItems.length) {
              console.warn("🧨 DROPPED items due to no strict match:", {
