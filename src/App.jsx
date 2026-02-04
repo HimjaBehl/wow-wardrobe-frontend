@@ -598,6 +598,12 @@ export default function App() {
 
   // ── Onboarding modal UI state (frontend-only) ──
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const BUILD_VERSION = "2026-02-04-2";
+
+  useEffect(() => {
+    console.log("✅ WOW BUILD VERSION:", BUILD_VERSION);
+    console.log("SW supported:", "serviceWorker" in navigator);
+  }, []);
 
 
     const feedbackSessionIdRef = useRef(String(Date.now()));// 🔎 Viewer for a saved plan/outfit
