@@ -582,6 +582,7 @@ export default function App() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterColor, setFilterColor] = useState("");
   const [occasion, setOccasion] = useState("Casual");
+  const [homeOccasion, setHomeOccasion] = useState("Today");
   const [selectedItems, setSelectedItems] = useState([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [vibe, setVibe] = useState("fun");
@@ -1073,7 +1074,8 @@ export default function App() {
                 bodyShape: userPrefs.bodyShape,
                 complexion: userPrefs.complexion
               },
-              constraints: `${occasion} look for ${new Date().toISOString().slice(0, 10)}. Make it feel fresh, avoid repeating the same outerwear/shoes combo.`,
+              constraints: `${homeOccasion} look for ${new Date().toISOString().slice(0, 10)}. Make it feel fresh, avoid repeating the same outerwear/shoes combo.`,
+
 
 
             }),
@@ -1732,27 +1734,28 @@ export default function App() {
            body: JSON.stringify({
              uid,
              city,
-             wardrobe: wardrobe.map((w) => ({
+             occasion,
+             vibe,
+             constraints, // can be "" or swap instruction
+             profile: {
+               gender: userPrefs?.gender || "",
+               bodyShape: userPrefs?.bodyShape || "",
+               complexion: userPrefs?.complexion || "",
+             },
+             dislikes: userPrefs?.dislikes || [],
+             wardrobe: (wardrobe || []).map((w) => ({
                wardrobe_id: String(w.id),
                id: String(w.id),
                image_url: w.image_url,
+               image_path: w.image_path || w.imagePath || "",
                name: w.displayName || w.name || "",
                category: w.category || "",
                color: w.color || "",
+               tags: Array.isArray(w.tags) ? w.tags : [],
              })),
-             profile: {
-               gender: userPrefs.gender,
-               bodyShape: userPrefs.bodyShape,
-               complexion: userPrefs.complexion
-             },
-             occasion,
-             vibe,
-             constraints,
-             swapTarget,
-             lockedIds,
-             baseLook
            }),
          });
+
 
          const rawText = await res.text();
          console.log("🎯 Tina agent result (raw from backend):", rawText);
