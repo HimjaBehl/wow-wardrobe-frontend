@@ -589,6 +589,11 @@ export default function App() {
   const [todayPlan, setTodayPlan] = useState({ outfit: { items: [] } });
   const [autoSuggestedOutfit, setAutoSuggestedOutfit] = useState(null);
   const [autoSuggestLoading, setAutoSuggestLoading] = useState(false);
+  const hasTodayPlan =
+    !!todayPlan?.outfit &&
+    Array.isArray(todayPlan.outfit.items) &&
+    todayPlan.outfit.items.length > 0;
+
 
   // ── Onboarding modal UI state (frontend-only) ──
   const [onboardingOpen, setOnboardingOpen] = useState(false);
@@ -1015,7 +1020,11 @@ export default function App() {
     const hasWardrobe = items.length > 0;
     const isReady = user?.uid && userPrefs.gender && !loadingPrefs && !autoSuggestLoading;
     
-    if (hasWardrobe && isReady && !hasGeneratedThisSession) {
+    const onHome = activeTab === "home";
+
+    // ✅ Only auto-suggest on Home + only if no saved plan exists
+    if (onHome && hasWardrobe && isReady && !hasTodayPlan && !hasGeneratedThisSession) {
+
       console.log("Auto-generating fresh outfit for today...");
       setHasGeneratedThisSession(true);
       setAutoSuggestLoading(true);
@@ -1064,7 +1073,8 @@ export default function App() {
                 bodyShape: userPrefs.bodyShape,
                 complexion: userPrefs.complexion
               },
-              constraints: "Smart Casual occasion. Create a stylish everyday outfit.",
+              constraints: `Smart casual everyday look for ${new Date().toISOString().slice(0, 10)}. Make it feel fresh, avoid repeating the same outerwear/shoes combo.`,
+
             }),
           });
           
@@ -1098,7 +1108,18 @@ export default function App() {
       
       getLocationAndSuggest();
     }
-  }, [items, user?.uid, userPrefs.gender, loadingPrefs, hasGeneratedThisSession, autoSuggestLoading, city]);
+  }, [
+    items,
+    user?.uid,
+    userPrefs.gender,
+    loadingPrefs,
+    hasGeneratedThisSession,
+    autoSuggestLoading,
+    city,
+    activeTab,
+    hasTodayPlan
+  ]);
+
 
 
   const fetchItems = async (uid) => {
