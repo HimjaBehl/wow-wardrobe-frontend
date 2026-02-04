@@ -1073,7 +1073,8 @@ export default function App() {
                 bodyShape: userPrefs.bodyShape,
                 complexion: userPrefs.complexion
               },
-              constraints: `Smart casual everyday look for ${new Date().toISOString().slice(0, 10)}. Make it feel fresh, avoid repeating the same outerwear/shoes combo.`,
+              constraints: `${occasion} look for ${new Date().toISOString().slice(0, 10)}. Make it feel fresh, avoid repeating the same outerwear/shoes combo.`,
+
 
             }),
           });
@@ -2280,7 +2281,8 @@ async function suggestOutfit(options = {}) {
                           date,
                           outfit: {
                             items: look.items,
-                            style_note: look.style_note || "Tina's Smart Casual suggestion"
+                            style_note: look.style_note || `Tina's ${occasion} suggestion`
+
                           }
                         })
                       });
