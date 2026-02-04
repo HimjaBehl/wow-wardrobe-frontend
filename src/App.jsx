@@ -1824,36 +1824,32 @@ export default function App() {
              // If still no match, allow rendering as "inspiration/staple" (so 5 items show, not 3)
              if (!w) {
                const canRenderFromUrl = !!tinaUrl && String(tinaUrl).startsWith("http");
-               const looksLikeStaple =
-                 /staples/i.test(String(tinaUrl || "")) ||
-                 /staple/i.test(String(it?.source || "")) ||
-                 it?.is_staple === true;
 
                console.warn("🧨 Tina item not matched to wardrobe:", {
                  tinaId: tinaId != null ? String(tinaId) : null,
                  tinaIdx: tinaIdx != null ? String(tinaIdx) : null,
                  tinaPath,
                  tinaUrl: tinaUrl ? normalizeUrl(tinaUrl) : null,
-                 looksLikeStaple,
                  tinaItem: it,
                });
 
-               // Render staples/inspiration instead of dropping
-               if (canRenderFromUrl && looksLikeStaple) {
+               // ✅ NEW: never drop if Tina gave a usable image_url
+               if (canRenderFromUrl) {
                  return {
-                   id: it.wardrobe_id || it.id || `insp-${idx}-${i}`,
+                   id: it.wardrobe_id || it.id || `agent-${idx}-${i}`,
                    name: it.name || it.title || "Extra piece",
                    category: it.category || "",
                    color: it.color || "",
                    image_url: tinaUrl,
                    tags: Array.isArray(it.tags) ? it.tags : [],
-                   source: "inspiration", // will show a badge if you want
+                   source: "agent_unmatched", // <- not "staples", not "inspiration"
                  };
                }
 
-               // otherwise keep strict behavior
+               // If no image_url, keep strict behavior (optional)
                return null;
              }
+
 
 
              return {
@@ -1867,6 +1863,8 @@ export default function App() {
              };
            })
            .filter(Boolean);
+
+           console.log("🧾 Rendered item sources:", mappedItems.map(x => ({ name: x.name, source: x.source })));
 
            console.log("🧮 Item counts:", {
              tinaReturned: (look.items || []).length,
@@ -3044,6 +3042,10 @@ async function suggestOutfit(options = {}) {
                             {hydrated.source === "inspiration" && (
                               <span className="tag" style={{ marginTop: 6 }}>Inspiration</span>
                             )}
+                            {hydrated.source === "agent_unmatched" && (
+                              <span className="tag" style={{ marginTop: 6 }}>Added by Tina</span>
+                            )}
+
                           </div>
 
                         </div>
