@@ -1728,29 +1728,30 @@ export default function App() {
          const res = await fetch(`${BASE_URL}/suggest-outfit`, {
            method: "POST",
            headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({ 
+           body: JSON.stringify({
              uid,
              city,
-               wardrobe: (wardrobe || items).map((w) => ({
-               wardrobe_id: String(w.id),                 // ✅ Firestore doc id
-               id: String(w.id),                          // backward compat
-               idx: w.idx != null ? String(w.idx) : undefined,
+             wardrobe: wardrobe.map((w) => ({
+               wardrobe_id: String(w.id),
+               id: String(w.id),
                image_url: w.image_url,
                name: w.displayName || w.name || "",
                category: w.category || "",
                color: w.color || "",
              })),
-
-  profile: {
+             profile: {
                gender: userPrefs.gender,
                bodyShape: userPrefs.bodyShape,
                complexion: userPrefs.complexion
              },
+             occasion,
+             vibe,
              constraints,
-             locked_ids: lockedIds,       // 👈 NEW (backend may honor)
-               swap_target: swapTarget      // 👈 NEW (backend may honor)
+             swapTarget,
+             lockedIds,
+             baseLook
            }),
-           });
+         });
 
          const rawText = await res.text();
          console.log("🎯 Tina agent result (raw from backend):", rawText);
@@ -2987,7 +2988,7 @@ async function suggestOutfit(options = {}) {
                           uid: user.uid,
                           city,
                           wardrobe: items,
-                           occasion: String(occasion || "").toLowerCase(),
+                           occasion: occasion, 
                           vibe,
                         });
                       }}
