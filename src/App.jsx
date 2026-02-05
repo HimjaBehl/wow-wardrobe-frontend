@@ -767,6 +767,17 @@ useEffect(() => {
 }, []);
 
 export default function App() {
+  const UI_BUILD = "2026-02-05-1";
+
+  useEffect(() => {
+    const prev = localStorage.getItem("wow_ui_build");
+    if (prev !== UI_BUILD) {
+      localStorage.setItem("wow_ui_build", UI_BUILD);
+      // hard refresh to break cached JS chunks
+      window.location.reload();
+    }
+  }, []);
+
   const [userPrefs, setUserPrefs] = useState({});
   const [file, setFile] = useState(null); // current preview (optional)
   const [files, setFiles] = useState([]); // selected files (multi)
