@@ -727,44 +727,6 @@ function OnboardingModal({
 
 /* ======================================== */
 
-// 🔥 Version Gate: forces users off old cached builds after every deploy
-useEffect(() => {
-  const run = async () => {
-    try {
-      const res = await fetch(`/version.json?ts=${Date.now()}`, { cache: "no-store" });
-      const { version } = await res.json();
-
-      const key = "wow_app_version";
-      const prev = localStorage.getItem(key);
-
-      if (prev && prev !== version) {
-        localStorage.setItem(key, version);
-
-        // wipe SW caches if any exist (fixes “some users stuck on old UI”)
-        if ("caches" in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map((k) => caches.delete(k)));
-        }
-
-        // unregister service workers if present
-        if ("serviceWorker" in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map((r) => r.unregister()));
-        }
-
-        window.location.reload();
-        return;
-      }
-
-      localStorage.setItem(key, version);
-    } catch (e) {
-      // don’t block app if version fetch fails
-      console.warn("Version check failed:", e);
-    }
-  };
-
-  run();
-}, []);
 
 export default function App() {
   const UI_BUILD = "2026-02-05-1";
@@ -801,7 +763,7 @@ export default function App() {
     Array.isArray(todayPlan.outfit.items) &&
     todayPlan.outfit.items.length > 0;
 
-  // ── Onboarding modal UI state (frontend-only) ──
+  // ── Onboarding modal UI state (e frontend-only) ──
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const BUILD_VERSION = "2026-02-04-2";
 
