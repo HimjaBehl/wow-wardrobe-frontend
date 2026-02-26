@@ -1076,28 +1076,13 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch staples from backend (list of individual items)
-  // ✅ Staples fetch (gender-safe + cache-bust)
   useEffect(() => {
-    const normalizeGender = (g) => {
-      const s = String(g || "").trim().toLowerCase();
-      if (s.startsWith("m")) return "male";
-      if (s.startsWith("f")) return "female";
-      return ""; // other / prefer not to say -> we’ll handle below
-    };
-
     const fetchStaples = async () => {
-      if (!user?.uid) return;
-
-      const g = normalizeGender(userPrefs?.gender);
-
-      // If gender isn't set, don't keep old staples hanging around
-      setStaples([]);
-
-      // If gender unknown, either:
-      // (A) return;  // strict
-      // (B) fetch "unisex" or default set
-      // I recommend defaulting to female OR unisex depending on your backend.
+      const g = userPrefs?.gender?.toLowerCase();
+      if (!user?.uid || !g) {
+        console.log("Staples fetch skipped - uid:", user?.uid, "gender:", g);
+        return;
+      }
       const genderParam = g || "female";
 
       try {
@@ -1369,7 +1354,17 @@ export default function App() {
 
   const fetchItems = async (uid) => {
     try {
-      const res = await fetch(`${BASE_URL}/wardrobe?uid=${uid}`);
+      const genderParam =
+        String(userPrefs?.gender || "").toLowerCase().startsWith("m") ? "male" :
+        String(userPrefs?.gender || "").toLowerCase().startsWith("f") ? "female" :
+        "female";
+
+      const res = await fetch(
+        `${BASE_URL}/wardrobe?uid=${uid}&include_staples=1&gender=${encodeURIComponent(
+          genderParam,
+        )}&version=v2&v=${Date.now()}`,
+        { cache: "no-store" },
+      );
       const text = await res.text();
       const data = JSON.parse(text);
 
@@ -1672,6 +1667,12 @@ export default function App() {
           category: stapleCategory,
           color: variant.color,
           image_url: variant.image_url,
+          save_to_staples: true,
+          gender:
+            String(userPrefs?.gender || "").toLowerCase().startsWith("m") ? "male" :
+            String(userPrefs?.gender || "").toLowerCase().startsWith("f") ? "female" :
+            "female",
+          version: "v2",
         }),
       });
 
@@ -1722,10 +1723,16 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uid: user.uid,
-          name: product.name,
-          category: product.category || "Search",
-          color: product.color || "Unknown",
-          image_url: product.image_url,
+          name: stapleName,
+          category: stapleCategory,
+          color: variant.color,
+          image_url: variant.image_url,
+          save_to_staples: true,
+          gender:
+            String(userPrefs?.gender || "").toLowerCase().startsWith("m") ? "male" :
+            String(userPrefs?.gender || "").toLowerCase().startsWith("f") ? "female" :
+            "female",
+          version: "v2",
         }),
       });
 
@@ -2483,7 +2490,9 @@ export default function App() {
   };
 
   // 💎 Clean, case-friendly filtering
-  const filteredItems = items.filter((item) => {
+  const filteredItems = items
+  .filter((item) => item?.source !== "staple") // ✅ hide staples from wardrobe page
+  .filter((item) => {
     const categoryMatch = filterCategory
       ? formatLabel(item.category) === formatLabel(filterCategory)
       : true;
