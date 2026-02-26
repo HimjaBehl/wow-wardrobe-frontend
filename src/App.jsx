@@ -1077,27 +1077,60 @@ export default function App() {
   }, []);
 
   // Fetch staples from backend (list of individual items)
+  // ✅ Staples fetch (gender-safe + cache-bust)
   useEffect(() => {
+    const normalizeGender = (g) => {
+      const s = String(g || "").trim().toLowerCase();
+      if (s.startsWith("m")) return "male";
+      if (s.startsWith("f")) return "female";
+      return ""; // other / prefer not to say -> we’ll handle below
+    };
+
     const fetchStaples = async () => {
-      if (!user?.uid || !userPrefs.gender) {
-        console.log(
-          "Staples fetch skipped - uid:",
-          user?.uid,
-          "gender:",
-          userPrefs.gender,
-        );
-        return;
-      }
+      if (!user?.uid) return;
+
+      const g = normalizeGender(userPrefs?.gender);
+
+      // If gender isn't set, don't keep old staples hanging around
+      setStaples([]);
+
+      // If gender unknown, either:
+      // (A) return;  // strict
+      // (B) fetch "unisex" or default set
+      // I recommend defaulting to female OR unisex depending on your backend.
+      const genderParam = g || "female";
+
       try {
-        const genderParam = userPrefs.gender.toLowerCase();
-        console.log("Fetching staples for gender:", genderParam);
-        const res = await fetch(`${BASE_URL}/staples?gender=${genderParam}`);
+        const url = `${BASE_URL}/staples?gender=${encodeURIComponent(
+          genderParam,
+        )}&uid=${encodeURIComponent(user.uid)}&v=${Date.now()}`; // ✅ cache-bust
+
+        console.log("Fetching staples for gender:", genderParam, "url:", url);
+
+        const res = await fetch(url, { cache: "no-store" }); // ✅ avoid cached responses
         if (!res.ok) {
+          console.warn("Staples fetch failed:", res.status);
           setStaples([]);
           return;
         }
+
         const data = await res.json();
-        const list = Array.isArray(data) ? data : data.staples || [];
+
+        // support both shapes: [] OR { staples: [] }
+        let list = Array.isArray(data) ? data : Array.isArray(data?.staples) ? data.staples : [];
+
+        // ✅ if backend sends grouped items with variants, flatten them safely
+        // (won't break if not present)
+        if (list.length && list[0]?.variants && Array.isArray(list[0].variants)) {
+          list = list.flatMap((s) =>
+            (s.variants || []).map((v) => ({
+              ...s,
+              color: v.color || s.color,
+              image_url: v.image_url || s.image_url,
+            })),
+          );
+        }
+
         console.log("Staples received:", list.length, "items for", genderParam);
         setStaples(list);
       } catch (err) {
@@ -1107,7 +1140,7 @@ export default function App() {
     };
 
     fetchStaples();
-  }, [user?.uid, userPrefs.gender]);
+  }, [user?.uid, userPrefs?.gender]);
 
   const isInAppBrowser = () => {
     const ua = navigator.userAgent || navigator.vendor || window.opera || "";
