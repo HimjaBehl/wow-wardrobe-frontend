@@ -1990,21 +1990,30 @@ export default function App() {
       swapTarget,
       lockedIds = [],
       baseLook,
+      anchorPiece,
     } = options;
 
     if (!uid) return;
 
     setStylistLoading(true);
 
-    console.log("🟢 Sending to Tina agent:", options);
-    console.log("🟣 Payload to Tina:", {
-      uid,
-      city,
-      wardrobe,
-      occasion,
-      vibe,
-      constraints,
-    });
+    let finalConstraints = constraints;
+    let anchorPayload = null;
+
+    if (anchorPiece) {
+      anchorPayload = {
+        wardrobe_id: String(anchorPiece.id),
+        id: String(anchorPiece.id),
+        image_url: anchorPiece.image_url,
+        name: anchorPiece.displayName || anchorPiece.name || "",
+        category: anchorPiece.category || "",
+        color: anchorPiece.color || "",
+        tags: Array.isArray(anchorPiece.tags) ? anchorPiece.tags : [],
+      };
+      finalConstraints = `IMPORTANT: You MUST include this specific wardrobe item in the outfit — it is the hero/anchor piece the user wants styled. Item details: name="${anchorPayload.name}", wardrobe_id="${anchorPayload.wardrobe_id}", category="${anchorPayload.category}", color="${anchorPayload.color}". Build the full outfit around this piece. ${constraints}`.trim();
+    }
+
+    console.log("Sending to Tina agent:", { ...options, anchorPiece: anchorPayload });
 
     try {
       const res = await fetch(`${BASE_URL}/suggest-outfit`, {
@@ -2015,7 +2024,8 @@ export default function App() {
           city,
           occasion,
           vibe,
-          constraints, // can be "" or swap instruction
+          constraints: finalConstraints,
+          anchor_item: anchorPayload,
           profile: {
             gender: userPrefs?.gender || "",
             bodyShape: userPrefs?.bodyShape || "",
@@ -3459,16 +3469,13 @@ export default function App() {
                       <button
                         className="btn btn-primary stylist-generate"
                         onClick={async () => {
-                          const anchorConstraint = anchorItem
-                            ? `MUST include this item from the wardrobe: "${anchorItem.displayName || anchorItem.name || anchorItem.category}" (wardrobe_id: ${anchorItem.id}, category: ${anchorItem.category || "unknown"}, color: ${anchorItem.color || "unknown"}). Build the entire outfit around this piece.`
-                            : "";
                           await suggestOutfitAgent({
                             uid: user.uid,
                             city,
                             wardrobe: items,
                             occasion: occasion,
                             vibe,
-                            constraints: anchorConstraint,
+                            anchorPiece: anchorItem || undefined,
                           });
                         }}
                       >
