@@ -810,7 +810,8 @@ export default function App() {
   });
   const [planLook, setPlanLook] = useState(null);
   const [anchorItem, setAnchorItem] = useState(null);
-  const [anchorPickerOpen, setAnchorPickerOpen] = useState(false);
+  const [anchorUploading, setAnchorUploading] = useState(false);
+  const [anchorPreview, setAnchorPreview] = useState(null);
 
   const openPlanModal = (look) => {
     setPlanLook(look);
@@ -1470,6 +1471,140 @@ export default function App() {
     }
   };
 
+  const handleAnchorUpload = async (file, autoStyle = false) => {
+    if (!file || !user?.uid) return;
+    setAnchorUploading(true);
+    setAnchorPreview(URL.createObjectURL(file));
+    setAnchorItem(null);
+
+    try {
+      const uniqueName = `${user.uid}/${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `wardrobe/${uniqueName}`);
+      await uploadBytes(storageRef, file);
+      const imageUrl = await getDownloadURL(storageRef);
+      const storagePath = storageRef.fullPath;
+
+      const tagRes = await fetch(`${BASE_URL}/auto-tag`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_url: imageUrl }),
+      });
+
+      let itemName = "Uploaded piece";
+      let itemCategory = "";
+      let itemColor = "";
+      let itemTags = [];
+
+      if (tagRes.ok) {
+        const tagData = await tagRes.json();
+        const detected = (tagData.detectedItems || tagData.detected || []);
+        if (detected.length > 0) {
+          const first = detected[0];
+          itemName = first.name || "Uploaded piece";
+          itemCategory = first.category || "";
+          itemColor = first.color || "";
+          itemTags = Array.isArray(first.tags) ? first.tags : [];
+        }
+      }
+
+      const saveRes = await fetch(`${BASE_URL}/wardrobe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user.uid,
+          image_path: storagePath,
+          image_url: imageUrl,
+          name: itemName,
+          category: itemCategory,
+          color: itemColor,
+          tags: itemTags,
+        }),
+      });
+
+      let savedId = `anchor_${Date.now()}`;
+      if (saveRes.ok) {
+        const saveData = await saveRes.json();
+        savedId = saveData.id || saveData.doc_id || savedId;
+      }
+
+      await fetchItems(user.uid);
+
+      const newAnchor = {
+        id: savedId,
+        image_url: imageUrl,
+        image_path: storagePath,
+        name: itemName,
+        displayName: itemName,
+        category: itemCategory,
+        color: itemColor,
+        tags: itemTags,
+      };
+      setAnchorItem(newAnchor);
+
+      if (autoStyle) {
+        setAnchorUploading(false);
+        setAutoSuggestLoading(true);
+        try {
+          const styleRes = await fetch(`${BASE_URL}/suggest-outfit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: user.uid,
+              city,
+              occasion: "Smart Casual",
+              vibe: "",
+              constraints: `IMPORTANT: You MUST include this specific wardrobe item in the outfit — it is the hero/anchor piece the user wants styled. Item details: name="${itemName}", wardrobe_id="${savedId}", category="${itemCategory}", color="${itemColor}". Build the full outfit around this piece. Use wardrobe items and staples to complete the look.`,
+              anchor_item: {
+                wardrobe_id: String(savedId),
+                id: String(savedId),
+                image_url: imageUrl,
+                name: itemName,
+                category: itemCategory,
+                color: itemColor,
+              },
+              profile: {
+                gender: userPrefs?.gender || "",
+                bodyShape: userPrefs?.bodyShape || "",
+                complexion: userPrefs?.complexion || "",
+              },
+              wardrobe: items.map((w) => ({
+                wardrobe_id: String(w.id),
+                id: String(w.id),
+                image_url: w.image_url,
+                name: w.displayName || w.name || "",
+                category: w.category || "",
+                color: w.color || "",
+              })),
+            }),
+          });
+          const rawText = await styleRes.text();
+          let clean = rawText.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+          let data;
+          try { data = JSON.parse(clean); } catch { data = { looks: [] }; }
+          const looks = data.looks || (data.look ? [data.look] : []) || (data.outfits || []);
+          if (looks.length > 0) {
+            const firstLook = looks[0];
+            setAutoSuggestedOutfit({
+              ...firstLook,
+              style_note: firstLook.style_note || "Styled around your uploaded piece",
+              isSuggestion: true,
+            });
+          }
+        } catch (e) {
+          console.error("Auto-style after upload failed:", e);
+        } finally {
+          setAutoSuggestLoading(false);
+        }
+      }
+    } catch (err) {
+      console.error("Anchor upload failed:", err);
+      alert("Failed to upload image. Please try again.");
+      setAnchorPreview(null);
+    } finally {
+      setAnchorUploading(false);
+    }
+  };
+
   const startDetectionQueue = async () => {
     if (!user?.uid) {
       alert("Please login first.");
@@ -2010,7 +2145,7 @@ export default function App() {
         color: anchorPiece.color || "",
         tags: Array.isArray(anchorPiece.tags) ? anchorPiece.tags : [],
       };
-      finalConstraints = `IMPORTANT: You MUST include this specific wardrobe item in the outfit — it is the hero/anchor piece the user wants styled. Item details: name="${anchorPayload.name}", wardrobe_id="${anchorPayload.wardrobe_id}", category="${anchorPayload.category}", color="${anchorPayload.color}". Build the full outfit around this piece. ${constraints}`.trim();
+      finalConstraints = `IMPORTANT: You MUST include this specific wardrobe item in the outfit — it is the hero/anchor piece the user wants styled. Item details: name="${anchorPayload.name}", wardrobe_id="${anchorPayload.wardrobe_id}", category="${anchorPayload.category}", color="${anchorPayload.color}". Build the full outfit around this piece. You can use items from the wardrobe AND staples to complete the look. ${constraints}`.trim();
     }
 
     console.log("Sending to Tina agent:", { ...options, anchorPiece: anchorPayload });
@@ -2609,6 +2744,12 @@ export default function App() {
                   onGo={(tab) => setActiveTab(tab)}
                   autoSuggestedOutfit={autoSuggestedOutfit}
                   autoSuggestLoading={autoSuggestLoading}
+                  anchorUploading={anchorUploading}
+                  anchorPreview={anchorPreview}
+                  anchorItem={anchorItem}
+                  onStylePieceUpload={async (file) => {
+                    await handleAnchorUpload(file, true);
+                  }}
                   onSaveSuggestion={async (look) => {
                     if (!user?.uid || !look?.items?.length) return;
                     try {
@@ -3352,46 +3493,60 @@ export default function App() {
                       </p>
                     </div>
 
-                    {/* Anchor Piece Selector */}
+                    {/* Anchor Piece - Upload/Camera */}
                     <div className="anchor-piece">
                       <p className="anchor-piece__label">Style around a piece</p>
-                      <p className="anchor-piece__sub">Pick an item from your wardrobe and Tina will build a full outfit around it</p>
+                      <p className="anchor-piece__sub">Upload or snap a photo of any clothing item and Tina will build a full outfit around it</p>
                       
                       {anchorItem ? (
                         <div className="anchor-piece__selected">
                           <img src={anchorItem.image_url} alt={anchorItem.name || "Selected piece"} className="anchor-piece__img" />
                           <div className="anchor-piece__info">
                             <span className="anchor-piece__name">{anchorItem.displayName || anchorItem.name || anchorItem.category || "Selected piece"}</span>
-                            <span className="anchor-piece__cat">{anchorItem.category || ""} {anchorItem.color ? `- ${anchorItem.color}` : ""}</span>
+                            <span className="anchor-piece__cat">{anchorItem.category || ""}{anchorItem.color ? ` - ${anchorItem.color}` : ""}</span>
+                            <span className="anchor-piece__saved">Saved to wardrobe</span>
                           </div>
-                          <button type="button" className="anchor-piece__remove" onClick={() => setAnchorItem(null)}>Remove</button>
+                          <button type="button" className="anchor-piece__remove" onClick={() => { setAnchorItem(null); setAnchorPreview(null); }}>Remove</button>
+                        </div>
+                      ) : anchorUploading ? (
+                        <div className="anchor-piece__uploading">
+                          {anchorPreview && <img src={anchorPreview} alt="Uploading..." className="anchor-piece__preview" />}
+                          <div className="anchor-piece__uploading-text">
+                            <div className="loading-shimmer" style={{ width: 120, height: 14, borderRadius: 7 }}></div>
+                            <span>Detecting and saving to wardrobe...</span>
+                          </div>
                         </div>
                       ) : (
-                        <button
-                          type="button"
-                          className="anchor-piece__pick-btn"
-                          onClick={() => setAnchorPickerOpen(!anchorPickerOpen)}
-                        >
-                          {anchorPickerOpen ? "Close" : "Choose from wardrobe"}
-                        </button>
-                      )}
-
-                      {anchorPickerOpen && !anchorItem && (
-                        <div className="anchor-piece__grid">
-                          {items.map((it) => (
-                            <button
-                              key={it.id}
-                              type="button"
-                              className="anchor-piece__thumb"
-                              onClick={() => {
-                                setAnchorItem(it);
-                                setAnchorPickerOpen(false);
+                        <div className="anchor-piece__upload-row">
+                          <label className="anchor-piece__upload-btn">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleAnchorUpload(f);
+                                e.target.value = "";
                               }}
-                            >
-                              <img src={it.image_url} alt={it.name || it.category} />
-                              <span>{it.displayName || it.name || it.category || "Item"}</span>
-                            </button>
-                          ))}
+                            />
+                            <span className="anchor-piece__upload-icon">+</span>
+                            <span>Upload photo</span>
+                          </label>
+                          <label className="anchor-piece__upload-btn">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              style={{ display: "none" }}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleAnchorUpload(f);
+                                e.target.value = "";
+                              }}
+                            />
+                            <span className="anchor-piece__upload-icon">&#128247;</span>
+                            <span>Use camera</span>
+                          </label>
                         </div>
                       )}
                     </div>

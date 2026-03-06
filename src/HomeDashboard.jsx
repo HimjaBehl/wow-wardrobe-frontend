@@ -1,5 +1,4 @@
-// HomeDashboard.jsx
-import React from "react";
+import React, { useState } from "react";
 
 export default function HomeDashboard({ 
   user, 
@@ -8,9 +7,12 @@ export default function HomeDashboard({
   onGo,
   autoSuggestedOutfit,
   autoSuggestLoading,
-  onSaveSuggestion
+  onSaveSuggestion,
+  onStylePieceUpload,
+  anchorUploading,
+  anchorPreview,
+  anchorItem,
 }) {
-  // Always show the fresh auto-generated suggestion on each refresh
   const displayLook = autoSuggestedOutfit;
   const isSuggestion = !!autoSuggestedOutfit;
 
@@ -25,6 +27,14 @@ export default function HomeDashboard({
     if (typeof onSaveSuggestion === "function" && autoSuggestedOutfit) {
       onSaveSuggestion(autoSuggestedOutfit);
     }
+  };
+
+  const handleFileSelect = (e) => {
+    const f = e.target.files?.[0];
+    if (f && typeof onStylePieceUpload === "function") {
+      onStylePieceUpload(f);
+    }
+    e.target.value = "";
   };
 
   return (
@@ -55,7 +65,7 @@ export default function HomeDashboard({
               <div className="loading-shimmer loading-shimmer--large"></div>
               <div className="loading-shimmer loading-shimmer--large"></div>
             </div>
-            <p className="outfit-hero__loading-text">Creating your Smart Casual look...</p>
+            <p className="outfit-hero__loading-text">Creating your look...</p>
           </div>
         ) : displayLook?.items?.length > 0 ? (
           <>
@@ -135,6 +145,54 @@ export default function HomeDashboard({
             >
               Create my look
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* Style a Piece - Upload/Camera */}
+      <div className="home-style-piece">
+        <p className="home-style-piece__title">Have a piece you want styled?</p>
+        <p className="home-style-piece__sub">Upload or snap a photo — Tina will style a full outfit around it and save it to your wardrobe</p>
+
+        {anchorItem && !autoSuggestLoading ? (
+          <div className="anchor-piece__selected">
+            <img src={anchorItem.image_url} alt={anchorItem.name || "Piece"} className="anchor-piece__img" />
+            <div className="anchor-piece__info">
+              <span className="anchor-piece__name">{anchorItem.displayName || anchorItem.name || anchorItem.category || "Your piece"}</span>
+              <span className="anchor-piece__saved">Saved to wardrobe</span>
+            </div>
+          </div>
+        ) : anchorUploading ? (
+          <div className="anchor-piece__uploading">
+            {anchorPreview && <img src={anchorPreview} alt="Uploading..." className="anchor-piece__preview" />}
+            <div className="anchor-piece__uploading-text">
+              <div className="loading-shimmer" style={{ width: 120, height: 14, borderRadius: 7 }}></div>
+              <span>Detecting and styling...</span>
+            </div>
+          </div>
+        ) : (
+          <div className="anchor-piece__upload-row">
+            <label className="anchor-piece__upload-btn">
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleFileSelect}
+              />
+              <span className="anchor-piece__upload-icon">+</span>
+              <span>Upload photo</span>
+            </label>
+            <label className="anchor-piece__upload-btn">
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: "none" }}
+                onChange={handleFileSelect}
+              />
+              <span className="anchor-piece__upload-icon">&#128247;</span>
+              <span>Use camera</span>
+            </label>
           </div>
         )}
       </div>

@@ -58,3 +58,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Hosting Platform
 - **Replit** - Configured specifically for Replit hosting environment with appropriate server settings
+
+# Key Features
+
+## Style a Piece (Anchor Upload)
+- Available on both **Home page** and **Style page**
+- User uploads a photo or captures with camera
+- Image is uploaded to Firebase Storage, then auto-tagged via `/auto-tag` endpoint
+- Tagged item is saved to wardrobe via `/wardrobe` POST
+- On Style page: user manually triggers Tina styling via "Style this piece" button
+- On Home page: styling triggers automatically after upload, result appears in hero outfit section
+- `suggestOutfitAgent` sends `anchor_item` + constraint text to `/suggest-outfit`
+- State: `anchorItem`, `anchorUploading`, `anchorPreview` in App.jsx
+- CSS classes: `.anchor-piece__*` for Style page, `.home-style-piece*` for Home page
+- Firebase Storage bucket: `wowapp1406.firebasestorage.app`
