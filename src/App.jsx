@@ -750,18 +750,17 @@ export default function App() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterColor, setFilterColor] = useState("");
   const [occasion, setOccasion] = useState("Casual");
-  const [homeOccasion, setHomeOccasion] = useState("Today");
   const [selectedItems, setSelectedItems] = useState([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [todayPlan, setTodayPlan] = useState({ outfit: { items: [] } });
-  const [autoSuggestedOutfit, setAutoSuggestedOutfit] = useState(null);
-  const [autoSuggestLoading, setAutoSuggestLoading] = useState(false);
-  const hasTodayPlan =
-    !!todayPlan?.outfit &&
-    Array.isArray(todayPlan.outfit.items) &&
-    todayPlan.outfit.items.length > 0;
+  const [heroFile, setHeroFile] = useState(null);
+  const [heroPreview, setHeroPreview] = useState(null);
+  const [heroOccasion, setHeroOccasion] = useState("Smart Casual");
+  const [heroLoading, setHeroLoading] = useState(false);
+  const [heroResult, setHeroResult] = useState(null);
+  const [heroDetectedItem, setHeroDetectedItem] = useState(null);
 
   // ── Onboarding modal UI state (e frontend-only) ──
   const [onboardingOpen, setOnboardingOpen] = useState(false);
@@ -1228,129 +1227,196 @@ export default function App() {
     }
   };
 
-  // Track if we've already generated a suggestion this session
-  const [hasGeneratedThisSession, setHasGeneratedThisSession] = useState(false);
-
-  // Auto-generate outfit suggestion on every login/refresh
+  // Detect user location on mount
   useEffect(() => {
-    const hasWardrobe = items.length > 0;
-    const isReady =
-      user?.uid && userPrefs.gender && !loadingPrefs && !autoSuggestLoading;
-
-    const onHome = activeTab === "home";
-
-    // ✅ Only auto-suggest on Home + only if no saved plan exists
-    if (
-      onHome &&
-      hasWardrobe &&
-      isReady &&
-      !hasTodayPlan &&
-      !hasGeneratedThisSession
-    ) {
-      console.log("Auto-generating fresh outfit for today...");
-      setHasGeneratedThisSession(true);
-      setAutoSuggestLoading(true);
-
-      // Get user's location for weather-appropriate suggestions
-      const getLocationAndSuggest = async () => {
-        let userCity = city;
-
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
         try {
-          // Try to get user's location
-          if (navigator.geolocation) {
-            const position = await new Promise((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject, {
-                timeout: 5000,
-              });
-            });
-
-            // Reverse geocode to get city name
-            const { latitude, longitude } = position.coords;
-            const geoRes = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            );
-            const geoData = await geoRes.json();
-            userCity =
-              geoData.address?.city ||
-              geoData.address?.town ||
-              geoData.address?.state ||
-              city;
-            setCity(userCity);
-          }
-        } catch (err) {
-          console.log("Location not available, using default city:", city);
+          const { latitude, longitude } = pos.coords;
+          const geoRes = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+          );
+          const geoData = await geoRes.json();
+          const detectedCity =
+            geoData.address?.city ||
+            geoData.address?.town ||
+            geoData.address?.state ||
+            "Delhi";
+          setCity(detectedCity);
+          console.log("Location detected:", detectedCity);
+        } catch (e) {
+          console.log("Reverse geocoding failed, using default city");
         }
+      },
+      () => console.log("Geolocation denied, using default city"),
+      { timeout: 5000 },
+    );
+  }, []);
 
-        try {
-          const res = await fetch(`${BASE_URL}/suggest-outfit`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              uid: user.uid,
-              city: userCity,
-              wardrobe: items.map((w) => ({
-                wardrobe_id: String(w.id),
-                id: String(w.id),
-                image_url: w.image_url,
-                name: w.displayName || w.name || "",
-                category: w.category || "",
-                color: w.color || "",
-              })),
-              profile: {
-                gender: userPrefs.gender,
-                bodyShape: userPrefs.bodyShape,
-                complexion: userPrefs.complexion,
-              },
-              constraints: `${homeOccasion} look for ${new Date().toISOString().slice(0, 10)}. Make it feel fresh, avoid repeating the same outerwear/shoes combo.`,
-            }),
-          });
-
-          const rawText = await res.text();
-          let clean = rawText
-            .trim()
-            .replace(/^```(?:json)?/i, "")
-            .replace(/```$/i, "")
-            .trim();
-
-          let data;
-          try {
-            data = JSON.parse(clean);
-          } catch {
-            data = { looks: [] };
-          }
-
-          // Extract the first look
-          const looks =
-            data.looks || (data.look ? [data.look] : []) || data.outfits || [];
-          if (looks.length > 0) {
-            const firstLook = looks[0];
-            setAutoSuggestedOutfit({
-              ...firstLook,
-              style_note: firstLook.style_note || "Tina's suggestion for today",
-              isSuggestion: true,
-            });
-            console.log("Auto-suggestion ready:", firstLook);
-          }
-        } catch (err) {
-          console.error("Auto-suggestion failed:", err);
-        } finally {
-          setAutoSuggestLoading(false);
-        }
-      };
-
-      getLocationAndSuggest();
+  const handleHeroSelectFile = (file) => {
+    if (!file) {
+      setHeroFile(null);
+      setHeroPreview(null);
+      setHeroResult(null);
+      setHeroDetectedItem(null);
+      return;
     }
-  }, [
-    items,
-    user?.uid,
-    userPrefs.gender,
-    loadingPrefs,
-    hasGeneratedThisSession,
-    autoSuggestLoading,
-    city,
-    activeTab,
-    hasTodayPlan,
-  ]);
+    setHeroFile(file);
+    setHeroPreview(URL.createObjectURL(file));
+    setHeroResult(null);
+    setHeroDetectedItem(null);
+  };
+
+  const handleStyleMe = async () => {
+    if (!heroFile || !user?.uid) return;
+    setHeroLoading(true);
+    setHeroResult(null);
+
+    try {
+      // 1. Upload image to Firebase Storage
+      const bucket = storage.app.options.storageBucket;
+      const filePath = `wardrobe/${user.uid}/${Date.now()}_${heroFile.name}`;
+      const storageRef = ref(storage, filePath);
+      await uploadBytes(storageRef, heroFile);
+      const imageUrl = await getDownloadURL(storageRef);
+      console.log("Hero image uploaded:", imageUrl);
+
+      // 2. Auto-tag / detect the item
+      let detectedName = "Clothing item";
+      let detectedCategory = "";
+      let detectedColor = "";
+      try {
+        const tagRes = await fetch(`${BASE_URL}/auto-tag`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_url: imageUrl }),
+        });
+        const tagData = await tagRes.json();
+        const firstItem = tagData?.detectedItems?.[0] || tagData?.items?.[0] || {};
+        detectedName = firstItem.name || firstItem.title || "Clothing item";
+        detectedCategory = firstItem.category || "";
+        detectedColor = firstItem.color || "";
+        console.log("Detected item:", firstItem);
+      } catch (e) {
+        console.warn("Auto-tag failed, continuing with defaults:", e);
+      }
+
+      // 3. Save to wardrobe
+      const savedItem = {
+        uid: user.uid,
+        image_path: filePath,
+        image_url: imageUrl,
+        name: detectedName,
+        category: detectedCategory,
+        color: detectedColor,
+        tags: [],
+      };
+      try {
+        await fetch(`${BASE_URL}/wardrobe`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(savedItem),
+        });
+        console.log("Item saved to wardrobe");
+        fetchItems(user.uid);
+      } catch (e) {
+        console.warn("Failed to save to wardrobe:", e);
+      }
+
+      setHeroDetectedItem({ ...savedItem, id: filePath });
+
+      // 4. Build the wardrobe list including the new item
+      const fullWardrobe = [
+        ...items.map((w) => ({
+          wardrobe_id: String(w.id),
+          id: String(w.id),
+          image_url: w.image_url,
+          name: w.displayName || w.name || "",
+          category: w.category || "",
+          color: w.color || "",
+        })),
+        {
+          wardrobe_id: filePath,
+          id: filePath,
+          image_url: imageUrl,
+          name: detectedName,
+          category: detectedCategory,
+          color: detectedColor,
+        },
+      ];
+
+      // 5. Call suggest-outfit with anchor constraint
+      const bodyShapeHint = userPrefs.bodyShape
+        ? `The user has a ${userPrefs.bodyShape} body shape.`
+        : "";
+      const complexionHint = userPrefs.complexion
+        ? `Their complexion is ${userPrefs.complexion}.`
+        : "";
+      const anchorConstraint =
+        `MUST include this item in the outfit: "${detectedName}" (${detectedCategory}, ${detectedColor}), image_url: ${imageUrl}. ` +
+        `Build a complete ${heroOccasion} outfit around it. ` +
+        `${bodyShapeHint} ${complexionHint} ` +
+        `Give specific styling tips considering their body shape and complexion. ` +
+        `City: ${city}. Weather-appropriate.`;
+
+      const res = await fetch(`${BASE_URL}/suggest-outfit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user.uid,
+          city,
+          wardrobe: fullWardrobe,
+          profile: {
+            gender: userPrefs.gender,
+            bodyShape: userPrefs.bodyShape,
+            complexion: userPrefs.complexion,
+          },
+          occasion: heroOccasion,
+          constraints: anchorConstraint,
+        }),
+      });
+
+      const rawText = await res.text();
+      let clean = rawText
+        .trim()
+        .replace(/^```(?:json)?/i, "")
+        .replace(/```$/i, "")
+        .trim();
+
+      let data;
+      try {
+        data = JSON.parse(clean);
+      } catch {
+        data = { looks: [] };
+      }
+
+      const looks =
+        data.looks || (data.look ? [data.look] : []) || data.outfits || [];
+      if (looks.length > 0) {
+        const firstLook = looks[0];
+        setHeroResult({
+          ...firstLook,
+          style_note:
+            firstLook.style_note || `Tina's ${heroOccasion} outfit for today`,
+          items: firstLook.items || [],
+        });
+        console.log("Style-this-piece result:", firstLook);
+      } else {
+        alert("Tina couldn't build a complete outfit. Try adding more items to your wardrobe.");
+      }
+    } catch (err) {
+      console.error("Style-this-piece failed:", err);
+      alert("Something went wrong while styling your outfit. Please try again.");
+    } finally {
+      setHeroLoading(false);
+    }
+  };
+
+  const handleHeroTryAgain = () => {
+    setHeroResult(null);
+    setHeroDetectedItem(null);
+  };
 
   const fetchItems = async (uid) => {
     try {
@@ -2589,14 +2655,17 @@ export default function App() {
                 <HomeDashboard
                   user={user}
                   items={items}
-                  todayPlan={
-                    todayPlan?.outfit?.items
-                      ? todayPlan
-                      : { outfit: { items: [] } }
-                  }
                   onGo={(tab) => setActiveTab(tab)}
-                  autoSuggestedOutfit={autoSuggestedOutfit}
-                  autoSuggestLoading={autoSuggestLoading}
+                  heroFile={heroFile}
+                  heroPreview={heroPreview}
+                  heroOccasion={heroOccasion}
+                  setHeroOccasion={setHeroOccasion}
+                  heroLoading={heroLoading}
+                  heroResult={heroResult}
+                  heroDetectedItem={heroDetectedItem}
+                  onSelectFile={handleHeroSelectFile}
+                  onStyleMe={handleStyleMe}
+                  onTryAgain={handleHeroTryAgain}
                   onSaveSuggestion={async (look) => {
                     if (!user?.uid || !look?.items?.length) return;
                     try {
@@ -2611,13 +2680,15 @@ export default function App() {
                             items: look.items,
                             style_note:
                               look.style_note ||
-                              `Tina's ${occasion} suggestion`,
+                              `Tina's ${heroOccasion} outfit`,
                           },
                         }),
                       });
                       if (res.ok) {
                         setTodayPlan({ outfit: look });
-                        setAutoSuggestedOutfit(null);
+                        setHeroResult(null);
+                        setHeroFile(null);
+                        setHeroPreview(null);
                         alert("Saved to today's plan!");
                       }
                     } catch (err) {
