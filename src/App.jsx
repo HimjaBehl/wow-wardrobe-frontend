@@ -809,6 +809,8 @@ export default function App() {
     note: "",
   });
   const [planLook, setPlanLook] = useState(null);
+  const [anchorItem, setAnchorItem] = useState(null);
+  const [anchorPickerOpen, setAnchorPickerOpen] = useState(false);
 
   const openPlanModal = (look) => {
     setPlanLook(look);
@@ -3340,6 +3342,52 @@ export default function App() {
                       </p>
                     </div>
 
+                    {/* Anchor Piece Selector */}
+                    <div className="anchor-piece">
+                      <p className="anchor-piece__label">Style around a piece</p>
+                      <p className="anchor-piece__sub">Pick an item from your wardrobe and Tina will build a full outfit around it</p>
+                      
+                      {anchorItem ? (
+                        <div className="anchor-piece__selected">
+                          <img src={anchorItem.image_url} alt={anchorItem.name || "Selected piece"} className="anchor-piece__img" />
+                          <div className="anchor-piece__info">
+                            <span className="anchor-piece__name">{anchorItem.displayName || anchorItem.name || anchorItem.category || "Selected piece"}</span>
+                            <span className="anchor-piece__cat">{anchorItem.category || ""} {anchorItem.color ? `- ${anchorItem.color}` : ""}</span>
+                          </div>
+                          <button type="button" className="anchor-piece__remove" onClick={() => setAnchorItem(null)}>Remove</button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="anchor-piece__pick-btn"
+                          onClick={() => setAnchorPickerOpen(!anchorPickerOpen)}
+                        >
+                          {anchorPickerOpen ? "Close" : "Choose from wardrobe"}
+                        </button>
+                      )}
+
+                      {anchorPickerOpen && !anchorItem && (
+                        <div className="anchor-piece__grid">
+                          {items.map((it) => (
+                            <button
+                              key={it.id}
+                              type="button"
+                              className="anchor-piece__thumb"
+                              onClick={() => {
+                                setAnchorItem(it);
+                                setAnchorPickerOpen(false);
+                              }}
+                            >
+                              <img src={it.image_url} alt={it.name || it.category} />
+                              <span>{it.displayName || it.name || it.category || "Item"}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="anchor-piece__divider-line"></div>
+
                     {/* Controls */}
                     <div className="style-controls">
                       <div className="form-group">
@@ -3349,38 +3397,38 @@ export default function App() {
                           value={occasion}
                           onChange={(e) => setOccasion(e.target.value)}
                         >
-                          <option value="Casual">😎 Casual</option>
-                          <option value="Party">🎉 Party</option>
-                          <option value="Workwear">💼 Workwear</option>
-                          <option value="Athleisure">🏃‍♀️ Athleisure</option>
-                          <option value="Brunch">🥐 Brunch</option>
-                          <option value="Dinner">🍽️ Dinner</option>
-                          <option value="Gym">🏋️ Gym / Workout</option>
-                          <option value="Travel">✈️ Travel / Airport</option>
-                          <option value="Date">💖 Date Night</option>
-                          <option value="Wedding">💃 Wedding / Festive</option>
-                          <option value="Beach">🏖️ Beach / Resort</option>
-                          <option value="Formal">🎩 Formal Event / Gala</option>
+                          <option value="Casual">Casual</option>
+                          <option value="Party">Party</option>
+                          <option value="Workwear">Workwear</option>
+                          <option value="Athleisure">Athleisure</option>
+                          <option value="Brunch">Brunch</option>
+                          <option value="Dinner">Dinner</option>
+                          <option value="Gym">Gym / Workout</option>
+                          <option value="Travel">Travel / Airport</option>
+                          <option value="Date">Date Night</option>
+                          <option value="Wedding">Wedding / Festive</option>
+                          <option value="Beach">Beach / Resort</option>
+                          <option value="Formal">Formal Event / Gala</option>
                           <option value="Interview">
-                            🗂️ Interview / Presentation
+                            Interview / Presentation
                           </option>
                           <option value="Shopping">
-                            🛍️ Shopping / Errands
+                            Shopping / Errands
                           </option>
-                          <option value="Concert">🎶 Concert / Festival</option>
+                          <option value="Concert">Concert / Festival</option>
                           <option value="Winter">
-                            ❄️ Winter Casual / Layered
+                            Winter Casual / Layered
                           </option>
                           <option value="Summer">
-                            ☀️ Summer Casual / Lightwear
+                            Summer Casual / Lightwear
                           </option>
-                          <option value="Lounge">🛋️ Lounge / Homewear</option>
+                          <option value="Lounge">Lounge / Homewear</option>
                           <option value="Streetwear">
-                            🕶️ Streetwear / Urban
+                            Streetwear / Urban
                           </option>
-                          <option value="Business">📊 Business Casual</option>
+                          <option value="Business">Business Casual</option>
                           <option value="Adventure">
-                            🏔️ Outdoor Adventure / Hiking
+                            Outdoor Adventure / Hiking
                           </option>
                         </select>
                       </div>
@@ -3411,17 +3459,20 @@ export default function App() {
                       <button
                         className="btn btn-primary stylist-generate"
                         onClick={async () => {
-                          console.log(" Generate clicked (Tina Agent)");
+                          const anchorConstraint = anchorItem
+                            ? `MUST include this item from the wardrobe: "${anchorItem.displayName || anchorItem.name || anchorItem.category}" (wardrobe_id: ${anchorItem.id}, category: ${anchorItem.category || "unknown"}, color: ${anchorItem.color || "unknown"}). Build the entire outfit around this piece.`
+                            : "";
                           await suggestOutfitAgent({
                             uid: user.uid,
                             city,
                             wardrobe: items,
                             occasion: occasion,
                             vibe,
+                            constraints: anchorConstraint,
                           });
                         }}
                       >
-                        {uiCopy.stylist.generateBtn}
+                        {anchorItem ? "Style this piece" : uiCopy.stylist.generateBtn}
                       </button>
                     </div>
 
