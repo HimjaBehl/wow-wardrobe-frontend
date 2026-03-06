@@ -1,6 +1,6 @@
 # Overview
 
-WOW Wardrobe UI is a modern web application for managing a personal wardrobe and AI-powered outfit planning. Built with React and Vite, it features "Tina" - an AI stylist that builds complete outfits. The homepage centers on a "Style This Piece" experience where users upload one clothing item and Tina builds a full outfit around it. The application integrates with Firebase for authentication/storage and a separate backend for AI styling.
+WOW Wardrobe UI is a modern web application for managing a personal wardrobe and outfit planning. Built with React and Vite, it provides a clean, minimalist interface for users to organize their clothing items and plan outfits using an interactive calendar system. The application features a wardrobe management system with image handling capabilities and integrates with Firebase for authentication and data storage.
 
 # User Preferences
 
@@ -9,61 +9,52 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## Frontend Architecture
-- **React 18** with functional components and hooks
-- **Vite** as the build tool with static deployment (npm run build → dist/)
-- **CSS** with separate stylesheets (App.css, Wardrobe.css, Planner.css)
-- **PWA** features with service worker and manifest
+- **React 18** with functional components and hooks for the main UI framework
+- **Vite** as the build tool providing fast development with Hot Module Reloading
+- **React Router DOM** for client-side navigation between wardrobe and planner views
+- **CSS Modules approach** with separate stylesheets for different components (App.css, Wardrobe.css, Planner.css)
+- **Progressive Web App (PWA)** features with service worker and manifest for offline capabilities
 
-## Homepage - "Style This Piece" Flow
-1. User uploads/photographs one clothing item they want to wear
-2. User picks an occasion (Smart Casual, Work, Date, Dinner, Festive, Party, etc.)
-3. Weather is auto-detected via geolocation + OpenStreetMap Nominatim API
-4. Image is uploaded to Firebase Storage, sent to `/auto-tag` for detection
-5. Item is auto-saved to user's wardrobe via `POST /wardrobe`
-6. Full wardrobe + staples + detected item sent to `/suggest-outfit` with anchor constraint
-7. Tina returns outfit with styling tips considering body shape and complexion
-8. User can save to plan or try a different look
+## State Management
+- React's built-in state management using hooks (useState, useEffect)
+- No external state management library, keeping the architecture simple
 
-## Key State (App.jsx)
-- `heroFile`, `heroPreview` - The uploaded piece
-- `heroOccasion` - Selected occasion (default: "Smart Casual")
-- `heroLoading` - Processing state
-- `heroResult` - The outfit suggestion from Tina
-- `heroDetectedItem` - The auto-tagged item info
+## UI Components
+- **Fabric.js** integration for advanced canvas-based image manipulation
+- **React Calendar** component for outfit planning and date selection
+- **Lucide React** for consistent iconography throughout the application
+- Custom CSS with CSS variables for a cohesive design system using neutral colors and accent colors (pink and gold)
 
-## Backend (separate Replit app)
-- Base URL: `https://wow-wardrobe-backend-himjabehl.replit.app`
-- `POST /auto-tag` - Detect clothing item from image
-- `POST /wardrobe` - Save item to user's wardrobe
-- `GET /wardrobe?uid=` - Fetch user's wardrobe
-- `POST /suggest-outfit` - AI outfit suggestion (accepts constraints, profile, wardrobe)
-- `POST /plan-outfit` - Save outfit to daily plan
-- `GET /staples?gender=&uid=` - Fetch staple items
+## Authentication System
+- **Firebase Authentication** with Google OAuth provider
+- Simple sign-in/sign-out flow integrated into the main application
 
-## Authentication
-- **Firebase Auth** with Google OAuth
-- In-app browser detection (WhatsApp, Instagram) shows alert to open in regular browser
+## Image Handling
+- **Fabric.js** for client-side image editing and canvas manipulation
+- Integration with Firebase Storage for image uploads and retrieval
 
-## Firebase Config
-- Project: wowapp1406
-- Storage bucket: `wowapp1406.firebasestorage.app`
-- CORS configured for cross-origin uploads
+## Build Configuration
+- **Vite configuration** optimized for Replit hosting with allowedHosts setting
+- **Code splitting** implemented with manual chunks for vendor libraries, fabric.js, and router
+- **TypeScript support** available but currently using JSX files
 
-## Key Files
-- `src/App.jsx` - Main app with all state, routing, and business logic
-- `src/HomeDashboard.jsx` - Homepage "Style This Piece" component
-- `src/firebase.js` - Firebase configuration
-- `src/App.css` - Main styles
-- `src/Wardrobe.css` - Wardrobe grid styles
+# External Dependencies
 
-## External Dependencies
-- **Firebase** (Auth, Firestore, Storage)
-- **React** (v18), **React Router DOM**, **Vite** (v5)
-- **Fabric.js** - Canvas-based image editing
-- **React Calendar** - Outfit planning calendar
-- **Lucide React** - Icons
+## Firebase Services
+- **Firebase Authentication** - Google OAuth sign-in/sign-out
+- **Firebase Firestore** - NoSQL database for storing wardrobe items and user data
+- **Firebase Storage** - Cloud storage for clothing item images
 
-## Deployment
-- Static site on Replit (serves from dist/)
-- Build: `npm run build`
-- Dev: `npm run dev -- --host 0.0.0.0 --port 5000`
+## Key Libraries
+- **React** (v18.2.0) - Core UI framework
+- **React Router DOM** (v7.6.2) - Client-side routing
+- **Fabric.js** (v5.3.0) - Canvas-based image editing and manipulation
+- **React Calendar** (v3.7.0) - Calendar component for outfit planning
+- **Lucide React** (v0.523.0) - Icon library
+
+## Development Tools
+- **Vite** (v5.0.0) - Build tool and development server
+- **@vitejs/plugin-react** - React integration for Vite
+
+## Hosting Platform
+- **Replit** - Configured specifically for Replit hosting environment with appropriate server settings
