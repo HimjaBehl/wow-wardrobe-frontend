@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 
 const OCCASIONS = ["Smart Casual", "Work", "Date", "Dinner", "Festive", "Party", "Brunch", "Travel"];
 
@@ -11,15 +11,18 @@ export default function HomeDashboard({
   heroOccasion,
   setHeroOccasion,
   heroLoading,
-  heroResult,
+  heroResults,
   heroDetectedItem,
   onSelectFile,
   onStyleMe,
   onSaveSuggestion,
   onTryAgain,
+  city,
+  setCity,
 }) {
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
+  const [activeLookIdx, setActiveLookIdx] = useState(0);
   const firstName = user?.displayName ? user.displayName.split(" ")[0] : "there";
 
   const handleGo = (key) => {
@@ -31,9 +34,12 @@ export default function HomeDashboard({
     if (f && typeof onSelectFile === "function") onSelectFile(f);
   };
 
+  const looks = heroResults || [];
+  const activeLook = looks[activeLookIdx] || null;
+
   const phase = heroLoading
     ? "loading"
-    : heroResult?.items?.length > 0
+    : looks.length > 0
     ? "result"
     : heroPreview
     ? "preview"
@@ -42,7 +48,7 @@ export default function HomeDashboard({
   return (
     <section className="home-wrap">
       <div className="outfit-hero">
-        {/* ── PHASE: PROMPT ── */}
+        {/* PROMPT */}
         {phase === "prompt" && (
           <>
             <h1 className="hero-greeting">Hi, {firstName}</h1>
@@ -78,11 +84,11 @@ export default function HomeDashboard({
           </>
         )}
 
-        {/* ── PHASE: PREVIEW – image selected, pick occasion ── */}
+        {/* PREVIEW */}
         {phase === "preview" && (
           <>
             <h1 className="hero-greeting">Great choice!</h1>
-            <p className="hero-sub">Pick an occasion and Tina will build your outfit.</p>
+            <p className="hero-sub">Set your occasion and location, then let Tina style you.</p>
 
             <div className="hero-preview-row">
               <div className="hero-preview-img-wrap">
@@ -98,19 +104,32 @@ export default function HomeDashboard({
                 </button>
               </div>
 
-              <div className="hero-occasion-wrap">
-                <p className="hero-occasion-label">Occasion</p>
-                <div className="hero-occasion-pills">
-                  {OCCASIONS.map((occ) => (
-                    <button
-                      key={occ}
-                      type="button"
-                      className={`hero-pill ${heroOccasion === occ ? "hero-pill--active" : ""}`}
-                      onClick={() => setHeroOccasion(occ)}
-                    >
-                      {occ}
-                    </button>
-                  ))}
+              <div className="hero-controls">
+                <div className="hero-control-group">
+                  <p className="hero-control-label">Occasion</p>
+                  <div className="hero-occasion-pills">
+                    {OCCASIONS.map((occ) => (
+                      <button
+                        key={occ}
+                        type="button"
+                        className={`hero-pill ${heroOccasion === occ ? "hero-pill--active" : ""}`}
+                        onClick={() => setHeroOccasion(occ)}
+                      >
+                        {occ}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="hero-control-group">
+                  <p className="hero-control-label">Location (for weather)</p>
+                  <input
+                    type="text"
+                    className="hero-location-input"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="e.g. Mumbai, London, New York"
+                  />
                 </div>
               </div>
             </div>
@@ -126,7 +145,7 @@ export default function HomeDashboard({
           </>
         )}
 
-        {/* ── PHASE: LOADING ── */}
+        {/* LOADING */}
         {phase === "loading" && (
           <>
             <h1 className="hero-greeting">Tina is styling your look...</h1>
@@ -146,19 +165,34 @@ export default function HomeDashboard({
           </>
         )}
 
-        {/* ── PHASE: RESULT ── */}
-        {phase === "result" && (
+        {/* RESULT */}
+        {phase === "result" && activeLook && (
           <>
             <div className="hero-result-header">
               <div>
-                <h1 className="hero-greeting">Your outfit is ready</h1>
+                <h1 className="hero-greeting">Your outfits are ready</h1>
                 <p className="hero-sub">Picked for today • From your wardrobe</p>
               </div>
               <span className="hero-result-badge">{heroOccasion}</span>
             </div>
 
+            {looks.length > 1 && (
+              <div className="hero-look-tabs">
+                {looks.map((look, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`hero-look-tab ${idx === activeLookIdx ? "hero-look-tab--active" : ""}`}
+                    onClick={() => setActiveLookIdx(idx)}
+                  >
+                    {look.title || `Look ${idx + 1}`}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="hero-result-items">
-              {heroResult.items.slice(0, 6).map((it, i) => {
+              {activeLook.items.slice(0, 6).map((it, i) => {
                 const isAnchor = heroDetectedItem && (
                   it.id === heroDetectedItem.id ||
                   it.image_url === heroDetectedItem.image_url
@@ -176,10 +210,10 @@ export default function HomeDashboard({
               })}
             </div>
 
-            {heroResult.style_note && (
+            {activeLook.style_note && (
               <div className="hero-tips">
                 <p className="hero-tips-label">Tina's styling tips</p>
-                <p className="hero-tips-text">{heroResult.style_note}</p>
+                <p className="hero-tips-text">{activeLook.style_note}</p>
               </div>
             )}
 
@@ -188,7 +222,7 @@ export default function HomeDashboard({
                 type="button"
                 className="hero-style-btn"
                 onClick={() => {
-                  if (typeof onSaveSuggestion === "function") onSaveSuggestion(heroResult);
+                  if (typeof onSaveSuggestion === "function") onSaveSuggestion(activeLook);
                 }}
               >
                 Wear this today
@@ -196,9 +230,12 @@ export default function HomeDashboard({
               <button
                 type="button"
                 className="hero-btn-ghost"
-                onClick={onTryAgain}
+                onClick={() => {
+                  setActiveLookIdx(0);
+                  if (typeof onTryAgain === "function") onTryAgain();
+                }}
               >
-                Try a different look
+                Start over with a new piece
               </button>
             </div>
           </>

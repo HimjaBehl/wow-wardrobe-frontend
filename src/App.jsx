@@ -759,7 +759,7 @@ export default function App() {
   const [heroPreview, setHeroPreview] = useState(null);
   const [heroOccasion, setHeroOccasion] = useState("Smart Casual");
   const [heroLoading, setHeroLoading] = useState(false);
-  const [heroResult, setHeroResult] = useState(null);
+  const [heroResults, setHeroResults] = useState([]);
   const [heroDetectedItem, setHeroDetectedItem] = useState(null);
 
   // ── Onboarding modal UI state (e frontend-only) ──
@@ -1258,20 +1258,20 @@ export default function App() {
     if (!file) {
       setHeroFile(null);
       setHeroPreview(null);
-      setHeroResult(null);
+      setHeroResults([]);
       setHeroDetectedItem(null);
       return;
     }
     setHeroFile(file);
     setHeroPreview(URL.createObjectURL(file));
-    setHeroResult(null);
+    setHeroResults([]);
     setHeroDetectedItem(null);
   };
 
   const handleStyleMe = async () => {
     if (!heroFile || !user?.uid) return;
     setHeroLoading(true);
-    setHeroResult(null);
+    setHeroResults([]);
 
     try {
       // 1. Upload image to Firebase Storage
@@ -1355,9 +1355,9 @@ export default function App() {
         : "";
       const anchorConstraint =
         `MUST include this item in the outfit: "${detectedName}" (${detectedCategory}, ${detectedColor}), image_url: ${imageUrl}. ` +
-        `Build a complete ${heroOccasion} outfit around it. ` +
+        `Build 3 different complete ${heroOccasion} outfits around this piece. Each look should have a different vibe. ` +
         `${bodyShapeHint} ${complexionHint} ` +
-        `Give specific styling tips considering their body shape and complexion. ` +
+        `For each look, provide detailed styling tips: how to wear each piece, what silhouette works best for their body shape, color pairing advice for their complexion, and accessory suggestions. ` +
         `City: ${city}. Weather-appropriate.`;
 
       const res = await fetch(`${BASE_URL}/suggest-outfit`, {
@@ -1394,14 +1394,15 @@ export default function App() {
       const looks =
         data.looks || (data.look ? [data.look] : []) || data.outfits || [];
       if (looks.length > 0) {
-        const firstLook = looks[0];
-        setHeroResult({
-          ...firstLook,
+        const preparedLooks = looks.map((look, idx) => ({
+          ...look,
+          title: look.title || `Look ${idx + 1}`,
           style_note:
-            firstLook.style_note || `Tina's ${heroOccasion} outfit for today`,
-          items: firstLook.items || [],
-        });
-        console.log("Style-this-piece result:", firstLook);
+            look.style_note || `Tina's ${heroOccasion} outfit for today`,
+          items: look.items || [],
+        }));
+        setHeroResults(preparedLooks);
+        console.log("Style-this-piece results:", preparedLooks.length, "looks");
       } else {
         alert("Tina couldn't build a complete outfit. Try adding more items to your wardrobe.");
       }
@@ -1414,7 +1415,9 @@ export default function App() {
   };
 
   const handleHeroTryAgain = () => {
-    setHeroResult(null);
+    setHeroResults([]);
+    setHeroFile(null);
+    setHeroPreview(null);
     setHeroDetectedItem(null);
   };
 
@@ -2661,10 +2664,12 @@ export default function App() {
                   heroOccasion={heroOccasion}
                   setHeroOccasion={setHeroOccasion}
                   heroLoading={heroLoading}
-                  heroResult={heroResult}
+                  heroResults={heroResults}
                   heroDetectedItem={heroDetectedItem}
                   onSelectFile={handleHeroSelectFile}
                   onStyleMe={handleStyleMe}
+                  city={city}
+                  setCity={setCity}
                   onTryAgain={handleHeroTryAgain}
                   onSaveSuggestion={async (look) => {
                     if (!user?.uid || !look?.items?.length) return;
@@ -2686,7 +2691,7 @@ export default function App() {
                       });
                       if (res.ok) {
                         setTodayPlan({ outfit: look });
-                        setHeroResult(null);
+                        setHeroResults([]);
                         setHeroFile(null);
                         setHeroPreview(null);
                         alert("Saved to today's plan!");

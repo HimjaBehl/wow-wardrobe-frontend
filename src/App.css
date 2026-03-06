@@ -2298,16 +2298,74 @@ a{ color:var(--link); }
   background: #333;
 }
 
-.hero-occasion-wrap {
+.hero-controls {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.hero-occasion-label {
+.hero-control-group {}
+
+.hero-control-label {
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.5);
   margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.hero-location-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.hero-location-input:focus {
+  border-color: #ff6b9d;
+}
+
+.hero-location-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.hero-look-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.hero-look-tab {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.hero-look-tab:hover {
+  border-color: rgba(255, 107, 157, 0.4);
+  color: #fff;
+}
+
+.hero-look-tab--active {
+  background: #ff6b9d;
+  color: #000;
+  border-color: #ff6b9d;
+  font-weight: 600;
 }
 
 .hero-occasion-pills {
