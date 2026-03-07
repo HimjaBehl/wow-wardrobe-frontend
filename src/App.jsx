@@ -1584,11 +1584,50 @@ export default function App() {
           const looks = data.looks || (data.look ? [data.look] : []) || (data.outfits || []);
           if (looks.length > 0) {
             const firstLook = looks[0];
-            setAutoSuggestedOutfit({
-              ...firstLook,
-              style_note: firstLook.style_note || "Styled around your uploaded piece",
-              isSuggestion: true,
-            });
+            const hydratedItems = (firstLook.items || []).map((it, i) => {
+              const tinaId = it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.id;
+              const tinaIdx = it.idx ?? it.index ?? it.wardrobe_idx;
+              const tinaPath = it.image_path ?? it.imagePath ?? "";
+              const tinaUrl = it.image_url ?? it.image_uri ?? it.image ?? it.url ?? "";
+
+              let w = null;
+              if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId)) || null;
+              if (!w && tinaIdx != null) w = WARDROBE_BY_ID.get(`idx:${String(tinaIdx)}`) || null;
+              if (!w && tinaPath) w = WARDROBE_BY_PATH.get(String(tinaPath)) || null;
+              if (!w && tinaUrl) w = WARDROBE_BY_URL.get(normalizeUrl(tinaUrl)) || null;
+
+              if (w) {
+                return {
+                  id: w.id,
+                  name: w.displayName || w.name || it.name || `Item ${i + 1}`,
+                  category: w.category || it.category || "",
+                  color: w.color || it.color || "",
+                  image_url: w.image_url,
+                  tags: Array.isArray(w.tags) ? w.tags : [],
+                  source: "wardrobe",
+                };
+              }
+              if (tinaUrl && String(tinaUrl).startsWith("http")) {
+                return {
+                  id: it.wardrobe_id || it.id || `agent-${i}`,
+                  name: it.name || it.title || "Extra piece",
+                  category: it.category || "",
+                  color: it.color || "",
+                  image_url: tinaUrl,
+                  source: "agent_unmatched",
+                };
+              }
+              return null;
+            }).filter(Boolean);
+
+            if (hydratedItems.length > 0) {
+              setAutoSuggestedOutfit({
+                ...firstLook,
+                items: hydratedItems,
+                style_note: firstLook.style_note || "Styled around your uploaded piece",
+                isSuggestion: true,
+              });
+            }
           }
         } catch (e) {
           console.error("Auto-style after upload failed:", e);
