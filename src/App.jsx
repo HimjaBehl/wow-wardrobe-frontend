@@ -1545,6 +1545,27 @@ export default function App() {
         setAnchorUploading(false);
         setAutoSuggestLoading(true);
         try {
+          const anchorWardrobe = {
+            wardrobe_id: String(savedId),
+            id: String(savedId),
+            image_url: imageUrl,
+            name: itemName,
+            category: itemCategory,
+            color: itemColor,
+          };
+          const existingWardrobe = items.map((w) => ({
+            wardrobe_id: String(w.id),
+            id: String(w.id),
+            image_url: w.image_url,
+            name: w.displayName || w.name || "",
+            category: w.category || "",
+            color: w.color || "",
+          }));
+          const alreadyInList = existingWardrobe.some((w) => w.id === String(savedId));
+          const fullWardrobe = alreadyInList ? existingWardrobe : [anchorWardrobe, ...existingWardrobe];
+
+          console.log("[AutoStyle] Sending suggest-outfit with", fullWardrobe.length, "wardrobe items, anchor:", itemName);
+
           const styleRes = await fetch(`${BASE_URL}/suggest-outfit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1554,47 +1575,46 @@ export default function App() {
               occasion: "Smart Casual",
               vibe: "",
               constraints: `IMPORTANT: You MUST include this specific wardrobe item in the outfit — it is the hero/anchor piece the user wants styled. Item details: name="${itemName}", wardrobe_id="${savedId}", category="${itemCategory}", color="${itemColor}". Build the full outfit around this piece. Use wardrobe items and staples to complete the look.`,
-              anchor_item: {
-                wardrobe_id: String(savedId),
-                id: String(savedId),
-                image_url: imageUrl,
-                name: itemName,
-                category: itemCategory,
-                color: itemColor,
-              },
+              anchor_item: anchorWardrobe,
               profile: {
                 gender: userPrefs?.gender || "",
                 bodyShape: userPrefs?.bodyShape || "",
                 complexion: userPrefs?.complexion || "",
               },
-              wardrobe: items.map((w) => ({
-                wardrobe_id: String(w.id),
-                id: String(w.id),
-                image_url: w.image_url,
-                name: w.displayName || w.name || "",
-                category: w.category || "",
-                color: w.color || "",
-              })),
+              wardrobe: fullWardrobe,
             }),
           });
           const rawText = await styleRes.text();
+          console.log("[AutoStyle] Raw response length:", rawText.length);
           let clean = rawText.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
           let data;
           try { data = JSON.parse(clean); } catch { data = { looks: [] }; }
           const looks = data.looks || (data.look ? [data.look] : []) || (data.outfits || []);
+          console.log("[AutoStyle] Parsed looks count:", looks.length);
+
           if (looks.length > 0) {
             const firstLook = looks[0];
+
+            const localIdMap = new Map();
+            for (const w of items) {
+              if (w.id) localIdMap.set(String(w.id), w);
+              if (w.doc_id) localIdMap.set(String(w.doc_id), w);
+            }
+            localIdMap.set(String(savedId), newAnchor);
+
+            const localUrlMap = new Map();
+            for (const w of items) {
+              if (w.image_url) localUrlMap.set(normalizeUrl(w.image_url), w);
+            }
+            localUrlMap.set(normalizeUrl(imageUrl), newAnchor);
+
             const hydratedItems = (firstLook.items || []).map((it, i) => {
               const tinaId = it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.id;
-              const tinaIdx = it.idx ?? it.index ?? it.wardrobe_idx;
-              const tinaPath = it.image_path ?? it.imagePath ?? "";
               const tinaUrl = it.image_url ?? it.image_uri ?? it.image ?? it.url ?? "";
 
               let w = null;
-              if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId)) || null;
-              if (!w && tinaIdx != null) w = WARDROBE_BY_ID.get(`idx:${String(tinaIdx)}`) || null;
-              if (!w && tinaPath) w = WARDROBE_BY_PATH.get(String(tinaPath)) || null;
-              if (!w && tinaUrl) w = WARDROBE_BY_URL.get(normalizeUrl(tinaUrl)) || null;
+              if (tinaId != null) w = localIdMap.get(String(tinaId)) || null;
+              if (!w && tinaUrl) w = localUrlMap.get(normalizeUrl(tinaUrl)) || null;
 
               if (w) {
                 return {
@@ -1617,16 +1637,28 @@ export default function App() {
                   source: "agent_unmatched",
                 };
               }
-              return null;
-            }).filter(Boolean);
+              return {
+                id: it.wardrobe_id || it.id || `raw-${i}`,
+                name: it.name || it.title || it.category || `Item ${i + 1}`,
+                category: it.category || "",
+                color: it.color || "",
+                image_url: tinaUrl || "",
+                source: "raw",
+              };
+            });
 
-            if (hydratedItems.length > 0) {
+            console.log("[AutoStyle] Hydrated items:", hydratedItems.length, hydratedItems.map(h => `${h.name} (${h.source})`));
+
+            const validItems = hydratedItems.filter((h) => h.image_url);
+            if (validItems.length > 0) {
               setAutoSuggestedOutfit({
                 ...firstLook,
-                items: hydratedItems,
+                items: validItems,
                 style_note: firstLook.style_note || "Styled around your uploaded piece",
                 isSuggestion: true,
               });
+            } else {
+              console.warn("[AutoStyle] No items with valid image URLs after hydration");
             }
           }
         } catch (e) {
