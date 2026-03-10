@@ -2222,31 +2222,29 @@ export default function App() {
     console.log("Sending to Tina agent:", { ...options, anchorPiece: anchorPayload });
 
     try {
-      const res = await fetch(`${BASE_URL}/suggest-outfit`, {
+      const endpoint = anchorPiece ? "/style-piece" : "/suggest-outfit";
+
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uid,
-          city,
+          gender: userPrefs?.gender || "",
           occasion,
           vibe,
-          constraints: finalConstraints,
+          weather: "warm",
+          city,
+          include_wardrobe: true,
+          include_staples: false,
+
           anchor_item: anchorPayload,
-          profile: {
-            gender: userPrefs?.gender || "",
-            bodyShape: userPrefs?.bodyShape || "",
-            complexion: userPrefs?.complexion || "",
-          },
-          dislikes: userPrefs?.dislikes || [],
+
           wardrobe: (wardrobe || []).map((w) => ({
-            wardrobe_id: String(w.id),
             id: String(w.id),
             image_url: w.image_url,
-            image_path: w.image_path || w.imagePath || "",
             name: w.displayName || w.name || "",
             category: w.category || "",
             color: w.color || "",
-            tags: Array.isArray(w.tags) ? w.tags : [],
           })),
         }),
       });
@@ -2273,6 +2271,9 @@ export default function App() {
       if (!res.ok) throw new Error(data.error || "Agent failed");
 
       if (!data.looks && data.look) {
+        if (!data.looks && Array.isArray(data.outfits)) {
+          data.looks = data.outfits;
+        }
         data.looks = [
           { title: "Look 1", style_note: "Auto-fixed", items: data.look },
         ];
@@ -3560,13 +3561,15 @@ export default function App() {
                     <div className="stylist-card__head">
                       <h2 className="stylist-title">AI Style Assistant</h2>
                       <p className="stylist-subtitle">
-                        Create personalized looks from your wardrobe
+                      Upload a piece or use your wardrobe to generate full outfits
                       </p>
                     </div>
 
                     {/* Anchor Piece - Upload/Camera */}
                     <div className="anchor-piece">
-                      <p className="anchor-piece__label">Style around a piece</p>
+                      <p className="anchor-piece__label">
+                      Upload a clothing item to style around
+                      </p>
                       <p className="anchor-piece__sub">Upload or snap a photo of any clothing item and Tina will build a full outfit around it</p>
                       
                       {anchorItem ? (
@@ -3705,7 +3708,7 @@ export default function App() {
                           });
                         }}
                       >
-                        {anchorItem ? "Style this piece" : uiCopy.stylist.generateBtn}
+                        {anchorItem ? "Create outfits around this piece" : uiCopy.stylist.generateBtn}
                       </button>
                     </div>
 
