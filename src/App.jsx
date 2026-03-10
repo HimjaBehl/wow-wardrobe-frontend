@@ -2500,6 +2500,161 @@ export default function App() {
     }
   }
 
+  async function suggestPinterestOutfits({ uid, occasion, city, weather }) {
+    const res = await fetch(`${BASE_URL}/pinterest-analysis`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid, occasion, city, weather }),
+    });
+    return await res.json();
+  }
+
+  async function suggestOutfit(options = {}) {
+    const {
+      uid,
+      vibe,
+      occasion,
+      style_mood,
+      prompt = "",
+      constraints = "",
+      city = "Delhi",
+    } = options;
+
+    if (!uid) return;
+
+    const attempt = async (payload) => {
+      console.log("🟢 Sending to backend:", payload);
+      // 👉 toggle here: use Tina agent or old suggest-outfit
+      const response = await fetch(`${BASE_URL}/suggest-outfit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Retry case if Tina failed with "no valid looks"
+        if (
+          data.error?.includes("no looks") ||
+          data.error?.includes("No valid looks")
+        ) {
+          const reasons = data.rejected_reasons || [];
+          const combinedReason = reasons.join(" | ");
+          setOutfit([]);
+          alert(
+            `Tina tried her best but couldn't style a look.\nReasons: ${combinedReason}`,
+          );
+        } else {
+          alert(`Error: ${data.error || "Something went wrong"}`);
+        }
+        return null;
+      }
+
+      return data;
+    };
+
+    // 1️⃣ First attempt — full payload
+    let result = await attempt({
+      uid,
+      city,
+      occasion,
+      vibe,
+      constraints,
+      prompt,
+      style_mood,
+      dislikes: userPrefs.dislikes || [], // ✅ new
+    });
+
+    // 2️⃣ If fail and retry allowed — fallback to minimal
+    if (!result || !Array.isArray(result.looks) || result.looks.length === 0) {
+      console.warn(
+        "⚠️ Retry: Tina failed to find a look. Trying simplified prompt...",
+      );
+
+      result = await attempt({
+        uid,
+        city,
+        occasion: "",
+        vibe: "",
+        constraints,
+        prompt,
+        style_mood,
+      });
+    }
+
+    if (result && Array.isArray(result.looks)) {
+      console.log("🎯 Final looks:", result.looks);
+      setOutfit(
+        result.looks.map((look) => ({
+          title: look.title,
+          style_note: look.style_note || "Suggested look",
+          items: dedupe(
+            (look.items || [])
+              .map((it, i) => {
+                const tinaUrl = it.image_url || it.image || "";
+                const tinaId = it.wardrobe_id ?? it.item_id ?? it.id ?? it.idx;
+                const tinaPath = it.image_path ?? it.imagePath ?? "";
+
+                let w = null;
+                // 1) ID match
+                if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId));
+                // 2) image_path match
+                if (!w && tinaPath) w = WARDROBE_BY_PATH.get(String(tinaPath));
+                // 3) URL match (normalized)
+                if (!w && tinaUrl) {
+                  const key = normalizeUrl(tinaUrl);
+                  w =
+                    WARDROBE_BY_URL.get(key) ||
+                    items.find(
+                      (wi) => wi.image_url && sameImage(wi.image_url, tinaUrl),
+                    );
+                }
+
+                if (!w && !SHOW_INSPIRATION) return null;
+
+                if (w) {
+                  console.debug("✅ Matched Tina item to wardrobe", {
+                    tinaId,
+                    tinaUrl: normalizeUrl(tinaUrl),
+                    matchedId: w.id,
+                    matchedUrl: normalizeUrl(w.image_url),
+                  });
+                }
+
+                return w
+                  ? {
+                      id: w.id,
+                      name:
+                        w.displayName ||
+                        w.name ||
+                        it.name ||
+                        (w.category
+                          ? formatLabel(w.category)
+                          : `Item ${i + 1}`),
+                      category: w.category || it.category || "",
+                      color: w.color || it.color || "",
+                      image_url: w.image_url,
+                      tags: Array.isArray(w.tags) ? w.tags : [],
+                      source: "wardrobe",
+                    }
+                  : {
+                      id: it.id || `insp-${i}`,
+                      name: it.name || "Inspiration",
+                      category: it.category || "",
+                      color: it.color || "",
+                      image_url: tinaUrl,
+                      tags: Array.isArray(it.tags) ? it.tags : [],
+                      source: "inspiration",
+                    };
+              })
+              .filter(Boolean),
+          ),
+        })),
+      );
+    }
+  }
+
   // 🔸 remove any exact-duplicate items (same image_url)
   function dedupe(list = []) {
     const map = new Map();
@@ -3680,7 +3835,16 @@ export default function App() {
                                             ? formatLabel(hydrated.category)
                                             : `Item ${i + 1}`)}
                                       </p>
+
+                                      {hydrated.source === "uploaded_item" && (
+                                        <span className="tag" style={{ marginTop: 6 }}>
+                                          Anchor piece
+                                        </span>
+                                      )}
+                                      
                                       {hydrated.source === "inspiration" && (
+
+                                    
                                         <span
                                           className="tag"
                                           style={{ marginTop: 6 }}
@@ -3688,12 +3852,8 @@ export default function App() {
                                           Inspiration
                                         </span>
                                       )}
-                                      {hydrated.source === "uploaded_item" && (
-                                        <span className="tag" style={{ marginTop: 6 }}>
-                                          Anchor piece
-                                        </span>
-                                      )}
-                                      {hydrated.source === "agent_unmatched" && (
+                                      {hydrated.source ===
+                                        "agent_unmatched" && (
                                         <span
                                           className="tag"
                                           style={{ marginTop: 6 }}
@@ -3701,6 +3861,7 @@ export default function App() {
                                           Added by Tina
                                         </span>
                                       )}
+
                                       {hydrated.role && (
                                         <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
                                           {hydrated.role}
@@ -3909,13 +4070,6 @@ export default function App() {
               </section>
             )}
 
-            {/* Weekly Planner */}
-            {activeTab === "planner" && (
-              <section style={{ marginTop: "2rem" }}>
-                <WeeklyPlanner uid={user?.uid} onOpenPlan={openPlanViewer} />
-              </section>
-            )}
-
             {activeTab === "stylepiece" && (
               <StylePiecePage
                 user={user}
@@ -3924,6 +4078,13 @@ export default function App() {
                 city={city}
                 setCity={setCity}
               />
+            )}
+            
+            {/* Weekly Planner */}
+            {activeTab === "planner" && (
+              <section style={{ marginTop: "2rem" }}>
+                <WeeklyPlanner uid={user?.uid} onOpenPlan={openPlanViewer} />
+              </section>
             )}
 
             {/* Profile Section */}
@@ -4157,12 +4318,21 @@ export default function App() {
       )}
 
       <nav className="wow-bottom-nav" aria-label="Primary">
-        <div className="wow-bottom-nav__pill">
+        <div
+          className="wow-bottom-nav__pill"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+            width: "min(1100px, calc(100vw - 24px))",
+            gap: "4px",
+          }}
+        >
           {[
             { label: "Home", key: "home" },
             { label: "Wardrobe", key: "wardrobe" }, // keeping Wardrobe
             { label: "Add", key: "upload" },
-            { label: "Style", key: "stylist" },
+      { label: "Style", key: "stylist" },
+          { label: "Piece", key: "stylepiece" },
             { label: "Plan", key: "planner" },
             { label: "Me", key: "profile" },
           ].map((tab) => {
@@ -4175,7 +4345,17 @@ export default function App() {
                 className={`wow-bottom-nav__item ${active ? "is-active" : ""}`}
                 aria-current={active ? "page" : undefined}
               >
-                <span className="wow-bottom-nav__label">{tab.label}</span>
+                <span
+                  className="wow-bottom-nav__label"
+                  style={{
+                    fontSize: "0.82rem",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {tab.label}
+                </span>
               </button>
             );
           })}
