@@ -25,6 +25,7 @@ import HomeDashboard from "./HomeDashboard";
 import VirtualTryOn from "./VirtualTryOn";
 // near the other imports
 import TrendsPanel from "./trendPanel";
+import StylePiecePage from "./StylePiecePage";
 import { logOutfitFeedback } from "./logOutfitFeedback";
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
@@ -729,7 +730,7 @@ function OnboardingModal({
 
 
 export default function App() {
-  const UI_BUILD = "2026-02-05-1";
+  const UI_BUILD = "2026-03-10-stylepiece-newpage-1";
 
   useEffect(() => {
     const prev = localStorage.getItem("wow_ui_build");
@@ -2194,7 +2195,6 @@ export default function App() {
       vibe,
       constraints = "",
       swapTarget,
-      lockedIds = [],
       baseLook,
       anchorPiece,
     } = options;
@@ -2203,31 +2203,24 @@ export default function App() {
 
     setStylistLoading(true);
 
-    let finalConstraints = constraints;
-    let anchorPayload = null;
-
-    if (anchorPiece) {
-      anchorPayload = {
-        wardrobe_id: String(anchorPiece.id),
-        id: String(anchorPiece.id),
-        image_url: anchorPiece.image_url,
-        name: anchorPiece.displayName || anchorPiece.name || "",
-        category: anchorPiece.category || "",
-        color: anchorPiece.color || "",
-        tags: Array.isArray(anchorPiece.tags) ? anchorPiece.tags : [],
-      };
-      finalConstraints = `IMPORTANT: You MUST include this specific wardrobe item in the outfit — it is the hero/anchor piece the user wants styled. Item details: name="${anchorPayload.name}", wardrobe_id="${anchorPayload.wardrobe_id}", category="${anchorPayload.category}", color="${anchorPayload.color}". Build the full outfit around this piece. You can use items from the wardrobe AND staples to complete the look. ${constraints}`.trim();
-    }
-
-    console.log("Sending to Tina agent:", { ...options, anchorPiece: anchorPayload });
-
     try {
-      const endpoint = anchorPiece ? "/style-piece" : "/suggest-outfit";
+      const isStylePiece = !!anchorPiece;
+      const endpoint = isStylePiece ? "/style-piece" : "/suggest-outfit";
 
-      const res = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      let body;
+
+      if (isStylePiece) {
+        const anchorPayload = {
+          id: String(anchorPiece.id),
+          wardrobe_id: String(anchorPiece.id),
+          image_url: anchorPiece.image_url,
+          name: anchorPiece.displayName || anchorPiece.name || "",
+          category: anchorPiece.category || "",
+          color: anchorPiece.color || "",
+          tags: Array.isArray(anchorPiece.tags) ? anchorPiece.tags : [],
+        };
+
+        body = {
           uid,
           gender: userPrefs?.gender || "",
           occasion,
@@ -2236,211 +2229,265 @@ export default function App() {
           city,
           include_wardrobe: true,
           include_staples: false,
-
           anchor_item: anchorPayload,
-
+        };
+      } else {
+        body = {
+          uid,
+          city,
+          occasion,
+          vibe,
+          constraints,
+          profile: {
+            gender: userPrefs?.gender || "",
+            bodyShape: userPrefs?.bodyShape || "",
+            complexion: userPrefs?.complexion || "",
+          },
+          dislikes: userPrefs?.dislikes || [],
           wardrobe: (wardrobe || []).map((w) => ({
+            wardrobe_id: String(w.id),
             id: String(w.id),
             image_url: w.image_url,
+            image_path: w.image_path || w.imagePath || "",
             name: w.displayName || w.name || "",
             category: w.category || "",
             color: w.color || "",
+            tags: Array.isArray(w.tags) ? w.tags : [],
           })),
-        }),
+        };
+      }
+
+      console.log("🟢 suggestOutfitAgent endpoint:", endpoint);
+      console.log("🟢 suggestOutfitAgent body:", body);
+
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
 
       const rawText = await res.text();
-      console.log("🎯 Tina agent result (raw from backend):", rawText);
-
-      let clean = rawText.trim();
-      // Strip any code fences (```json ... ```)
-      clean = clean
-        .replace(/^```(?:json)?/i, "")
-        .replace(/```$/i, "")
-        .trim();
+      console.log("🎯 Raw backend response:", rawText);
 
       let data;
       try {
+        const clean = rawText
+          .trim()
+          .replace(/^```(?:json)?/i, "")
+          .replace(/```$/i, "")
+          .trim();
         data = JSON.parse(clean);
-        console.log("✅ Parsed Tina agent JSON:", data);
       } catch (err) {
-        console.warn("⚠️ Could not parse Tina agent raw:", clean);
-        data = { looks: [] };
+        console.error("❌ Failed to parse backend JSON:", err);
+        throw new Error("Backend returned invalid JSON");
       }
 
-      if (!res.ok) throw new Error(data.error || "Agent failed");
+      console.log("✅ Parsed backend JSON:", data);
 
-      if (!data.looks && data.look) {
-        if (!data.looks && Array.isArray(data.outfits)) {
-          data.looks = data.outfits;
-        }
-        data.looks = [
-          { title: "Look 1", style_note: "Auto-fixed", items: data.look },
-        ];
+      if (!res.ok) {
+        throw new Error(data?.error || "Agent failed");
       }
 
-      if (!data.looks && Array.isArray(data.outfits)) {
-        data.looks = data.outfits;
-      }
+      let preparedLooks = [];
 
-      if (!data.looks || !Array.isArray(data.looks)) {
-        console.warn("⚠️ Tina returned invalid schema:", data);
-        setOutfit([]);
-        return;
-      }
-
-      const preparedLooks = (data.looks || []).map((look, idx) => {
-        const mappedItems = (look.items || [])
-          .map((it, i) => {
-            const tinaId =
-              it.wardrobe_id ??
-              it.wardrobeId ??
-              it.item_id ??
-              it.doc_id ??
-              it.id;
-            const tinaIdx = it.idx ?? it.index ?? it.wardrobe_idx;
-            const tinaPath = it.image_path ?? it.imagePath ?? "";
-            const tinaUrl =
-              it.image_url ?? it.image_uri ?? it.image ?? it.url ?? "";
-
-            let w = null;
-
-            // 1) Strict ID match (best)
-            if (tinaId != null) {
-              w = WARDROBE_BY_ID.get(String(tinaId)) || null;
-            }
-
-            // 2) Strict IDX match fallback (still strict, not fuzzy)
-            if (!w && tinaIdx != null) {
-              w = WARDROBE_BY_ID.get(`idx:${String(tinaIdx)}`) || null;
-            }
-
-            // 3) image_path match
-            if (!w && tinaPath) {
-              w = WARDROBE_BY_PATH.get(String(tinaPath)) || null;
-            }
-
-            // 4) If strict id match fails, try exact normalized URL match (NOT fuzzy).
-            if (!w && tinaUrl) {
-              const key = normalizeUrl(tinaUrl);
-              w = WARDROBE_BY_URL.get(key) || null;
-            }
-
-            // If still no match, allow rendering as "inspiration/staple" (so 5 items show, not 3)
-            if (!w) {
-              const canRenderFromUrl =
-                !!tinaUrl && String(tinaUrl).startsWith("http");
-
-              console.warn("🧨 Tina item not matched to wardrobe:", {
-                tinaId: tinaId != null ? String(tinaId) : null,
-                tinaIdx: tinaIdx != null ? String(tinaIdx) : null,
-                tinaPath,
-                tinaUrl: tinaUrl ? normalizeUrl(tinaUrl) : null,
-                tinaItem: it,
-              });
-
-              // ✅ NEW: never drop if Tina gave a usable image_url
-              if (canRenderFromUrl) {
+      // =========================
+      // STYLE-PIECE RESPONSE PATH
+      // =========================
+      if (Array.isArray(data.outfits)) {
+        preparedLooks = data.outfits.map((outfitObj, lookIdx) => {
+          const mappedItems = (outfitObj.pieces || [])
+            .map((piece, pieceIdx) => {
+              // uploaded anchor piece
+              if (piece.source === "uploaded_item") {
                 return {
-                  id: it.wardrobe_id || it.id || `agent-${idx}-${i}`,
-                  name: it.name || it.title || "Extra piece",
-                  category: it.category || "",
-                  color: it.color || "",
-                  image_url: tinaUrl,
-                  tags: Array.isArray(it.tags) ? it.tags : [],
-                  source: "agent_unmatched", // <- not "staples", not "inspiration"
+                  id: piece.idx || `anchor-${lookIdx}-${pieceIdx}`,
+                  name: piece.name || "Anchor piece",
+                  category: piece.category || "",
+                  color: piece.color || "",
+                  image_url: anchorPiece?.image_url || anchorItem?.image_url || anchorPreview || "",
+                  tags: [],
+                  source: "uploaded_item",
+                  role: piece.role || "",
                 };
               }
 
-              // If no image_url, keep strict behavior (optional)
-              return null;
-            }
+              // wardrobe piece
+              if (piece.source === "wardrobe") {
+                const wardrobeMatch =
+                  items.find((w) => String(w.id) === String(piece.idx)) ||
+                  items.find((w) => String(w.doc_id) === String(piece.idx));
 
-            return {
-              id: w.id,
-              name:
-                w.displayName ||
-                w.name ||
-                it.name ||
-                (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
-              category: w.category || it.category || "",
-              color: w.color || it.color || "",
-              image_url: w.image_url,
-              tags: Array.isArray(w.tags) ? w.tags : [],
-              source: "wardrobe",
-            };
-          })
-          .filter(Boolean);
+                if (wardrobeMatch) {
+                  return {
+                    id: wardrobeMatch.id,
+                    name:
+                      wardrobeMatch.displayName ||
+                      wardrobeMatch.name ||
+                      piece.name ||
+                      `Item ${pieceIdx + 1}`,
+                    category: wardrobeMatch.category || piece.category || "",
+                    color: wardrobeMatch.color || piece.color || "",
+                    image_url: wardrobeMatch.image_url || "",
+                    tags: Array.isArray(wardrobeMatch.tags) ? wardrobeMatch.tags : [],
+                    source: "wardrobe",
+                    role: piece.role || "",
+                  };
+                }
 
-        console.log(
-          "🧾 Rendered item sources:",
-          mappedItems.map((x) => ({ name: x.name, source: x.source })),
-        );
+                return {
+                  id: piece.idx || `wardrobe-${lookIdx}-${pieceIdx}`,
+                  name: piece.name || `Item ${pieceIdx + 1}`,
+                  category: piece.category || "",
+                  color: piece.color || "",
+                  image_url: "",
+                  tags: [],
+                  source: "wardrobe",
+                  role: piece.role || "",
+                };
+              }
 
-        console.log("🧮 Item counts:", {
-          tinaReturned: (look.items || []).length,
-          matchedWardrobe: mappedItems.length,
+              // staple / unknown fallback
+              return {
+                id: piece.idx || `piece-${lookIdx}-${pieceIdx}`,
+                name: piece.name || `Item ${pieceIdx + 1}`,
+                category: piece.category || "",
+                color: piece.color || "",
+                image_url: piece.image_url || "",
+                tags: [],
+                source: piece.source || "unknown",
+                role: piece.role || "",
+              };
+            })
+            .filter(Boolean);
+
+          return {
+            outfit_id:
+              outfitObj.id || `outfit_${feedbackSessionIdRef.current}_${lookIdx}`,
+            title: outfitObj.title || `Look ${lookIdx + 1}`,
+            style_note:
+              outfitObj.why_it_works ||
+              outfitObj.style_note ||
+              "Styled around your selected piece",
+            trends_used: [],
+            validation: null,
+            items: mappedItems,
+          };
         });
+      }
 
-        if ((look.items || []).length !== mappedItems.length) {
-          console.warn("🧨 DROPPED items due to no strict match:", {
-            returnedByBackend: look.items,
-            matchedOnClient: mappedItems,
-          });
-        }
-        console.log("🧩 Tina->UI mapping", {
-          tina: (look.items || []).map((x) => ({
-            id: x.id,
-            wardrobe_id: x.wardrobe_id,
-            idx: x.idx,
-            image_url: x.image_url,
-            name: x.name,
-          })),
-          rendered: mappedItems.map((x) => ({
-            id: x.id,
-            image_url: x.image_url,
-            name: x.name,
-          })),
+      // =========================
+      // OLD SUGGEST-OUTFIT PATH
+      // =========================
+      else {
+        const looks =
+          data.looks ||
+          (data.look ? [{ title: "Look 1", items: data.look }] : []) ||
+          [];
+
+        preparedLooks = looks.map((look, idx) => {
+          const mappedItems = (look.items || [])
+            .map((it, i) => {
+              const tinaId =
+                it.wardrobe_id ??
+                it.wardrobeId ??
+                it.item_id ??
+                it.doc_id ??
+                it.id;
+              const tinaIdx = it.idx ?? it.index ?? it.wardrobe_idx;
+              const tinaPath = it.image_path ?? it.imagePath ?? "";
+              const tinaUrl =
+                it.image_url ?? it.image_uri ?? it.image ?? it.url ?? "";
+
+              let w = null;
+
+              if (tinaId != null) {
+                w = WARDROBE_BY_ID.get(String(tinaId)) || null;
+              }
+              if (!w && tinaIdx != null) {
+                w = WARDROBE_BY_ID.get(`idx:${String(tinaIdx)}`) || null;
+              }
+              if (!w && tinaPath) {
+                w = WARDROBE_BY_PATH.get(String(tinaPath)) || null;
+              }
+              if (!w && tinaUrl) {
+                const key = normalizeUrl(tinaUrl);
+                w = WARDROBE_BY_URL.get(key) || null;
+              }
+
+              if (!w) {
+                const canRenderFromUrl =
+                  !!tinaUrl && String(tinaUrl).startsWith("http");
+
+                if (canRenderFromUrl) {
+                  return {
+                    id: it.wardrobe_id || it.id || `agent-${idx}-${i}`,
+                    name: it.name || it.title || "Extra piece",
+                    category: it.category || "",
+                    color: it.color || "",
+                    image_url: tinaUrl,
+                    tags: Array.isArray(it.tags) ? it.tags : [],
+                    source: "agent_unmatched",
+                  };
+                }
+
+                return null;
+              }
+
+              return {
+                id: w.id,
+                name:
+                  w.displayName ||
+                  w.name ||
+                  it.name ||
+                  (w.category ? formatLabel(w.category) : `Item ${i + 1}`),
+                category: w.category || it.category || "",
+                color: w.color || it.color || "",
+                image_url: w.image_url,
+                tags: Array.isArray(w.tags) ? w.tags : [],
+                source: "wardrobe",
+              };
+            })
+            .filter(Boolean);
+
+          const { title, note } = sanitizeCopy(
+            look.title || `Look ${idx + 1}`,
+            look.style_note || "Suggested look",
+            mappedItems,
+          );
+
+          return {
+            outfit_id:
+              look.outfit_id ||
+              look.outfitId ||
+              `outfit_${feedbackSessionIdRef.current}_${idx}`,
+            title,
+            style_note: note,
+            trends_used: look.trends_used || [],
+            validation: look.validation?.styleRules || null,
+            items: mappedItems,
+          };
         });
+      }
 
-        const { title, note } = sanitizeCopy(
-          look.title || `Look ${idx + 1}`,
-          look.style_note || "Suggested look",
-          mappedItems,
-        );
-
-        const validation = look.validation?.styleRules || null;
-
-        const stableOutfitId =
-          look.outfit_id ||
-          look.outfitId ||
-          `outfit_${feedbackSessionIdRef.current}_${idx}`;
-
-        return {
-          outfit_id: stableOutfitId, // ✅ stable per look in this session
-          title,
-          style_note: note,
-          trends_used: look.trends_used || [],
-          validation,
-          items: mappedItems,
-        };
-      });
-
-      // If this was a swap request, hard-enforce locks on the client
-      let patchedLooks = preparedLooks;
       if (swapTarget && baseLook && Array.isArray(preparedLooks)) {
-        patchedLooks = preparedLooks.map((lk) => ({
+        preparedLooks = preparedLooks.map((lk) => ({
           ...lk,
           items: applyLocks(baseLook, lk, swapTarget),
         }));
       }
 
-      const finalLooks = (patchedLooks || []).filter(
-        (l) => Array.isArray(l.items) && l.items.length > 0,
-      );
+      const finalLooks = (preparedLooks || [])
+        .map((look) => ({
+          ...look,
+          items: (look.items || []).filter((it) => !!it.image_url),
+        }))
+        .filter((look) => Array.isArray(look.items) && look.items.length > 0);
+
+      console.log("✅ Final looks for UI:", finalLooks);
+
       setOutfit(finalLooks);
 
-      if (preparedLooks.length === 0) {
+      if (finalLooks.length === 0) {
         alert(
           "No complete looks could be made from the current wardrobe. Try adding footwear (and a bag for women) or switch the occasion.",
         );
@@ -2450,161 +2497,6 @@ export default function App() {
       alert("Tina agent could not generate looks.");
     } finally {
       setStylistLoading(false);
-    }
-  }
-
-  async function suggestPinterestOutfits({ uid, occasion, city, weather }) {
-    const res = await fetch(`${BASE_URL}/pinterest-analysis`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid, occasion, city, weather }),
-    });
-    return await res.json();
-  }
-
-  async function suggestOutfit(options = {}) {
-    const {
-      uid,
-      vibe,
-      occasion,
-      style_mood,
-      prompt = "",
-      constraints = "",
-      city = "Delhi",
-    } = options;
-
-    if (!uid) return;
-
-    const attempt = async (payload) => {
-      console.log("🟢 Sending to backend:", payload);
-      // 👉 toggle here: use Tina agent or old suggest-outfit
-      const response = await fetch(`${BASE_URL}/suggest-outfit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Retry case if Tina failed with "no valid looks"
-        if (
-          data.error?.includes("no looks") ||
-          data.error?.includes("No valid looks")
-        ) {
-          const reasons = data.rejected_reasons || [];
-          const combinedReason = reasons.join(" | ");
-          setOutfit([]);
-          alert(
-            `Tina tried her best but couldn't style a look.\nReasons: ${combinedReason}`,
-          );
-        } else {
-          alert(`Error: ${data.error || "Something went wrong"}`);
-        }
-        return null;
-      }
-
-      return data;
-    };
-
-    // 1️⃣ First attempt — full payload
-    let result = await attempt({
-      uid,
-      city,
-      occasion,
-      vibe,
-      constraints,
-      prompt,
-      style_mood,
-      dislikes: userPrefs.dislikes || [], // ✅ new
-    });
-
-    // 2️⃣ If fail and retry allowed — fallback to minimal
-    if (!result || !Array.isArray(result.looks) || result.looks.length === 0) {
-      console.warn(
-        "⚠️ Retry: Tina failed to find a look. Trying simplified prompt...",
-      );
-
-      result = await attempt({
-        uid,
-        city,
-        occasion: "",
-        vibe: "",
-        constraints,
-        prompt,
-        style_mood,
-      });
-    }
-
-    if (result && Array.isArray(result.looks)) {
-      console.log("🎯 Final looks:", result.looks);
-      setOutfit(
-        result.looks.map((look) => ({
-          title: look.title,
-          style_note: look.style_note || "Suggested look",
-          items: dedupe(
-            (look.items || [])
-              .map((it, i) => {
-                const tinaUrl = it.image_url || it.image || "";
-                const tinaId = it.wardrobe_id ?? it.item_id ?? it.id ?? it.idx;
-                const tinaPath = it.image_path ?? it.imagePath ?? "";
-
-                let w = null;
-                // 1) ID match
-                if (tinaId != null) w = WARDROBE_BY_ID.get(String(tinaId));
-                // 2) image_path match
-                if (!w && tinaPath) w = WARDROBE_BY_PATH.get(String(tinaPath));
-                // 3) URL match (normalized)
-                if (!w && tinaUrl) {
-                  const key = normalizeUrl(tinaUrl);
-                  w =
-                    WARDROBE_BY_URL.get(key) ||
-                    items.find(
-                      (wi) => wi.image_url && sameImage(wi.image_url, tinaUrl),
-                    );
-                }
-
-                if (!w && !SHOW_INSPIRATION) return null;
-
-                if (w) {
-                  console.debug("✅ Matched Tina item to wardrobe", {
-                    tinaId,
-                    tinaUrl: normalizeUrl(tinaUrl),
-                    matchedId: w.id,
-                    matchedUrl: normalizeUrl(w.image_url),
-                  });
-                }
-
-                return w
-                  ? {
-                      id: w.id,
-                      name:
-                        w.displayName ||
-                        w.name ||
-                        it.name ||
-                        (w.category
-                          ? formatLabel(w.category)
-                          : `Item ${i + 1}`),
-                      category: w.category || it.category || "",
-                      color: w.color || it.color || "",
-                      image_url: w.image_url,
-                      tags: Array.isArray(w.tags) ? w.tags : [],
-                      source: "wardrobe",
-                    }
-                  : {
-                      id: it.id || `insp-${i}`,
-                      name: it.name || "Inspiration",
-                      category: it.category || "",
-                      color: it.color || "",
-                      image_url: tinaUrl,
-                      tags: Array.isArray(it.tags) ? it.tags : [],
-                      source: "inspiration",
-                    };
-              })
-              .filter(Boolean),
-          ),
-        })),
-      );
     }
   }
 
@@ -3796,14 +3688,23 @@ export default function App() {
                                           Inspiration
                                         </span>
                                       )}
-                                      {hydrated.source ===
-                                        "agent_unmatched" && (
+                                      {hydrated.source === "uploaded_item" && (
+                                        <span className="tag" style={{ marginTop: 6 }}>
+                                          Anchor piece
+                                        </span>
+                                      )}
+                                      {hydrated.source === "agent_unmatched" && (
                                         <span
                                           className="tag"
                                           style={{ marginTop: 6 }}
                                         >
                                           Added by Tina
                                         </span>
+                                      )}
+                                      {hydrated.role && (
+                                        <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+                                          {hydrated.role}
+                                        </div>
                                       )}
                                     </div>
                                   </div>
@@ -4013,6 +3914,16 @@ export default function App() {
               <section style={{ marginTop: "2rem" }}>
                 <WeeklyPlanner uid={user?.uid} onOpenPlan={openPlanViewer} />
               </section>
+            )}
+
+            {activeTab === "stylepiece" && (
+              <StylePiecePage
+                user={user}
+                userPrefs={userPrefs}
+                items={items}
+                city={city}
+                setCity={setCity}
+              />
             )}
 
             {/* Profile Section */}
