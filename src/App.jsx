@@ -21,7 +21,6 @@ import { getDocs, query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import WeeklyPlanner from "./WeeklyPlanner";
 import PlanViewer from "./PlanViewer";
-import HomeDashboard from "./HomeDashboard";
 import VirtualTryOn from "./VirtualTryOn";
 // near the other imports
 import TrendsPanel from "./trendPanel";
@@ -730,7 +729,7 @@ function OnboardingModal({
 
 
 export default function App() {
-  const UI_BUILD = "2026-03-10-stylepiece-newpage-1";
+  const UI_BUILD = "2026-03-10-core-revamp-stylepiece-1";
 
   useEffect(() => {
     const prev = localStorage.getItem("wow_ui_build");
@@ -757,8 +756,6 @@ export default function App() {
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [todayPlan, setTodayPlan] = useState({ outfit: { items: [] } });
-  const [autoSuggestedOutfit, setAutoSuggestedOutfit] = useState(null);
-  const [autoSuggestLoading, setAutoSuggestLoading] = useState(false);
   const hasTodayPlan =
     !!todayPlan?.outfit &&
     Array.isArray(todayPlan.outfit.items) &&
@@ -902,7 +899,7 @@ export default function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [editedTags, setEditedTags] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, setActiveTab] = useState("stylepiece");
   const [stylistLoading, setStylistLoading] = useState(false);
   const [detectedItems, setDetectedItems] = useState([]);
   const [openEditors, setOpenEditors] = useState({}); // idx -> true/false
@@ -1567,23 +1564,27 @@ export default function App() {
 
           console.log("[AutoStyle] Sending suggest-outfit with", fullWardrobe.length, "wardrobe items, anchor:", itemName);
 
-          const styleRes = await fetch(`${BASE_URL}/suggest-outfit`, {
+            const styleRes = await fetch(`${BASE_URL}/style-piece`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              uid: user.uid,
-              city,
-              occasion: "Smart Casual",
-              vibe: "",
-              constraints: `IMPORTANT: You MUST include this specific wardrobe item in the outfit — it is the hero/anchor piece the user wants styled. Item details: name="${itemName}", wardrobe_id="${savedId}", category="${itemCategory}", color="${itemColor}". Build the full outfit around this piece. Use wardrobe items and staples to complete the look.`,
-              anchor_item: anchorWardrobe,
-              profile: {
+              body: JSON.stringify({
+                uid: user.uid,
+                city,
+                occasion: "Smart Casual",
+                vibe: "",
                 gender: userPrefs?.gender || "",
-                bodyShape: userPrefs?.bodyShape || "",
-                complexion: userPrefs?.complexion || "",
-              },
-              wardrobe: fullWardrobe,
-            }),
+                include_wardrobe: true,
+                include_staples: true,
+                anchor_item: {
+                  id: String(savedId),
+                  wardrobe_id: String(savedId),
+                  image_url: imageUrl,
+                  name: itemName,
+                  category: itemCategory,
+                  color: itemColor,
+                  tags: itemTags,
+                },
+              }),
           });
           const rawText = await styleRes.text();
           console.log("[AutoStyle] Raw response length:", rawText.length);
@@ -2228,7 +2229,7 @@ export default function App() {
           weather: "warm",
           city,
           include_wardrobe: true,
-          include_staples: false,
+          include_staples: true,
           anchor_item: anchorPayload,
         };
       } else {
@@ -2368,6 +2369,15 @@ export default function App() {
               outfitObj.why_it_works ||
               outfitObj.style_note ||
               "Styled around your selected piece",
+            tina_reasoning:
+              outfitObj.why_it_works ||
+              outfitObj.style_note ||
+              "Styled around your selected piece",
+            styling_tips: Array.isArray(outfitObj.styling_tips)
+              ? outfitObj.styling_tips
+              : [],
+            direction: outfitObj.direction || "",
+            occasion_fit: outfitObj.occasion_fit || "",
             trends_used: [],
             validation: null,
             items: mappedItems,
@@ -2851,61 +2861,27 @@ export default function App() {
         ) : (
           <>
             {activeTab === "home" && (
-              <>
-                <HomeDashboard
-                  user={user}
-                  items={items}
-                  todayPlan={
-                    todayPlan?.outfit?.items
-                      ? todayPlan
-                      : { outfit: { items: [] } }
-                  }
-                  onGo={(tab) => setActiveTab(tab)}
-                  autoSuggestedOutfit={autoSuggestedOutfit}
-                  autoSuggestLoading={autoSuggestLoading}
-                  anchorUploading={anchorUploading}
-                  anchorPreview={anchorPreview}
-                  anchorItem={anchorItem}
-                  onStylePieceUpload={async (file) => {
-                    await handleAnchorUpload(file, true);
-                  }}
-                  onSaveSuggestion={async (look) => {
-                    if (!user?.uid || !look?.items?.length) return;
-                    try {
-                      const date = new Date().toISOString().split("T")[0];
-                      const res = await fetch(`${BASE_URL}/plan-outfit`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          uid: user.uid,
-                          date,
-                          outfit: {
-                            items: look.items,
-                            style_note:
-                              look.style_note ||
-                              `Tina's ${occasion} suggestion`,
-                          },
-                        }),
-                      });
-                      if (res.ok) {
-                        setTodayPlan({ outfit: look });
-                        setAutoSuggestedOutfit(null);
-                        alert("Saved to today's plan!");
-                      }
-                    } catch (err) {
-                      console.error("Failed to save suggestion:", err);
-                      alert("Could not save. Please try again.");
-                    }
-                  }}
-                />
+              <section className="section section-wardrobe">
+                <div className="stylist-shell">
+                  <div className="stylist-card">
+                    <div className="stylist-card__head">
+                      <h2 className="stylist-title">Welcome to WOW</h2>
+                      <p className="stylist-subtitle">
+                        Your core styling flow now starts with one piece.
+                      </p>
+                    </div>
 
-                {/* 🔥 Trends below the dashboard */}
-                {SHOW_TRENDS && (
-                  <section className="section" style={{ marginTop: "1rem" }}>
-                    <TrendsPanel initialQuery="general" initialLimit={8} />
-                  </section>
-                )}
-              </>
+                    <div className="stylist-card__footer">
+                      <button
+                        className="btn btn-primary stylist-generate"
+                        onClick={() => setActiveTab("stylepiece")}
+                      >
+                        Start Styling a Piece
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </section>
             )}
 
             {activeTab === "upload" && (
@@ -3597,474 +3573,23 @@ export default function App() {
             {/* AI Stylist Section */}
             {activeTab === "stylist" && (
               <section className="section section-wardrobe">
-                <h2 className="section-title">AI Style Assistant</h2>
-                <p className="section-description">
-                  Let our AI stylist create personalized looks from your
-                  wardrobe
-                </p>
-
                 <div className="stylist-shell">
                   <div className="stylist-card">
                     <div className="stylist-card__head">
-                      <h2 className="stylist-title">AI Style Assistant</h2>
+                      <h2 className="stylist-title">Style with Tina</h2>
                       <p className="stylist-subtitle">
-                      Upload a piece or use your wardrobe to generate full outfits
+                        The new styling flow now starts from your uploaded piece.
                       </p>
-                    </div>
-
-                    {/* Anchor Piece - Upload/Camera */}
-                    <div className="anchor-piece">
-                      <p className="anchor-piece__label">
-                      Upload a clothing item to style around
-                      </p>
-                      <p className="anchor-piece__sub">Upload or snap a photo of any clothing item and Tina will build a full outfit around it</p>
-                      
-                      {anchorItem ? (
-                        <div className="anchor-piece__selected">
-                          <img src={anchorItem.image_url} alt={anchorItem.name || "Selected piece"} className="anchor-piece__img" />
-                          <div className="anchor-piece__info">
-                            <span className="anchor-piece__name">{anchorItem.displayName || anchorItem.name || anchorItem.category || "Selected piece"}</span>
-                            <span className="anchor-piece__cat">{anchorItem.category || ""}{anchorItem.color ? ` - ${anchorItem.color}` : ""}</span>
-                            <span className="anchor-piece__saved">Saved to wardrobe</span>
-                          </div>
-                          <button type="button" className="anchor-piece__remove" onClick={() => { setAnchorItem(null); setAnchorPreview(null); }}>Remove</button>
-                        </div>
-                      ) : anchorUploading ? (
-                        <div className="anchor-piece__uploading">
-                          {anchorPreview && <img src={anchorPreview} alt="Uploading..." className="anchor-piece__preview" />}
-                          <div className="anchor-piece__uploading-text">
-                            <div className="loading-shimmer" style={{ width: 120, height: 14, borderRadius: 7 }}></div>
-                            <span>Detecting and saving to wardrobe...</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="anchor-piece__upload-row">
-                          <label className="anchor-piece__upload-btn">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              style={{ display: "none" }}
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) handleAnchorUpload(f);
-                                e.target.value = "";
-                              }}
-                            />
-                            <span className="anchor-piece__upload-icon">+</span>
-                            <span>Upload photo</span>
-                          </label>
-                          <label className="anchor-piece__upload-btn">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              capture="environment"
-                              style={{ display: "none" }}
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) handleAnchorUpload(f);
-                                e.target.value = "";
-                              }}
-                            />
-                            <span className="anchor-piece__upload-icon">&#128247;</span>
-                            <span>Use camera</span>
-                          </label>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="anchor-piece__divider-line"></div>
-
-                    {/* Controls */}
-                    <div className="style-controls">
-                      <div className="form-group">
-                        <label className="form-label">Occasion</label>
-                        <select
-                          className="form-select"
-                          value={occasion}
-                          onChange={(e) => setOccasion(e.target.value)}
-                        >
-                          <option value="Casual">Casual</option>
-                          <option value="Party">Party</option>
-                          <option value="Workwear">Workwear</option>
-                          <option value="Athleisure">Athleisure</option>
-                          <option value="Brunch">Brunch</option>
-                          <option value="Dinner">Dinner</option>
-                          <option value="Gym">Gym / Workout</option>
-                          <option value="Travel">Travel / Airport</option>
-                          <option value="Date">Date Night</option>
-                          <option value="Wedding">Wedding / Festive</option>
-                          <option value="Beach">Beach / Resort</option>
-                          <option value="Formal">Formal Event / Gala</option>
-                          <option value="Interview">
-                            Interview / Presentation
-                          </option>
-                          <option value="Shopping">
-                            Shopping / Errands
-                          </option>
-                          <option value="Concert">Concert / Festival</option>
-                          <option value="Winter">
-                            Winter Casual / Layered
-                          </option>
-                          <option value="Summer">
-                            Summer Casual / Lightwear
-                          </option>
-                          <option value="Lounge">Lounge / Homewear</option>
-                          <option value="Streetwear">
-                            Streetwear / Urban
-                          </option>
-                          <option value="Business">Business Casual</option>
-                          <option value="Adventure">
-                            Outdoor Adventure / Hiking
-                          </option>
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Vibe</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={vibe}
-                          onChange={(e) => setVibe(e.target.value)}
-                          placeholder="e.g., edgy, romantic, minimalist"
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Location</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={city}
-                          onChange={(e) => setCity(e.target.value)}
-                          placeholder="e.g., New York, Paris, Tokyo"
-                        />
-                      </div>
                     </div>
 
                     <div className="stylist-card__footer">
                       <button
                         className="btn btn-primary stylist-generate"
-                        onClick={async () => {
-                          await suggestOutfitAgent({
-                            uid: user.uid,
-                            city,
-                            wardrobe: items,
-                            occasion: occasion,
-                            vibe,
-                            anchorPiece: anchorItem || undefined,
-                          });
-                        }}
+                        onClick={() => setActiveTab("stylepiece")}
                       >
-                        {anchorItem ? "Create outfits around this piece" : uiCopy.stylist.generateBtn}
+                        Open Style Piece
                       </button>
                     </div>
-
-                    {stylistLoading && (
-                      <LoadingState text={uiCopy.stylist.loadingText} />
-                    )}
-
-                    {outfit && outfit.length > 0 ? (
-                      <div className="outfit-suggestions">
-                        {outfit.map((look, idx) => (
-                          <div key={idx} className="outfit-look">
-                            <div className="look-header">
-                              <h3 className="look-title">
-                                ✨ {look.title || `Look ${idx + 1}`}
-                              </h3>
-                              <p className="look-description">
-                                {look.style_note}
-                              </p>
-                              {(() => {
-                                // show when backend fixed/completed (we look for our backend phrasing OR evidence)
-                                const note = (
-                                  look.style_note || ""
-                                ).toLowerCase();
-                                const autoCompleted =
-                                  /completed with real wardrobe items|added matching footwear|minor backend fix/i.test(
-                                    note,
-                                  );
-                                const showBag =
-                                  userPrefs.gender?.toLowerCase() ===
-                                    "female" && hasBag(look.items);
-                                const showBelt =
-                                  userPrefs.gender?.toLowerCase() === "male" &&
-                                  hasBelt(look.items);
-                                return (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      gap: 8,
-                                      marginTop: 6,
-                                      flexWrap: "wrap",
-                                    }}
-                                  >
-                                    {autoCompleted && (
-                                      <span className="tag">
-                                        Auto-completed
-                                      </span>
-                                    )}
-                                    {showBag && (
-                                      <span className="tag">Bag included</span>
-                                    )}
-                                    {showBelt && (
-                                      <span className="tag">Belt added</span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-
-                            <div className="look-items">
-                              {look.items.map((piece, i) => {
-                                const hydrated = piece;
-                                return (
-                                  <div key={i} className="look-item card">
-                                    <img
-                                      className="look-item-image"
-                                      src={hydrated.image_url}
-                                      alt={hydrated.name}
-                                    />
-                                    <div className="look-item-info">
-                                      <p
-                                        className="look-item-name"
-                                        style={{ margin: 0, fontWeight: 600 }}
-                                      >
-                                        {hydrated?.name ||
-                                          hydrated?.displayName ||
-                                          (hydrated?.category
-                                            ? formatLabel(hydrated.category)
-                                            : `Item ${i + 1}`)}
-                                      </p>
-
-                                      {hydrated.source === "uploaded_item" && (
-                                        <span className="tag" style={{ marginTop: 6 }}>
-                                          Anchor piece
-                                        </span>
-                                      )}
-                                      
-                                      {hydrated.source === "inspiration" && (
-
-                                    
-                                        <span
-                                          className="tag"
-                                          style={{ marginTop: 6 }}
-                                        >
-                                          Inspiration
-                                        </span>
-                                      )}
-                                      {hydrated.source ===
-                                        "agent_unmatched" && (
-                                        <span
-                                          className="tag"
-                                          style={{ marginTop: 6 }}
-                                        >
-                                          Added by Tina
-                                        </span>
-                                      )}
-
-                                      {hydrated.role && (
-                                        <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
-                                          {hydrated.role}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-
-                            <div className="look-actions wow-look-actions">
-                              {/* Primary CTA */}
-                              <button
-                                className="btn btn-accent wow-love-btn"
-                                onClick={async () => {
-                                  try {
-                                    const outfit_id = look?.outfit_id;
-
-                                    await logOutfitFeedback({
-                                      uid: user.uid,
-                                      action: "love",
-                                      outfit_id,
-                                      occasion,
-                                      vibe,
-                                      items: toFeedbackItems(look),
-                                      meta: {
-                                        source: "stylist",
-                                        look_index: idx,
-                                      },
-                                    });
-
-                                    alert("❤️ Loved this look!");
-                                  } catch (e) {
-                                    console.error("Love feedback failed:", e);
-                                    alert("Couldn’t save feedback. Try again.");
-                                  }
-                                }}
-                              >
-                                ❤️ Love this look
-                              </button>
-
-                              {/* Secondary row */}
-                              <div className="wow-look-actions__row">
-                                <button
-                                  className="btn btn-outline wow-action-btn"
-                                  onClick={() => openPlanModal(look)}
-                                  title="Add to calendar"
-                                >
-                                  📅
-                                </button>
-
-                                <button
-                                  className="btn btn-outline wow-action-btn"
-                                  onClick={async () => {
-                                    try {
-                                      const outfit_id = look?.outfit_id;
-
-                                      await logOutfitFeedback({
-                                        uid: user.uid,
-                                        occasion,
-                                        vibe,
-                                        action: "dislike",
-                                        outfit_id,
-                                        items: (look?.items || []).map(
-                                          (it) => ({
-                                            wardrobe_id: String(it.id),
-                                            name: it.name || "",
-                                            category: it.category || "",
-                                          }),
-                                        ),
-                                        reason_tags: ["outfit_only"], // 👈 IMPORTANT
-                                      });
-
-                                      alert(
-                                        "💔 Noted — won’t repeat this vibe.",
-                                      );
-                                    } catch (e) {
-                                      console.error(
-                                        "Dislike feedback failed:",
-                                        e,
-                                      );
-                                      alert(
-                                        "Couldn’t save feedback. Try again.",
-                                      );
-                                    }
-                                  }}
-                                  title="Not my style"
-                                >
-                                  💔
-                                </button>
-
-                                {/* Swap menu */}
-                                <div className="wow-swap-wrap">
-                                  <button
-                                    className="btn btn-outline wow-action-btn"
-                                    onClick={() =>
-                                      setSwapOpenIdx(
-                                        swapOpenIdx === idx ? null : idx,
-                                      )
-                                    }
-                                    title="Swap one piece"
-                                  >
-                                    🔁
-                                  </button>
-
-                                  {swapOpenIdx === idx && (
-                                    <div className="wow-swap-menu">
-                                      <div className="wow-swap-title">
-                                        Swap only:
-                                      </div>
-
-                                      <div className="wow-swap-grid">
-                                        <button
-                                          className="wow-swap-chip"
-                                          onClick={() =>
-                                            handleSwap(look, "top")
-                                          }
-                                        >
-                                          Top
-                                        </button>
-                                        <button
-                                          className="wow-swap-chip"
-                                          onClick={() =>
-                                            handleSwap(look, "bottom")
-                                          }
-                                        >
-                                          Bottom
-                                        </button>
-                                        <button
-                                          className="wow-swap-chip"
-                                          onClick={() =>
-                                            handleSwap(look, "footwear")
-                                          }
-                                        >
-                                          Footwear
-                                        </button>
-                                        <button
-                                          className="wow-swap-chip"
-                                          onClick={() =>
-                                            handleSwap(look, "bag")
-                                          }
-                                        >
-                                          Bag
-                                        </button>
-                                        <button
-                                          className="wow-swap-chip"
-                                          onClick={() =>
-                                            handleSwap(look, "dress")
-                                          }
-                                        >
-                                          Dress
-                                        </button>
-                                      </div>
-
-                                      <button
-                                        className="wow-swap-close"
-                                        onClick={() => setSwapOpenIdx(null)}
-                                      >
-                                        Close
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {look.trends_used?.length > 0 && (
-                              <div className="look-trends">
-                                <h4 className="trends-title">
-                                  🔥 Trending Inspiration
-                                </h4>
-                                <div className="trends-list">
-                                  {look.trends_used.map((trend, i) => (
-                                    <div key={i} className="trend-item">
-                                      <span className="trend-content">
-                                        {trend.content}
-                                      </span>
-                                      {trend.url && (
-                                        <a
-                                          className="trend-source"
-                                          href={trend.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                        >
-                                          🔗 Source
-                                        </a>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      outfit !== null && (
-                        <p style={{ marginTop: "1rem", color: "#888" }}>
-                          {uiCopy.stylist.emptyText}
-                        </p>
-                      )
-                    )}
                   </div>
                 </div>
               </section>
@@ -4328,13 +3853,11 @@ export default function App() {
           }}
         >
           {[
-            { label: "Home", key: "home" },
-            { label: "Wardrobe", key: "wardrobe" }, // keeping Wardrobe
-            { label: "Add", key: "upload" },
-      { label: "Style", key: "stylist" },
-          { label: "Piece", key: "stylepiece" },
-            { label: "Plan", key: "planner" },
-            { label: "Me", key: "profile" },
+          { label: "Style", key: "stylepiece" },
+          { label: "Closet", key: "wardrobe" },
+          { label: "Add", key: "upload" },
+          { label: "Plan", key: "planner" },
+          { label: "Me", key: "profile" },
           ].map((tab) => {
             const active = tab.key === activeTab;
             return (
