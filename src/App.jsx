@@ -756,6 +756,8 @@ export default function App() {
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [todayPlan, setTodayPlan] = useState({ outfit: { items: [] } });
+  const [autoSuggestedOutfit, setAutoSuggestedOutfit] = useState(null);
+  const [autoSuggestLoading, setAutoSuggestLoading] = useState(false);
   const hasTodayPlan =
     !!todayPlan?.outfit &&
     Array.isArray(todayPlan.outfit.items) &&
