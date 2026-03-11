@@ -750,18 +750,11 @@ export default function App() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterColor, setFilterColor] = useState("");
   const [occasion, setOccasion] = useState("Casual");
-  const [homeOccasion, setHomeOccasion] = useState("Today");
   const [selectedItems, setSelectedItems] = useState([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [vibe, setVibe] = useState("fun");
   const [city, setCity] = useState("Delhi");
   const [todayPlan, setTodayPlan] = useState({ outfit: { items: [] } });
-  const [autoSuggestedOutfit, setAutoSuggestedOutfit] = useState(null);
-  const [autoSuggestLoading, setAutoSuggestLoading] = useState(false);
-  const hasTodayPlan =
-    !!todayPlan?.outfit &&
-    Array.isArray(todayPlan.outfit.items) &&
-    todayPlan.outfit.items.length > 0;
 
   // ── Onboarding modal UI state (e frontend-only) ──
   const [onboardingOpen, setOnboardingOpen] = useState(false);
@@ -1231,130 +1224,7 @@ export default function App() {
     }
   };
 
-  // Track if we've already generated a suggestion this session
-  const [hasGeneratedThisSession, setHasGeneratedThisSession] = useState(false);
-
-  // Auto-generate outfit suggestion on every login/refresh
-  useEffect(() => {
-    const hasWardrobe = items.length > 0;
-    const isReady =
-      user?.uid && userPrefs.gender && !loadingPrefs && !autoSuggestLoading;
-
-    const onHome = activeTab === "home";
-
-    // ✅ Only auto-suggest on Home + only if no saved plan exists
-    if (
-      onHome &&
-      hasWardrobe &&
-      isReady &&
-      !hasTodayPlan &&
-      !hasGeneratedThisSession
-    ) {
-      console.log("Auto-generating fresh outfit for today...");
-      setHasGeneratedThisSession(true);
-      setAutoSuggestLoading(true);
-
-      // Get user's location for weather-appropriate suggestions
-      const getLocationAndSuggest = async () => {
-        let userCity = city;
-
-        try {
-          // Try to get user's location
-          if (navigator.geolocation) {
-            const position = await new Promise((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject, {
-                timeout: 5000,
-              });
-            });
-
-            // Reverse geocode to get city name
-            const { latitude, longitude } = position.coords;
-            const geoRes = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            );
-            const geoData = await geoRes.json();
-            userCity =
-              geoData.address?.city ||
-              geoData.address?.town ||
-              geoData.address?.state ||
-              city;
-            setCity(userCity);
-          }
-        } catch (err) {
-          console.log("Location not available, using default city:", city);
-        }
-
-        try {
-          const res = await fetch(`${BASE_URL}/suggest-outfit`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              uid: user.uid,
-              city: userCity,
-              wardrobe: items.map((w) => ({
-                wardrobe_id: String(w.id),
-                id: String(w.id),
-                image_url: w.image_url,
-                name: w.displayName || w.name || "",
-                category: w.category || "",
-                color: w.color || "",
-              })),
-              profile: {
-                gender: userPrefs.gender,
-                bodyShape: userPrefs.bodyShape,
-                complexion: userPrefs.complexion,
-              },
-              constraints: `${homeOccasion} look for ${new Date().toISOString().slice(0, 10)}. Make it feel fresh, avoid repeating the same outerwear/shoes combo.`,
-            }),
-          });
-
-          const rawText = await res.text();
-          let clean = rawText
-            .trim()
-            .replace(/^```(?:json)?/i, "")
-            .replace(/```$/i, "")
-            .trim();
-
-          let data;
-          try {
-            data = JSON.parse(clean);
-          } catch {
-            data = { looks: [] };
-          }
-
-          // Extract the first look
-          const looks =
-            data.looks || (data.look ? [data.look] : []) || data.outfits || [];
-          if (looks.length > 0) {
-            const firstLook = looks[0];
-            setAutoSuggestedOutfit({
-              ...firstLook,
-              style_note: firstLook.style_note || "Tina's suggestion for today",
-              isSuggestion: true,
-            });
-            console.log("Auto-suggestion ready:", firstLook);
-          }
-        } catch (err) {
-          console.error("Auto-suggestion failed:", err);
-        } finally {
-          setAutoSuggestLoading(false);
-        }
-      };
-
-      getLocationAndSuggest();
-    }
-  }, [
-    items,
-    user?.uid,
-    userPrefs.gender,
-    loadingPrefs,
-    hasGeneratedThisSession,
-    autoSuggestLoading,
-    city,
-    activeTab,
-    hasTodayPlan,
-  ]);
-
+  
   const fetchItems = async (uid) => {
     try {
       const genderParam =
@@ -1543,7 +1413,7 @@ export default function App() {
 
       if (autoStyle) {
         setAnchorUploading(false);
-        setAutoSuggestLoading(true);
+        setStylistLoading(true);
         try {
           const anchorWardrobe = {
             wardrobe_id: String(savedId),
@@ -1593,7 +1463,13 @@ export default function App() {
           let clean = rawText.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
           let data;
           try { data = JSON.parse(clean); } catch { data = { looks: [] }; }
-          const looks = data.looks || (data.look ? [data.look] : []) || (data.outfits || []);
+          const looks = Array.isArray(data?.outfits)
+          ? data.outfits
+          : Array.isArray(data?.looks)
+            ? data.looks
+            : data?.look
+              ? [data.look]
+              : [];
           console.log("[AutoStyle] Parsed looks count:", looks.length);
 
           if (looks.length > 0) {
@@ -1612,9 +1488,14 @@ export default function App() {
             }
             localUrlMap.set(normalizeUrl(imageUrl), newAnchor);
 
-            const hydratedItems = (firstLook.items || []).map((it, i) => {
-              const tinaId = it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.id;
-              const tinaUrl = it.image_url ?? it.image_uri ?? it.image ?? it.url ?? "";
+              const hydratedItems = (firstLook.pieces || firstLook.items || []).map((it, i) => {
+                const tinaId = it.idx ?? it.wardrobe_id ?? it.wardrobeId ?? it.item_id ?? it.id;
+                const tinaUrl =
+                  it.image_url ??
+                  it.image_uri ??
+                  it.image ??
+                  it.url ??
+                  (it.source === "uploaded_item" ? imageUrl : "");
 
               let w = null;
               if (tinaId != null) w = localIdMap.get(String(tinaId)) || null;
@@ -1655,12 +1536,16 @@ export default function App() {
 
             const validItems = hydratedItems.filter((h) => h.image_url);
             if (validItems.length > 0) {
-              setAutoSuggestedOutfit({
-                ...firstLook,
-                items: validItems,
-                style_note: firstLook.style_note || "Styled around your uploaded piece",
-                isSuggestion: true,
-              });
+              setOutfit([
+                {
+                  ...firstLook,
+                  items: validItems,
+                  style_note:
+                    firstLook.style_note ||
+                    firstLook.why_it_works ||
+                    "Styled around your uploaded piece",
+                },
+              ]);
             } else {
               console.warn("[AutoStyle] No items with valid image URLs after hydration");
             }
@@ -1668,7 +1553,7 @@ export default function App() {
         } catch (e) {
           console.error("Auto-style after upload failed:", e);
         } finally {
-          setAutoSuggestLoading(false);
+          setStylistLoading(false);
         }
       }
     } catch (err) {
@@ -1935,10 +1820,10 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uid: user.uid,
-          name: stapleName,
-          category: stapleCategory,
-          color: variant.color,
-          image_url: variant.image_url,
+          name: product.name || product.title || "Unnamed",
+          category: product.category || "Search",
+          color: product.color || "Unknown",
+          image_url: product.image_url || product.thumbnail || product.url || "",
           save_to_staples: true,
           gender:
             String(userPrefs?.gender || "").toLowerCase().startsWith("m") ? "male" :
@@ -2296,7 +2181,7 @@ export default function App() {
       // =========================
       // STYLE-PIECE RESPONSE PATH
       // =========================
-      if (Array.isArray(data.outfits)) {
+        if (Array.isArray(data?.outfits)) {
         preparedLooks = data.outfits.map((outfitObj, lookIdx) => {
           const mappedItems = (outfitObj.pieces || [])
             .map((piece, pieceIdx) => {
@@ -2307,7 +2192,12 @@ export default function App() {
                   name: piece.name || "Anchor piece",
                   category: piece.category || "",
                   color: piece.color || "",
-                  image_url: anchorPiece?.image_url || anchorItem?.image_url || anchorPreview || "",
+                  image_url:
+                    piece.image_url ||
+                    anchorPiece?.image_url ||
+                    anchorItem?.image_url ||
+                    anchorPreview ||
+                    "",
                   tags: [],
                   source: "uploaded_item",
                   role: piece.role || "",
@@ -2318,7 +2208,8 @@ export default function App() {
               if (piece.source === "wardrobe") {
                 const wardrobeMatch =
                   items.find((w) => String(w.id) === String(piece.idx)) ||
-                  items.find((w) => String(w.doc_id) === String(piece.idx));
+                  items.find((w) => String(w.doc_id) === String(piece.idx)) ||
+                  items.find((w) => String(w.wardrobe_id) === String(piece.idx));
 
                 if (wardrobeMatch) {
                   return {
@@ -2382,7 +2273,7 @@ export default function App() {
             occasion_fit: outfitObj.occasion_fit || "",
             trends_used: [],
             validation: null,
-            items: mappedItems,
+            items: mappedItems.filter(Boolean),
           };
         });
       }
@@ -2489,11 +2380,16 @@ export default function App() {
       }
 
       const finalLooks = (preparedLooks || [])
-        .map((look) => ({
+      .map((look) => {
+        const safeItems = (look.items || []).filter(
+          (it) => !!it && (!!it.image_url || it.source === "uploaded_item")
+        );
+        return {
           ...look,
-          items: (look.items || []).filter((it) => !!it.image_url),
-        }))
-        .filter((look) => Array.isArray(look.items) && look.items.length > 0);
+          items: safeItems,
+        };
+      })
+      .filter((look) => Array.isArray(look.items) && look.items.length > 0);
 
       console.log("✅ Final looks for UI:", finalLooks);
 
@@ -2862,29 +2758,7 @@ export default function App() {
           </div>
         ) : (
           <>
-            {activeTab === "home" && (
-              <section className="section section-wardrobe">
-                <div className="stylist-shell">
-                  <div className="stylist-card">
-                    <div className="stylist-card__head">
-                      <h2 className="stylist-title">Welcome to WOW</h2>
-                      <p className="stylist-subtitle">
-                        Your core styling flow now starts with one piece.
-                      </p>
-                    </div>
-
-                    <div className="stylist-card__footer">
-                      <button
-                        className="btn btn-primary stylist-generate"
-                        onClick={() => setActiveTab("stylepiece")}
-                      >
-                        Start Styling a Piece
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
+            
 
             {activeTab === "upload" && (
               <section className="section upload-page">
@@ -3572,31 +3446,7 @@ export default function App() {
               </section>
             )}
 
-            {/* AI Stylist Section */}
-            {activeTab === "stylist" && (
-              <section className="section section-wardrobe">
-                <div className="stylist-shell">
-                  <div className="stylist-card">
-                    <div className="stylist-card__head">
-                      <h2 className="stylist-title">Style with Tina</h2>
-                      <p className="stylist-subtitle">
-                        The new styling flow now starts from your uploaded piece.
-                      </p>
-                    </div>
-
-                    <div className="stylist-card__footer">
-                      <button
-                        className="btn btn-primary stylist-generate"
-                        onClick={() => setActiveTab("stylepiece")}
-                      >
-                        Open Style Piece
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
+            
             {activeTab === "stylepiece" && (
               <StylePiecePage
                 user={user}
@@ -3849,7 +3699,7 @@ export default function App() {
           className="wow-bottom-nav__pill"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+            gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
             width: "min(1100px, calc(100vw - 24px))",
             gap: "4px",
           }}
