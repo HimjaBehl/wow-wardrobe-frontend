@@ -3448,13 +3448,14 @@ export default function App() {
 
             
             {activeTab === "stylepiece" && (
-              <StylePiecePage
-                user={user}
-                userPrefs={userPrefs}
-                items={items}
-                city={city}
-                setCity={setCity}
-              />
+            <StylePiecePage
+              user={user}
+              userPrefs={userPrefs}
+              items={items}
+              city={city}
+              setCity={setCity}
+              baseUrl={BASE_URL}
+            />
             )}
             
             {/* Weekly Planner */}

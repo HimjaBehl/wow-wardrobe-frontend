@@ -4,6 +4,33 @@ import { storage } from "./firebase";
 
 const BASE_URL = "https://wow-wardrobe-backend-himjabehl.replit.app";
 
+const OCCASION_OPTIONS = [
+  "workwear",
+  "formal",
+  "casual",
+  "date night",
+  "travel",
+  "airport",
+  "festive",
+  "wedding",
+  "vacation",
+  "gym",
+  "lounge",
+  "streetwear",
+];
+
+const VIBE_OPTIONS = [
+  "minimal",
+  "chic",
+  "bold",
+  "elegant",
+  "relaxed",
+  "smart casual",
+  "edgy",
+  "classic",
+  "trendy",
+];
+
 export default function StylePiecePage({
   user,
   userPrefs,
@@ -11,8 +38,8 @@ export default function StylePiecePage({
   city,
   setCity,
 }) {
-  const [occasion, setOccasion] = useState("date night");
-  const [vibe, setVibe] = useState("effortless chic");
+  const [occasion, setOccasion] = useState("workwear");
+  const [vibe, setVibe] = useState("minimal");
   const [anchorItem, setAnchorItem] = useState(null);
   const [anchorPreview, setAnchorPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -103,28 +130,37 @@ export default function StylePiecePage({
 
     setLoading(true);
     setLooks([]);
-
+    console.log("🎯 Calling /style-piece with:", {
+      uid: user?.uid,
+      occasion,
+      vibe,
+      city,
+      gender: userPrefs?.gender || "",
+      anchorItem,
+    });
     try {
       const res = await fetch(`${BASE_URL}/style-piece`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          uid: user.uid,
-          gender: userPrefs?.gender || "women",
+          uid: user?.uid,
           occasion,
           vibe,
-          weather: "warm",
-          city: city || "Delhi",
+          city,
+          gender: userPrefs?.gender || "",
           include_wardrobe: true,
-          include_staples: false,
+          include_staples: true,
+          staples_version: "v2",
           anchor_item: {
-            name: anchorItem.name,
-            category: anchorItem.category,
-            color: anchorItem.color,
-            tags: anchorItem.tags || [],
-            image_url: anchorItem.image_url,
+            id: anchorItem?.id,
+            wardrobe_id: anchorItem?.id,
+            image_url: anchorItem?.image_url,
+            name: anchorItem?.name || "",
+            category: anchorItem?.category || "",
+            color: anchorItem?.color || "",
+            tags: Array.isArray(anchorItem?.tags) ? anchorItem.tags : [],
           },
-        }),
+        })
       });
 
       const data = await res.json();
@@ -149,10 +185,11 @@ export default function StylePiecePage({
             };
           }
 
-          if (piece.source === "wardrobe") {
+          if (piece.source === "wardrobe" || piece.source === "staple") {
             const matched =
               items.find((w) => String(w.id) === String(piece.idx)) ||
-              items.find((w) => String(w.doc_id) === String(piece.idx));
+              items.find((w) => String(w.doc_id) === String(piece.idx)) ||
+              items.find((w) => String(w.wardrobe_id) === String(piece.idx));
 
             return {
               id: piece.idx || `w-${lookIdx}-${pieceIdx}`,
@@ -161,7 +198,7 @@ export default function StylePiecePage({
               color: matched?.color || piece.color,
               role: piece.role,
               source: piece.source,
-              image_url: matched?.image_url || "",
+              image_url: matched?.image_url || piece.image_url || "",
             };
           }
 
@@ -180,7 +217,7 @@ export default function StylePiecePage({
           id: look.id || `look-${lookIdx}`,
           title: look.title,
           why_it_works: look.why_it_works,
-          items: mappedItems,
+          items: mappedItems.filter((piece) => piece && (piece.image_url || piece.source === "uploaded_item")),
         };
       });
 
@@ -259,33 +296,43 @@ export default function StylePiecePage({
             )}
           </div>
 
-          <div className="style-controls">
-            <div className="form-group">
-              <label className="form-label">Occasion</label>
-              <input
-                className="form-input"
+            <div className="space-y-2">
+              <label className="text-sm text-white/70">Occasion</label>
+              <select
                 value={occasion}
                 onChange={(e) => setOccasion(e.target.value)}
-              />
+                className="w-full rounded-xl border border-neutral-700 bg-black px-4 py-3 text-white"
+              >
+                {OCCASION_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Vibe</label>
-              <input
-                className="form-input"
-                value={vibe}
-                onChange={(e) => setVibe(e.target.value)}
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm text-white/70">Vibe</label>
+            <select
+              value={vibe}
+              onChange={(e) => setVibe(e.target.value)}
+              className="w-full rounded-xl border border-neutral-700 bg-black px-4 py-3 text-white"
+            >
+              {VIBE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div className="form-group">
-              <label className="form-label">City</label>
-              <input
-                className="form-input"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-              />
-            </div>
+          <div className="form-group">
+            <label className="form-label">City</label>
+            <input
+              className="form-input"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+            />
           </div>
 
           <div className="stylist-card__footer">
