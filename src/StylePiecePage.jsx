@@ -147,7 +147,7 @@ export default function StylePiecePage({
           occasion,
           vibe,
           city,
-          gender: userPrefs?.gender || "",
+          gender: "male",
           include_wardrobe: true,
           include_staples: true,
           staples_version: "v2",
@@ -234,7 +234,7 @@ export default function StylePiecePage({
     <section className="section section-wardrobe">
       <h2 className="section-title">Style a Piece</h2>
       <p className="section-description">
-        Clean test page for the new style-piece flow
+        Upload any clothing item and get 3 complete looks built around it.
       </p>
 
       <div className="stylist-shell">
@@ -296,27 +296,27 @@ export default function StylePiecePage({
             )}
           </div>
 
-            <div className="space-y-2">
-              <label className="text-sm text-white/70">Occasion</label>
-              <select
-                value={occasion}
-                onChange={(e) => setOccasion(e.target.value)}
-                className="w-full rounded-xl border border-neutral-700 bg-black px-4 py-3 text-white"
-              >
-                {OCCASION_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="form-group">
+            <label className="form-label">Occasion</label>
+            <select
+              value={occasion}
+              onChange={(e) => setOccasion(e.target.value)}
+              className="form-select"
+            >
+              {OCCASION_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <div className="space-y-2">
-            <label className="text-sm text-white/70">Vibe</label>
+          <div className="form-group">
+            <label className="form-label">Vibe</label>
             <select
               value={vibe}
               onChange={(e) => setVibe(e.target.value)}
-              className="w-full rounded-xl border border-neutral-700 bg-black px-4 py-3 text-white"
+              className="form-select"
             >
               {VIBE_OPTIONS.map((option) => (
                 <option key={option} value={option}>
@@ -341,81 +341,86 @@ export default function StylePiecePage({
               onClick={handleStylePiece}
               disabled={!anchorItem || loading}
             >
-              {loading ? "Styling..." : "Call /style-piece"}
+              {loading ? "Styling your look…" : "Build outfits around this piece"}
             </button>
           </div>
-
-          {looks.length > 0 && (
-            <div className="outfit-suggestions">
-              {looks.map((look) => (
-                <div key={look.id} className="outfit-look">
-                  <div className="look-header">
-                    <h3 className="look-title">✨ {look.title}</h3>
-                    <p className="look-description">{look.why_it_works}</p>
-                  </div>
-
-                  <div className="look-items">
-                    {look.items.map((piece) => (
-                      <div key={piece.id} className="look-item card">
-                        {piece.image_url ? (
-                          <img
-                            className="look-item-image"
-                            src={piece.image_url}
-                            alt={piece.name}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              height: 180,
-                              display: "grid",
-                              placeItems: "center",
-                              background: "#f3f3f3",
-                              borderRadius: 12,
-                            }}
-                          >
-                            No image
-                          </div>
-                        )}
-
-                        <div className="look-item-info">
-                          <p
-                            className="look-item-name"
-                            style={{ margin: 0, fontWeight: 600 }}
-                          >
-                            {piece.name}
-                          </p>
-                          <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
-                            {piece.role} • {piece.source}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {rawResponse && (
-            <details style={{ marginTop: 20 }}>
-              <summary>Raw API response</summary>
-              <pre
-                style={{
-                  marginTop: 12,
-                  whiteSpace: "pre-wrap",
-                  fontSize: 12,
-                  background: "#111",
-                  color: "#ddd",
-                  padding: 12,
-                  borderRadius: 12,
-                }}
-              >
-                {JSON.stringify(rawResponse, null, 2)}
-              </pre>
-            </details>
-          )}
         </div>
       </div>
+
+      {/* Outfit suggestions — rendered outside the dark card so they use the white card theme */}
+      {looks.length > 0 && (
+        <div className="outfit-suggestions" style={{ marginTop: 24 }}>
+          {looks.map((look) => (
+            <div key={look.id} className="outfit-look" style={{ marginBottom: 24 }}>
+              <div className="look-header">
+                <h3 className="look-title">{look.title}</h3>
+                <p className="look-description">{look.why_it_works}</p>
+              </div>
+
+              <div className="look-items">
+                {look.items.map((piece) => (
+                  <div key={piece.id} className="look-item card">
+                    {piece.image_url ? (
+                      <img
+                        className="look-item-image"
+                        src={piece.image_url}
+                        alt={piece.name}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          const fallback = e.currentTarget.nextElementSibling;
+                          if (fallback) fallback.style.display = "grid";
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      style={{
+                        height: 180,
+                        display: piece.image_url ? "none" : "grid",
+                        placeItems: "center",
+                        background: "#f5f5f5",
+                        borderRadius: "12px 12px 0 0",
+                        color: "#888",
+                        fontSize: 13,
+                      }}
+                    >
+                      {piece.category || "No image"}
+                    </div>
+
+                    <div className="look-item-info">
+                      <p className="look-item-name" style={{ margin: 0, fontWeight: 600 }}>
+                        {piece.name}
+                      </p>
+                      <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>
+                        {[piece.role, piece.color].filter(Boolean).join(" · ")}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {rawResponse && (
+        <details style={{ marginTop: 20, padding: "0 16px" }}>
+          <summary style={{ cursor: "pointer", color: "#888", fontSize: 13 }}>Debug: raw API response</summary>
+          <pre
+            style={{
+              marginTop: 12,
+              whiteSpace: "pre-wrap",
+              fontSize: 12,
+              background: "#111",
+              color: "#ddd",
+              padding: 12,
+              borderRadius: 12,
+              overflowX: "auto",
+            }}
+          >
+            {JSON.stringify(rawResponse, null, 2)}
+          </pre>
+        </details>
+      )}
     </section>
   );
 }

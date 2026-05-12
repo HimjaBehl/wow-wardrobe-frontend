@@ -1074,19 +1074,12 @@ export default function App() {
 
   useEffect(() => {
     const fetchStaples = async () => {
-      const g = userPrefs?.gender?.toLowerCase();
-      if (!user?.uid || !g) {
-        console.log("Staples fetch skipped - uid:", user?.uid, "gender:", g);
-        return;
-      }
-      const genderParam = g || "female";
-
+      if (!user?.uid) return; // silent on initial render / logout
       try {
-        const url = `${BASE_URL}/staples?gender=${encodeURIComponent(
-          genderParam,
-        )}&uid=${encodeURIComponent(user.uid)}&v=${Date.now()}`; // ✅ cache-bust
+        // Always read from staples_male_v2 — the only populated collection
+        const url = `${BASE_URL}/staples?gender=male&uid=${encodeURIComponent(user.uid)}&v=${Date.now()}`; // ✅ cache-bust
 
-        console.log("Fetching staples for gender:", genderParam, "url:", url);
+        console.log("Fetching staples url:", url);
 
         const res = await fetch(url, { cache: "no-store" }); // ✅ avoid cached responses
         if (!res.ok) {
@@ -1121,7 +1114,7 @@ export default function App() {
     };
 
     fetchStaples();
-  }, [user?.uid, userPrefs?.gender]);
+  }, [user?.uid]);
 
   const isInAppBrowser = () => {
     const ua = navigator.userAgent || navigator.vendor || window.opera || "";
@@ -1227,15 +1220,9 @@ export default function App() {
   
   const fetchItems = async (uid) => {
     try {
-      const genderParam =
-        String(userPrefs?.gender || "").toLowerCase().startsWith("m") ? "male" :
-        String(userPrefs?.gender || "").toLowerCase().startsWith("f") ? "female" :
-        "female";
-
+      // Always use staples_male_v2 — the only populated collection
       const res = await fetch(
-        `${BASE_URL}/wardrobe?uid=${uid}&include_staples=1&gender=${encodeURIComponent(
-          genderParam,
-        )}&version=v2&v=${Date.now()}`,
+        `${BASE_URL}/wardrobe?uid=${uid}&include_staples=1&gender=male&version=v2&v=${Date.now()}`,
         { cache: "no-store" },
       );
       const text = await res.text();
