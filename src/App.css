@@ -202,14 +202,15 @@ img{ display:block; max-width:100%; }
 .btn-success:hover{ filter:brightness(.95); }
 
 /* Stylist / outfits */
-.outfit-look{ padding:var(--xl); border-radius:var(--r-xl); }
-.look-header{ text-align:center; margin-bottom:var(--xl); padding-bottom:var(--lg); border-bottom:1px solid var(--border); }
-.look-title{ font-size:1.5rem; font-weight:var(--fw-600); color:var(--ink); }
-.look-description{ color:var(--muted); }
-.look-items{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:var(--lg); margin-bottom:var(--xl); }
+.outfit-suggestions{ display:flex; flex-direction:column; gap:20px; }
+.outfit-look{ padding:var(--lg) var(--xl) var(--xl); border-radius:var(--r-xl); }
+.look-header{ margin-bottom:var(--lg); padding-bottom:var(--md); border-bottom:1px solid var(--border); }
+.look-title{ font-size:1.15rem; font-weight:var(--fw-600); color:var(--ink); }
+.look-description{ color:var(--muted); font-size:.9rem; margin-top:4px; }
+.look-items{ display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:var(--md); }
 .look-item{ overflow:hidden; }
-.look-item-image{ width:100%; height:180px; object-fit:cover; display:block; }
-.look-item-info{ padding:var(--md); text-align:center; }
+.look-item-image{ width:100%; height:160px; object-fit:cover; display:block; }
+.look-item-info{ padding:10px var(--md); text-align:center; }
 .look-item-name {
   font-weight: var(--fw-500);
   color: #111 !important;          /* force dark text on light card */
@@ -1741,6 +1742,10 @@ a{ color:var(--link); }
   opacity: 0.75;
   margin-bottom: 6px;
 }
+
+/* Labels inside the dark stylist card need to be light */
+.stylist-card .form-label { color: rgba(255,255,255,0.75); }
+.stylist-card .form-group { margin-bottom: 12px; }
 
 /* CTA footer */
 .stylist-card__footer{
@@ -4430,4 +4435,266 @@ a{ color:var(--link); }
   color: rgba(255, 255, 255, 0.45);
   margin-bottom: 16px;
   line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════
+   StylePiecePage — chip UI + enhanced cards
+   ═══════════════════════════════════════════════ */
+
+/* ── Input blocks ───────────────────────────── */
+.input-block { margin-bottom: var(--lg); }
+.input-label {
+  display: block;
+  font-size: .8rem;
+  font-weight: var(--fw-600);
+  color: var(--ink);
+  margin-bottom: .5rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.input-label-opt { font-weight: var(--fw-400); text-transform: none; color: var(--muted); }
+
+/* ── Chip group ─────────────────────────────── */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: var(--fw-500);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s, transform .1s;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--accent-pink); transform: translateY(-1px); }
+.chip--active {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+.chip-sub {
+  font-size: .7rem;
+  opacity: .75;
+  font-weight: var(--fw-400);
+  margin-top: 1px;
+}
+
+/* dislike chips — slightly red tint */
+.chip-group--dislike { gap: 6px; }
+.chip--dislike {
+  border-color: #fca5a5;
+  color: #b91c1c;
+  background: #fff5f5;
+  font-size: .78rem;
+  padding: 6px 12px;
+}
+.chip--dislike:hover { background: #fee2e2; border-color: #ef4444; }
+
+/* ── Hero upload zone ───────────────────────── */
+.hero-upload-zone {
+  min-height: 160px;
+  border: 2px dashed var(--border);
+  border-radius: var(--r-xl);
+  margin-bottom: var(--lg);
+  overflow: hidden;
+  transition: border-color .2s, background .2s;
+}
+.hero-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  cursor: pointer;
+  gap: 8px;
+  padding: var(--xl);
+}
+.hero-upload-label:hover { background: #fafafa; border-color: var(--accent-pink); }
+.hero-upload-icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: var(--accent-pink);
+  font-size: 1.8rem;
+  display: grid; place-items: center;
+  font-weight: 300;
+}
+.hero-upload-text { font-size: .95rem; font-weight: var(--fw-600); color: var(--ink); }
+.hero-upload-sub { font-size: .8rem; color: var(--muted); }
+
+/* anchor selected state */
+.anchor-selected {
+  display: flex;
+  align-items: center;
+  gap: var(--md);
+  padding: var(--md);
+}
+.anchor-img {
+  width: 90px; height: 90px;
+  object-fit: cover;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.anchor-img--preview { opacity: .7; }
+.anchor-meta { display: flex; flex-direction: column; gap: 4px; }
+.anchor-name { font-weight: var(--fw-600); color: var(--ink); font-size: .95rem; }
+.anchor-cat { font-size: .82rem; color: var(--muted); }
+.anchor-remove {
+  font-size: .78rem; color: var(--accent-pink); background: none; border: none;
+  cursor: pointer; padding: 0; font-weight: var(--fw-500);
+}
+.anchor-processing { display: flex; align-items: center; gap: var(--md); padding: var(--md); }
+.anchor-status { font-size: .85rem; color: var(--muted); }
+
+/* ── Tina context bar ───────────────────────── */
+.tina-context-panel {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px var(--lg);
+  margin-bottom: var(--md);
+}
+.tina-context-label {
+  font-size: .75rem;
+  font-weight: var(--fw-600);
+  color: rgba(255,255,255,.5);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-right: 4px;
+}
+.tina-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.85);
+  font-size: .75rem;
+  font-weight: var(--fw-500);
+}
+
+/* ── Enhanced look card ─────────────────────── */
+.look-card-v2 {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.look-card-header {
+  padding: var(--lg) var(--lg) var(--md);
+  border-bottom: 1px solid var(--border);
+}
+
+/* explanation notes */
+.look-notes {
+  padding: var(--md) var(--lg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.look-note {
+  font-size: .85rem;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0;
+}
+.look-note--why { color: #111; font-style: italic; }
+.look-note--weather { color: #0369a1; }
+.look-note--silhouette { color: #6d28d9; }
+.look-note--color { color: #b45309; }
+.look-note-icon { margin-right: 5px; font-style: normal; }
+
+/* action buttons inside card */
+.look-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: var(--md) var(--lg) var(--lg);
+  justify-content: flex-start;
+}
+.look-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1.5px solid;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: var(--fw-500);
+  cursor: pointer;
+  transition: background .15s, color .15s, transform .1s;
+  min-height: 38px;
+}
+.look-action-btn--like {
+  background: #fff;
+  color: var(--accent-pink);
+  border-color: var(--accent-pink);
+}
+.look-action-btn--like:hover,
+.look-action-btn--like.look-action-btn--active {
+  background: var(--accent-pink);
+  color: #fff;
+}
+.look-action-btn--save {
+  background: #fff;
+  color: #059669;
+  border-color: #059669;
+}
+.look-action-btn--save:hover,
+.look-action-btn--save.look-action-btn--active {
+  background: #059669;
+  color: #fff;
+}
+.look-action-btn--dislike {
+  background: #fff;
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+.look-action-btn--dislike:hover { background: #f9fafb; border-color: #9ca3af; }
+
+/* dislike panel */
+.dislike-panel {
+  padding: var(--md) var(--lg) var(--lg);
+  border-top: 1px solid var(--border);
+  background: #fff9f9;
+}
+.dislike-label {
+  font-size: .78rem;
+  font-weight: var(--fw-600);
+  color: #b91c1c;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.dislike-sent {
+  padding: var(--md) var(--lg);
+  font-size: .82rem;
+  color: #059669;
+  font-weight: var(--fw-500);
+  border-top: 1px solid var(--border);
+}
+
+/* section description */
+.section-description {
+  color: rgba(255,255,255,.55);
+  font-size: .9rem;
+  text-align: center;
+  margin-bottom: var(--xl);
+  line-height: 1.6;
 }
