@@ -1388,8 +1388,10 @@ export default function App() {
 
       let savedId = `anchor_${Date.now()}`;
       if (saveRes.ok) {
-        const saveData = await saveRes.json();
-        savedId = saveData.id || saveData.doc_id || savedId;
+        try {
+          const saveData = await saveRes.json();
+          savedId = saveData.id || saveData.doc_id || savedId;
+        } catch (e) { console.warn("[wardrobe-save] parse error:", e); }
       }
 
       await fetchItems(user.uid);
@@ -2434,7 +2436,11 @@ export default function App() {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      // Read body once — prevents "body stream already read" if server returns
+      // non-JSON on error (e.g. 502 HTML page)
+      const rawText = await response.text();
+      let data;
+      try { data = JSON.parse(rawText); } catch { data = {}; }
 
       if (!response.ok) {
         // Retry case if Tina failed with "no valid looks"

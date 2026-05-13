@@ -244,16 +244,6 @@ export default function StylePiecePage({ user, userPrefs, items, city, setCity }
     setRawResponse(null);
   };
 
-  // ── Resolve image URL for a wardrobe piece ─────────────────────────────────
-  const resolveImage = (piece, lookIdx, pieceIdx) => {
-    if (piece.source === "uploaded_item") return anchorItem?.image_url || "";
-    const matched =
-      wardrobeItems.find((w) => String(w.id)          === String(piece.idx)) ||
-      wardrobeItems.find((w) => String(w.doc_id)      === String(piece.idx)) ||
-      wardrobeItems.find((w) => String(w.wardrobe_id) === String(piece.idx));
-    return matched?.image_url || piece.image_url || "";
-  };
-
   // ── Upload anchor piece ────────────────────────────────────────────────────
   const handleAnchorUpload = async (file) => {
     if (!file || !user?.uid) return;
