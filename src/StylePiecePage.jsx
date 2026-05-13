@@ -24,27 +24,21 @@ const DISLIKE_CHIPS = [
   "Wrong silhouette", "Wrong shoes", "Not occasion appropriate",
 ];
 
-function ChipGroup({ options, value, onChange, multi = false }) {
-  const active = multi ? (Array.isArray(value) ? value : []) : [value];
-  const toggle = (opt) => {
-    if (multi) {
-      onChange(active.includes(opt) ? active.filter((v) => v !== opt) : [...active, opt]);
-    } else {
-      onChange(opt);
-    }
-  };
+const FALLBACK_NOTE = "Styled for your selected vibe with weather and silhouette balance in mind.";
+
+// ── Chip selector ────────────────────────────────────────────────────────────
+function ChipGroup({ options, value, onChange }) {
   return (
     <div className="chip-group">
       {options.map((opt) => {
         const label = typeof opt === "object" ? opt.label : opt;
-        const sub = typeof opt === "object" ? opt.sub : null;
-        const isActive = active.includes(label);
+        const sub   = typeof opt === "object" ? opt.sub   : null;
         return (
           <button
             key={label}
             type="button"
-            className={`chip${isActive ? " chip--active" : ""}`}
-            onClick={() => toggle(label)}
+            className={`chip${value === label ? " chip--active" : ""}`}
+            onClick={() => onChange(label)}
           >
             {label}
             {sub && <span className="chip-sub">{sub}</span>}
@@ -55,85 +49,224 @@ function ChipGroup({ options, value, onChange, multi = false }) {
   );
 }
 
+// ── Single look card ─────────────────────────────────────────────────────────
+function LookCard({ look, lookIndex, occasion, vibe, user, onLike, onSave, onDislike }) {
+  const [liked,       setLiked]       = useState(false);
+  const [saved,       setSaved]       = useState(false);
+  const [dislikeOpen, setDislikeOpen] = useState(false);
+  const [dislikeSent, setDislikeSent] = useState(false);
+
+  const handleLike = () => {
+    if (liked) return;
+    setLiked(true);
+    onLike(look);
+  };
+  const handleSave = () => {
+    if (saved) return;
+    setSaved(true);
+    onSave(look);
+  };
+  const handleDislike = (chip) => {
+    setDislikeSent(true);
+    setDislikeOpen(false);
+    onDislike(look, chip);
+  };
+
+  return (
+    <article className="lc">
+      {/* ── Header ── */}
+      <header className="lc__header">
+        <span className="lc__num">LOOK {String(lookIndex + 1).padStart(2, "0")}</span>
+        <h3 className="lc__title">{look.title || "Curated Look"}</h3>
+      </header>
+
+      {/* ── Tina's notes ── */}
+      <div className="lc__notes">
+        <p className="lc__why">
+          {look.why_it_works || FALLBACK_NOTE}
+        </p>
+
+        {(look.weather_note || look.silhouette_note || look.color_note) && (
+          <div className="lc__meta-row">
+            {look.weather_note && (
+              <span className="lc__meta lc__meta--weather">
+                <span className="lc__meta-icon">☁</span>
+                {look.weather_note}
+              </span>
+            )}
+            {look.silhouette_note && (
+              <span className="lc__meta lc__meta--silhouette">
+                <span className="lc__meta-icon">◈</span>
+                {look.silhouette_note}
+              </span>
+            )}
+            {look.color_note && (
+              <span className="lc__meta lc__meta--color">
+                <span className="lc__meta-icon">●</span>
+                {look.color_note}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Item filmstrip ── */}
+      <div className="lc__items">
+        {look.items.map((piece) => (
+          <div key={piece.id} className="lc__item">
+            <div className="lc__img-wrap">
+              <ItemImage piece={piece} />
+              <span className={`lc__badge${piece.source === "uploaded_item" ? " lc__badge--yours" : " lc__badge--closet"}`}>
+                {piece.source === "uploaded_item" ? "YOURS" : "CLOSET"}
+              </span>
+            </div>
+            <p className="lc__item-name">{piece.name}</p>
+            {piece.role && <p className="lc__item-role">{piece.role}</p>}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Action buttons ── */}
+      <div className="lc__actions">
+        <button
+          className={`lc__btn lc__btn--love${liked ? " lc__btn--done" : ""}`}
+          onClick={handleLike}
+          disabled={liked}
+          aria-label="Love this look"
+        >
+          <span className="lc__btn-icon">{liked ? "♡" : "♡"}</span>
+          <span>{liked ? "Loved" : "Love it"}</span>
+        </button>
+
+        <button
+          className={`lc__btn lc__btn--save${saved ? " lc__btn--done" : ""}`}
+          onClick={handleSave}
+          disabled={saved}
+          aria-label="Save this look"
+        >
+          <span className="lc__btn-icon">⊕</span>
+          <span>{saved ? "Saved" : "Save look"}</span>
+        </button>
+
+        <button
+          className={`lc__btn lc__btn--vibe${dislikeOpen ? " lc__btn--open" : ""}`}
+          onClick={() => !dislikeSent && setDislikeOpen((v) => !v)}
+          aria-label="Not my vibe"
+        >
+          <span>Not my vibe</span>
+        </button>
+      </div>
+
+      {/* ── Dislike chips ── */}
+      {dislikeOpen && !dislikeSent && (
+        <div className="lc__dislike">
+          <p className="lc__dislike-label">Tell Tina what's off:</p>
+          <div className="lc__dislike-chips">
+            {DISLIKE_CHIPS.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                className="lc__dislike-chip"
+                onClick={() => handleDislike(chip)}
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {dislikeSent && (
+        <p className="lc__dislike-sent">Got it — Tina will learn from this.</p>
+      )}
+    </article>
+  );
+}
+
+// ── Item image with clean fallback ───────────────────────────────────────────
+function ItemImage({ piece }) {
+  const [broken, setBroken] = useState(false);
+
+  if (!piece.image_url || broken) {
+    return (
+      <div className="lc__img-ph">
+        <span className="lc__img-ph-letter">
+          {(piece.category || piece.name || "?")[0].toUpperCase()}
+        </span>
+        <span className="lc__img-ph-label">{piece.category || "Item"}</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className="lc__img"
+      src={piece.image_url}
+      alt={piece.name}
+      onError={() => setBroken(true)}
+    />
+  );
+}
+
+// ── Main page ────────────────────────────────────────────────────────────────
 export default function StylePiecePage({ user, userPrefs, items, city, setCity }) {
-  // anchor
-  const [anchorItem, setAnchorItem] = useState(null);
-  const [anchorPreview, setAnchorPreview] = useState(null);
-
-  // inputs
-  const [occasion, setOccasion] = useState("Everyday");
-  const [vibe, setVibe] = useState("Minimal");
-  const [comfort, setComfort] = useState("Balanced");
-  const [experimentLevel, setExperimentLevel] = useState("Slightly new");
-  const [userNote, setUserNote] = useState("");
-
-  // results
-  const [loading, setLoading] = useState(false);
-  const [looks, setLooks] = useState([]);
-  const [rawResponse, setRawResponse] = useState(null);
-
-  // feedback per look
-  const [likedIds, setLikedIds] = useState(new Set());
-  const [savedIds, setSavedIds] = useState(new Set());
-  const [openFeedback, setOpenFeedback] = useState(null); // look id
-  const [feedbackSent, setFeedbackSent] = useState(new Set());
+  const [anchorItem,     setAnchorItem]     = useState(null);
+  const [anchorPreview,  setAnchorPreview]  = useState(null);
+  const [occasion,       setOccasion]       = useState("Everyday");
+  const [vibe,           setVibe]           = useState("Minimal");
+  const [comfort,        setComfort]        = useState("Balanced");
+  const [experimentLevel,setExperimentLevel]= useState("Slightly new");
+  const [userNote,       setUserNote]       = useState("");
+  const [loading,        setLoading]        = useState(false);
+  const [looks,          setLooks]          = useState([]);
+  const [rawResponse,    setRawResponse]    = useState(null);
 
   const buildPrompt = () => {
     const parts = [];
-    if (comfort !== "Balanced") parts.push(`Comfort preference: ${comfort}`);
+    if (comfort !== "Balanced")         parts.push(`Comfort preference: ${comfort}`);
     if (experimentLevel !== "Slightly new") parts.push(`Styling direction: ${experimentLevel}`);
-    if (userNote.trim()) parts.push(userNote.trim());
+    if (userNote.trim())                parts.push(userNote.trim());
     return parts.join(". ");
   };
 
+  // ── Upload anchor ──────────────────────────────────────────────────────────
   const handleAnchorUpload = async (file) => {
     if (!file || !user?.uid) return;
     setLoading(true);
     setAnchorPreview(URL.createObjectURL(file));
     setAnchorItem(null);
     setLooks([]);
+
     try {
-      const uniqueName = `${user.uid}/${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `wardrobe/${uniqueName}`);
+      const uniqueName  = `${user.uid}/${Date.now()}_${file.name}`;
+      const storageRef  = ref(storage, `wardrobe/${uniqueName}`);
       await uploadBytes(storageRef, file);
-      const imageUrl = await getDownloadURL(storageRef);
+      const imageUrl    = await getDownloadURL(storageRef);
       const storagePath = storageRef.fullPath;
 
       const tagRes = await fetch(`${BASE_URL}/auto-tag`, {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image_url: imageUrl }),
+        body:    JSON.stringify({ image_url: imageUrl }),
       });
 
-      let itemName = "Uploaded piece";
-      let itemCategory = "";
-      let itemColor = "";
-      let itemTags = [];
-
+      let itemName = "Uploaded piece", itemCategory = "", itemColor = "", itemTags = [];
       if (tagRes.ok) {
-        const tagData = await tagRes.json();
+        const tagData  = await tagRes.json();
         const detected = tagData.detectedItems || tagData.detected || [];
         if (detected.length > 0) {
           const first = detected[0];
           itemName = first.name || itemName;
           itemCategory = first.category || "";
-          itemColor = first.color || "";
-          itemTags = Array.isArray(first.tags) ? first.tags : [];
+          itemColor    = first.color    || "";
+          itemTags     = Array.isArray(first.tags) ? first.tags : [];
         }
       }
 
       const saveRes = await fetch(`${BASE_URL}/wardrobe`, {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user.uid,
-          image_path: storagePath,
-          image_url: imageUrl,
-          name: itemName,
-          category: itemCategory,
-          color: itemColor,
-          tags: itemTags,
-        }),
+        body:    JSON.stringify({ uid: user.uid, image_path: storagePath, image_url: imageUrl, name: itemName, category: itemCategory, color: itemColor, tags: itemTags }),
       });
 
       let savedId = `anchor_${Date.now()}`;
@@ -142,57 +275,43 @@ export default function StylePiecePage({ user, userPrefs, items, city, setCity }
         savedId = saveData.id || saveData.doc_id || savedId;
       }
 
-      setAnchorItem({
-        id: String(savedId),
-        image_url: imageUrl,
-        image_path: storagePath,
-        name: itemName,
-        category: itemCategory,
-        color: itemColor,
-        tags: itemTags,
-      });
+      setAnchorItem({ id: String(savedId), image_url: imageUrl, image_path: storagePath, name: itemName, category: itemCategory, color: itemColor, tags: itemTags });
     } catch (err) {
       console.error("Anchor upload failed:", err);
-      alert("Upload failed.");
+      alert("Upload failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Generate outfits ───────────────────────────────────────────────────────
   const handleStylePiece = async () => {
-    if (!user?.uid || !anchorItem) {
-      alert("Upload a piece first.");
-      return;
-    }
+    if (!user?.uid || !anchorItem) { alert("Upload a piece first."); return; }
     setLoading(true);
     setLooks([]);
-    setLikedIds(new Set());
-    setSavedIds(new Set());
-    setOpenFeedback(null);
-    setFeedbackSent(new Set());
 
     try {
       const res = await fetch(`${BASE_URL}/style-piece`, {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user?.uid,
+        body:    JSON.stringify({
+          uid:              user?.uid,
           occasion,
           vibe,
           city,
-          gender: userPrefs?.gender || "",
+          gender:           userPrefs?.gender || "",
           include_wardrobe: true,
-          include_staples: true,
-          staples_version: "v2",
-          prompt: buildPrompt(),
+          include_staples:  true,
+          staples_version:  "v2",
+          prompt:           buildPrompt(),
           anchor_item: {
-            id: anchorItem?.id,
+            id:          anchorItem?.id,
             wardrobe_id: anchorItem?.id,
-            image_url: anchorItem?.image_url,
-            name: anchorItem?.name || "",
-            category: anchorItem?.category || "",
-            color: anchorItem?.color || "",
-            tags: Array.isArray(anchorItem?.tags) ? anchorItem.tags : [],
+            image_url:   anchorItem?.image_url,
+            name:        anchorItem?.name     || "",
+            category:    anchorItem?.category || "",
+            color:       anchorItem?.color    || "",
+            tags:        Array.isArray(anchorItem?.tags) ? anchorItem.tags : [],
           },
         }),
       });
@@ -204,415 +323,188 @@ export default function StylePiecePage({ user, userPrefs, items, city, setCity }
       const mappedLooks = (data.outfits || []).map((look, lookIdx) => {
         const mappedItems = (look.pieces || []).map((piece, pieceIdx) => {
           if (piece.source === "uploaded_item") {
-            return {
-              id: `anchor-${lookIdx}-${pieceIdx}`,
-              name: piece.name,
-              category: piece.category,
-              color: piece.color,
-              role: piece.role,
-              source: piece.source,
-              image_url: anchorItem.image_url,
-            };
+            return { id: `anchor-${lookIdx}-${pieceIdx}`, name: piece.name, category: piece.category, color: piece.color, role: piece.role, source: piece.source, image_url: anchorItem.image_url };
           }
           if (piece.source === "wardrobe" || piece.source === "staple") {
             const matched =
-              items.find((w) => String(w.id) === String(piece.idx)) ||
-              items.find((w) => String(w.doc_id) === String(piece.idx)) ||
+              items.find((w) => String(w.id)          === String(piece.idx)) ||
+              items.find((w) => String(w.doc_id)      === String(piece.idx)) ||
               items.find((w) => String(w.wardrobe_id) === String(piece.idx));
             return {
-              id: piece.idx || `w-${lookIdx}-${pieceIdx}`,
-              name: matched?.displayName || matched?.name || piece.name,
-              category: matched?.category || piece.category,
-              color: matched?.color || piece.color,
-              role: piece.role,
-              source: piece.source,
-              image_url: matched?.image_url || piece.image_url || "",
+              id:        piece.idx || `w-${lookIdx}-${pieceIdx}`,
+              name:      matched?.displayName || matched?.name || piece.name,
+              category:  matched?.category    || piece.category,
+              color:     matched?.color       || piece.color,
+              role:      piece.role,
+              source:    piece.source,
+              image_url: matched?.image_url   || piece.image_url || "",
             };
           }
-          return {
-            id: piece.idx || `x-${lookIdx}-${pieceIdx}`,
-            name: piece.name,
-            category: piece.category,
-            color: piece.color,
-            role: piece.role,
-            source: piece.source,
-            image_url: piece.image_url || "",
-          };
+          return { id: piece.idx || `x-${lookIdx}-${pieceIdx}`, name: piece.name, category: piece.category, color: piece.color, role: piece.role, source: piece.source, image_url: piece.image_url || "" };
         });
 
         return {
-          id: look.id || `look-${lookIdx}`,
-          title: look.title,
-          why_it_works: look.why_it_works || look.style_note || "",
-          weather_note: look.weather_note || "",
+          id:              look.id || `look-${lookIdx}`,
+          title:           look.title,
+          why_it_works:    look.why_it_works    || look.style_note || "",
+          weather_note:    look.weather_note    || "",
           silhouette_note: look.silhouette_note || "",
-          color_note: look.color_note || "",
-          items: mappedItems.filter((p) => p && (p.image_url || p.source === "uploaded_item")),
+          color_note:      look.color_note      || "",
+          items:           mappedItems.filter((p) => p && (p.image_url || p.source === "uploaded_item" || p.name)),
         };
       });
 
       setLooks(mappedLooks);
     } catch (err) {
       console.error(err);
-      alert("Could not style this piece.");
+      alert("Could not style this piece. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Feedback handlers ──────────────────────────────────────────────────────
   const handleLike = async (look) => {
-    setLikedIds((prev) => new Set([...prev, look.id]));
     try {
       await fetch(`${BASE_URL}/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user?.uid,
-          event_type: "like",
-          outfit_id: look.id,
-          items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })),
-          occasion,
-          vibe,
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: user?.uid, event_type: "like", outfit_id: look.id, items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })), occasion, vibe }),
       });
-      await logOutfitFeedback({
-        uid: user?.uid,
-        occasion,
-        vibe,
-        action: "like",
-        outfit_id: look.id,
-        items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })),
-      });
-    } catch (e) {
-      console.warn("Like signal failed (non-fatal):", e);
-    }
+      await logOutfitFeedback({ uid: user?.uid, occasion, vibe, action: "like", outfit_id: look.id, items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })) });
+    } catch (e) { console.warn("[like]", e); }
   };
 
   const handleSave = async (look) => {
-    setSavedIds((prev) => new Set([...prev, look.id]));
     const today = new Date().toISOString().slice(0, 10);
     try {
       await fetch(`${BASE_URL}/plan-outfit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user?.uid,
-          date: today,
-          outfit: { items: look.items, title: look.title },
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: user?.uid, date: today, outfit: { items: look.items, title: look.title } }),
       });
-      await logOutfitFeedback({
-        uid: user?.uid,
-        occasion,
-        vibe,
-        action: "save",
-        outfit_id: look.id,
-        items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })),
-      });
-    } catch (e) {
-      console.warn("Save signal failed (non-fatal):", e);
-    }
+      await logOutfitFeedback({ uid: user?.uid, occasion, vibe, action: "save", outfit_id: look.id, items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })) });
+    } catch (e) { console.warn("[save]", e); }
   };
 
   const handleDislike = async (look, chip) => {
-    setFeedbackSent((prev) => new Set([...prev, look.id]));
-    setOpenFeedback(null);
     try {
       await fetch(`${BASE_URL}/dislike-outfit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user?.uid,
-          outfit_id: look.id,
-          reason: chip,
-          items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })),
-          occasion,
-          vibe,
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: user?.uid, outfit_id: look.id, reason: chip, items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })), occasion, vibe }),
       });
-      await logOutfitFeedback({
-        uid: user?.uid,
-        occasion,
-        vibe,
-        action: "dislike",
-        outfit_id: look.id,
-        items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })),
-        reason_tags: [chip],
-      });
-    } catch (e) {
-      console.warn("Dislike signal failed (non-fatal):", e);
-    }
+      await logOutfitFeedback({ uid: user?.uid, occasion, vibe, action: "dislike", outfit_id: look.id, items: look.items.map((p) => ({ id: p.id, name: p.name, category: p.category })), reason_tags: [chip] });
+    } catch (e) { console.warn("[dislike]", e); }
   };
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <section className="section section-wardrobe">
+    <section className="section section-wardrobe sp-page">
+
       <h2 className="section-title">Style a Piece</h2>
-      <p className="section-description">
-        Upload any item — Tina builds 3 complete looks around it, styled to your taste.
-      </p>
+      <p className="sp-tagline">Upload any item — Tina builds 3 complete looks around it.</p>
 
       {/* ── Input panel ── */}
-      <div className="stylist-shell">
-        <div className="stylist-card">
+      <div className="sp-panel">
 
-          {/* Hero upload zone */}
-          <div className="hero-upload-zone">
-            {anchorItem ? (
-              <div className="anchor-selected">
-                <img src={anchorItem.image_url} alt={anchorItem.name} className="anchor-img" />
-                <div className="anchor-meta">
-                  <span className="anchor-name">{anchorItem.name}</span>
-                  <span className="anchor-cat">{anchorItem.category}{anchorItem.color ? ` · ${anchorItem.color}` : ""}</span>
-                  <button
-                    type="button"
-                    className="anchor-remove"
-                    onClick={() => { setAnchorItem(null); setAnchorPreview(null); setLooks([]); }}
-                  >
-                    Change piece
-                  </button>
-                </div>
+        {/* Hero upload */}
+        <div className="hero-upload-zone">
+          {anchorItem ? (
+            <div className="anchor-selected">
+              <img src={anchorItem.image_url} alt={anchorItem.name} className="anchor-img" />
+              <div className="anchor-meta">
+                <span className="anchor-name">{anchorItem.name}</span>
+                <span className="anchor-cat">{anchorItem.category}{anchorItem.color ? ` · ${anchorItem.color}` : ""}</span>
+                <button type="button" className="anchor-remove" onClick={() => { setAnchorItem(null); setAnchorPreview(null); setLooks([]); }}>
+                  Change piece
+                </button>
               </div>
-            ) : anchorPreview ? (
-              <div className="anchor-processing">
-                <img src={anchorPreview} alt="preview" className="anchor-img anchor-img--preview" />
-                <p className="anchor-status">Reading your piece…</p>
-              </div>
-            ) : (
-              <label className="hero-upload-label">
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleAnchorUpload(f);
-                    e.target.value = "";
-                  }}
-                />
-                <div className="hero-upload-icon">+</div>
-                <p className="hero-upload-text">Drop a photo of the piece</p>
-                <p className="hero-upload-sub">Tina will build outfits around it</p>
-              </label>
-            )}
-          </div>
-
-          {/* Occasion */}
-          <div className="input-block">
-            <label className="input-label">What's the occasion?</label>
-            <ChipGroup options={OCCASIONS} value={occasion} onChange={setOccasion} />
-          </div>
-
-          {/* Vibe */}
-          <div className="input-block">
-            <label className="input-label">What vibe are you feeling?</label>
-            <ChipGroup options={VIBES} value={vibe} onChange={setVibe} />
-          </div>
-
-          {/* Comfort */}
-          <div className="input-block">
-            <label className="input-label">Comfort level today?</label>
-            <ChipGroup options={COMFORT} value={comfort} onChange={setComfort} />
-          </div>
-
-          {/* Experiment level */}
-          <div className="input-block">
-            <label className="input-label">How adventurous?</label>
-            <ChipGroup options={EXPERIMENT} value={experimentLevel} onChange={setExperimentLevel} />
-          </div>
-
-          {/* City */}
-          <div className="input-block">
-            <label className="input-label">Your city (for weather)</label>
-            <input
-              className="form-input"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g. Delhi, Mumbai, London"
-            />
-          </div>
-
-          {/* Optional note */}
-          <div className="input-block">
-            <label className="input-label">Anything specific? <span className="input-label-opt">(optional)</span></label>
-            <textarea
-              className="form-textarea"
-              value={userNote}
-              onChange={(e) => setUserNote(e.target.value)}
-              placeholder="e.g. I'm short so avoid bulky layers, need pockets…"
-              rows={2}
-            />
-          </div>
-
-          <button
-            className="btn btn-primary stylist-generate"
-            onClick={handleStylePiece}
-            disabled={!anchorItem || loading}
-          >
-            {loading ? "Tina is styling…" : "Build looks around this piece"}
-          </button>
+            </div>
+          ) : anchorPreview ? (
+            <div className="anchor-processing">
+              <img src={anchorPreview} alt="preview" className="anchor-img anchor-img--preview" />
+              <p className="anchor-status">Reading your piece…</p>
+            </div>
+          ) : (
+            <label className="hero-upload-label">
+              <input type="file" accept="image/*" style={{ display: "none" }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAnchorUpload(f); e.target.value = ""; }}
+              />
+              <div className="hero-upload-icon">+</div>
+              <p className="hero-upload-text">Drop a photo of the piece</p>
+              <p className="hero-upload-sub">Tina will build outfits around it</p>
+            </label>
+          )}
         </div>
+
+        <div className="input-block">
+          <label className="input-label">Occasion</label>
+          <ChipGroup options={OCCASIONS} value={occasion} onChange={setOccasion} />
+        </div>
+        <div className="input-block">
+          <label className="input-label">Vibe</label>
+          <ChipGroup options={VIBES} value={vibe} onChange={setVibe} />
+        </div>
+        <div className="input-block">
+          <label className="input-label">Comfort today</label>
+          <ChipGroup options={COMFORT} value={comfort} onChange={setComfort} />
+        </div>
+        <div className="input-block">
+          <label className="input-label">How adventurous?</label>
+          <ChipGroup options={EXPERIMENT} value={experimentLevel} onChange={setExperimentLevel} />
+        </div>
+        <div className="input-block">
+          <label className="input-label">City (for weather)</label>
+          <input className="form-input" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Delhi, Mumbai, London" />
+        </div>
+        <div className="input-block">
+          <label className="input-label">Anything specific? <span className="input-label-opt">(optional)</span></label>
+          <textarea className="form-textarea" value={userNote} onChange={(e) => setUserNote(e.target.value)} placeholder="e.g. I'm petite, need pockets, avoid bulky layers…" rows={2} />
+        </div>
+
+        <button className="sp-generate-btn" onClick={handleStylePiece} disabled={!anchorItem || loading}>
+          {loading
+            ? <><span className="sp-spinner" /> Tina is styling…</>
+            : "Build looks around this piece"}
+        </button>
       </div>
 
-      {/* ── Tina context bar ── */}
+      {/* ── Context bar ── */}
       {looks.length > 0 && (
-        <div className="tina-context-panel">
-          <span className="tina-context-label">Tina styled for</span>
-          <span className="tina-chip">{occasion}</span>
-          <span className="tina-chip">{vibe}</span>
-          <span className="tina-chip">{comfort}</span>
-          <span className="tina-chip">{experimentLevel}</span>
-          {city && <span className="tina-chip">{city}</span>}
+        <div className="sp-context-bar">
+          <span className="sp-context-label">Styled for</span>
+          {[occasion, vibe, comfort, experimentLevel, city].filter(Boolean).map((t) => (
+            <span key={t} className="sp-context-chip">{t}</span>
+          ))}
         </div>
       )}
 
       {/* ── Look cards ── */}
       {looks.length > 0 && (
-        <div className="outfit-suggestions">
-          {looks.map((look) => {
-            const isLiked = likedIds.has(look.id);
-            const isSaved = savedIds.has(look.id);
-            const dislikeOpen = openFeedback === look.id;
-            const dislikeSent = feedbackSent.has(look.id);
-
-            return (
-              <div key={look.id} className="look-card-v2">
-                {/* Header */}
-                <div className="look-card-header">
-                  <h3 className="look-title">{look.title}</h3>
-                </div>
-
-                {/* Explanation notes */}
-                <div className="look-notes">
-                  {look.why_it_works && (
-                    <p className="look-note look-note--why">{look.why_it_works}</p>
-                  )}
-                  {look.weather_note && (
-                    <p className="look-note look-note--weather">
-                      <span className="look-note-icon">☁</span> {look.weather_note}
-                    </p>
-                  )}
-                  {look.silhouette_note && (
-                    <p className="look-note look-note--silhouette">
-                      <span className="look-note-icon">◈</span> {look.silhouette_note}
-                    </p>
-                  )}
-                  {look.color_note && (
-                    <p className="look-note look-note--color">
-                      <span className="look-note-icon">●</span> {look.color_note}
-                    </p>
-                  )}
-                </div>
-
-                {/* Pieces grid */}
-                <div className="look-items">
-                  {look.items.map((piece) => (
-                    <div key={piece.id} className="look-item card">
-                      {piece.image_url ? (
-                        <img
-                          className="look-item-image"
-                          src={piece.image_url}
-                          alt={piece.name}
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                            if (e.currentTarget.nextElementSibling)
-                              e.currentTarget.nextElementSibling.style.display = "grid";
-                          }}
-                        />
-                      ) : null}
-                      <div
-                        style={{
-                          height: 160,
-                          display: piece.image_url ? "none" : "grid",
-                          placeItems: "center",
-                          background: "#f5f5f5",
-                          borderRadius: "12px 12px 0 0",
-                          color: "#888",
-                          fontSize: 13,
-                        }}
-                      >
-                        {piece.category || "No image"}
-                      </div>
-                      <div className="look-item-info">
-                        <p className="look-item-name">{piece.name}</p>
-                        <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>
-                          {[piece.role, piece.color].filter(Boolean).join(" · ")}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Action buttons */}
-                <div className="look-actions">
-                  <button
-                    className={`look-action-btn look-action-btn--like${isLiked ? " look-action-btn--active" : ""}`}
-                    onClick={() => !isLiked && handleLike(look)}
-                    title="Love this look"
-                  >
-                    {isLiked ? "Loved" : "Love it"}
-                  </button>
-                  <button
-                    className={`look-action-btn look-action-btn--save${isSaved ? " look-action-btn--active" : ""}`}
-                    onClick={() => !isSaved && handleSave(look)}
-                    title="Save to outfit plan"
-                  >
-                    {isSaved ? "Saved" : "Save look"}
-                  </button>
-                  <button
-                    className="look-action-btn look-action-btn--dislike"
-                    onClick={() => setOpenFeedback(dislikeOpen ? null : look.id)}
-                    title="Tell Tina what's off"
-                  >
-                    Not my vibe
-                  </button>
-                </div>
-
-                {/* Dislike chips */}
-                {dislikeOpen && !dislikeSent && (
-                  <div className="dislike-panel">
-                    <p className="dislike-label">What's off?</p>
-                    <div className="chip-group chip-group--dislike">
-                      {DISLIKE_CHIPS.map((chip) => (
-                        <button
-                          key={chip}
-                          type="button"
-                          className="chip chip--dislike"
-                          onClick={() => handleDislike(look, chip)}
-                        >
-                          {chip}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {dislikeSent && (
-                  <p className="dislike-sent">Got it — Tina will learn from this.</p>
-                )}
-              </div>
-            );
-          })}
+        <div className="sp-looks">
+          {looks.map((look, i) => (
+            <LookCard
+              key={look.id}
+              look={look}
+              lookIndex={i}
+              occasion={occasion}
+              vibe={vibe}
+              user={user}
+              onLike={handleLike}
+              onSave={handleSave}
+              onDislike={handleDislike}
+            />
+          ))}
+          <div style={{ height: 40 }} />
         </div>
       )}
 
+      {/* Debug */}
       {rawResponse && (
-        <details style={{ marginTop: 20, padding: "0 16px" }}>
-          <summary style={{ cursor: "pointer", color: "#888", fontSize: 13 }}>Debug: raw API response</summary>
-          <pre
-            style={{
-              marginTop: 12,
-              whiteSpace: "pre-wrap",
-              fontSize: 12,
-              background: "#111",
-              color: "#ddd",
-              padding: 12,
-              borderRadius: 12,
-              overflowX: "auto",
-            }}
-          >
-            {JSON.stringify(rawResponse, null, 2)}
-          </pre>
+        <details className="sp-debug">
+          <summary>Debug: raw API response</summary>
+          <pre>{JSON.stringify(rawResponse, null, 2)}</pre>
         </details>
       )}
+
     </section>
   );
 }
