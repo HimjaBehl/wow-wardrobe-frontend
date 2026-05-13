@@ -1302,15 +1302,21 @@ export default function App() {
       });
 
       const contentType = res.headers.get("content-type") || "";
+      const bodyText = await res.text();
       if (!res.ok || !contentType.includes("application/json")) {
-        const text = await res.text();
-        console.error("❌ Auto-tag failed:", text);
+        console.error("❌ Auto-tag failed:", bodyText);
         alert("Auto-tagging failed for this photo. Try another image.");
         setDetectedItems([]);
         return;
       }
 
-      const data = await res.json();
+      let data;
+      try { data = JSON.parse(bodyText); } catch {
+        console.error("❌ Auto-tag JSON parse error:", bodyText.slice(0, 200));
+        alert("Auto-tagging failed for this photo. Try another image.");
+        setDetectedItems([]);
+        return;
+      }
       const tagged = (data.detectedItems || data.detected || []).map((obj) => ({
         ...obj,
         approved: true,

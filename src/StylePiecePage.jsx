@@ -252,15 +252,17 @@ export default function StylePiecePage({ user, userPrefs, items, city, setCity }
 
       let itemName = "Uploaded piece", itemCategory = "", itemColor = "", itemTags = [];
       if (tagRes.ok) {
-        const tagData  = await tagRes.json();
-        const detected = tagData.detectedItems || tagData.detected || [];
-        if (detected.length > 0) {
-          const first = detected[0];
-          itemName = first.name || itemName;
-          itemCategory = first.category || "";
-          itemColor    = first.color    || "";
-          itemTags     = Array.isArray(first.tags) ? first.tags : [];
-        }
+        try {
+          const tagData  = await tagRes.json();
+          const detected = tagData.detectedItems || tagData.detected || [];
+          if (detected.length > 0) {
+            const first = detected[0];
+            itemName     = first.name     || itemName;
+            itemCategory = first.category || "";
+            itemColor    = first.color    || "";
+            itemTags     = Array.isArray(first.tags) ? first.tags : [];
+          }
+        } catch (e) { console.warn("[auto-tag] parse error:", e); }
       }
 
       const saveRes = await fetch(`${BASE_URL}/wardrobe`, {
@@ -316,9 +318,11 @@ export default function StylePiecePage({ user, userPrefs, items, city, setCity }
         }),
       });
 
-      const data = await res.json();
+      const bodyText = await res.text();
+      let data;
+      try { data = JSON.parse(bodyText); } catch { data = {}; }
       setRawResponse(data);
-      if (!res.ok) throw new Error(data?.error || "style-piece failed");
+      if (!res.ok) throw new Error(data?.error || `style-piece failed (${res.status})`);
 
       const mappedLooks = (data.outfits || []).map((look, lookIdx) => {
         const mappedItems = (look.pieces || []).map((piece, pieceIdx) => {
