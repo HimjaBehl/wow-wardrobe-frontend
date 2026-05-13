@@ -1359,15 +1359,17 @@ export default function App() {
       let itemTags = [];
 
       if (tagRes.ok) {
-        const tagData = await tagRes.json();
-        const detected = (tagData.detectedItems || tagData.detected || []);
-        if (detected.length > 0) {
-          const first = detected[0];
-          itemName = first.name || "Uploaded piece";
-          itemCategory = first.category || "";
-          itemColor = first.color || "";
-          itemTags = Array.isArray(first.tags) ? first.tags : [];
-        }
+        try {
+          const tagData = await tagRes.json();
+          const detected = (tagData.detectedItems || tagData.detected || []);
+          if (detected.length > 0) {
+            const first = detected[0];
+            itemName     = first.name     || "Uploaded piece";
+            itemCategory = first.category || "";
+            itemColor    = first.color    || "";
+            itemTags     = Array.isArray(first.tags) ? first.tags : [];
+          }
+        } catch (e) { console.warn("[auto-tag] parse error:", e); }
       }
 
       const saveRes = await fetch(`${BASE_URL}/wardrobe`, {
