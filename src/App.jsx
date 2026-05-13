@@ -1105,7 +1105,7 @@ export default function App() {
           );
         }
 
-        console.log("Staples received:", list.length, "items for", genderParam);
+        console.log("Staples received:", list.length, "items for male");
         setStaples(list);
       } catch (err) {
         console.error("Failed to fetch staples:", err);
