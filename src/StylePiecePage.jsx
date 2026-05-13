@@ -505,6 +505,11 @@ export default function StylePiecePage({ user, userPrefs, items, city, setCity }
         </details>
       )}
 
+      {/* Version marker — remove once deployment confirmed */}
+      <p style={{ textAlign: "center", color: "rgba(255,255,255,.2)", fontSize: ".65rem", marginTop: 12, letterSpacing: ".08em" }}>
+        Style UX v2 · f3c18c9
+      </p>
+
     </section>
   );
 }
